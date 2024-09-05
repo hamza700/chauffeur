@@ -1,6 +1,6 @@
 'use client';
 
-import type { IVehicleItem } from 'src/types/vehicle';
+import type { IVehicleDocumentFields } from 'src/types/vehicle';
 
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -67,7 +67,7 @@ export const VehicleDocumentsSchema = zod.object({
 // ----------------------------------------------------------------------
 
 type Props = {
-  currentVehicle?: IVehicleItem;
+  currentVehicle?: IVehicleDocumentFields;
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -401,7 +401,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
                     <Button
                       variant="contained"
                       startIcon={<Iconify icon="eva:cloud-download-fill" />}
-                      onClick={() => handleDownload(currentVehicle?.leasingContractUrls[0] || '')}
+                      onClick={() => handleDownload(currentVehicle?.leasingContractUrls?.[0] || '')}
                     >
                       Download
                     </Button>

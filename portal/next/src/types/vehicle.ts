@@ -7,14 +7,7 @@ export type IVehicleTableFilters = {
   status: string;
 };
 
-export interface IVehicleItem {
-  id: string;
-  licensePlate: string;
-  model: string;
-  colour: string; // Use British English spelling for consistency
-  productionYear: string;
-  serviceClass: string;
-  status: string;
+export type IVehicleDocumentFields = {
   privateHireLicenseUrls: string[];
   privateHireLicenseExpiryDate: IDateValue;
   privateHireLicenseStatus: 'pending' | 'rejected' | 'approved';
@@ -30,4 +23,15 @@ export interface IVehicleItem {
   vehicleRegistrationStatus: 'pending' | 'rejected' | 'approved';
   leasingContractUrls?: string[];
   leasingContractStatus?: 'pending' | 'rejected' | 'approved';
-}
+};
+
+export type IVehicleItem = {
+  id: string;
+  licensePlate: string;
+  model: string;
+  colour: string; // Use British English spelling for consistency
+  productionYear: string;
+  serviceClass: string;
+  status: string;
+  documents: IVehicleDocumentFields;
+};

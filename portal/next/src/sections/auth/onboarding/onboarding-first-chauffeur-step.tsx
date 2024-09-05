@@ -5,7 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 
 import { Field, schemaHelper } from 'src/components/hook-form';
 
@@ -55,25 +59,38 @@ export function FirstChauffeurStep({ currentChauffeur, onSubmit }: Props) {
   const { handleSubmit } = methods;
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack
-          rowGap={3}
-          columnGap={2}
-          display="grid"
-          gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
-        >
-          <Field.Text name="firstName" label="First Name" />
-          <Field.Text name="lastName" label="Last Name" />
-          <Field.Text name="email" label="Email Address" />
-          <Field.Phone name="phoneNumber" label="Phone Number" />
-          <Field.Text name="driversLicense" label="Driver's License" />
-          <Field.Text name="privateHireLicense" label="Private Hire License" />
-          <Field.Text name="licensePlate" label="License Plate" />
-          <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
-        </Stack>
-        <input type="submit" style={{ display: 'none' }} />
-      </form>
-    </FormProvider>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        First Chauffeur Information
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        Please fill in the details of your first chauffeur. Make sure all the information is
+        accurate before proceeding.
+      </Typography>
+
+      <Divider sx={{ my: 3 }} />
+      <Card sx={{ p: 3 }}>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack
+              rowGap={3}
+              columnGap={2}
+              display="grid"
+              gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
+            >
+              <Field.Text name="firstName" label="First Name" />
+              <Field.Text name="lastName" label="Last Name" />
+              <Field.Text name="email" label="Email Address" />
+              <Field.Phone name="phoneNumber" label="Phone Number" />
+              <Field.Text name="driversLicense" label="Driver's License" />
+              <Field.Text name="privateHireLicense" label="Private Hire License" />
+              <Field.Text name="licensePlate" label="License Plate" />
+              <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
+            </Stack>
+            <input type="submit" style={{ display: 'none' }} />
+          </form>
+        </FormProvider>
+      </Card>
+    </Box>
   );
 }

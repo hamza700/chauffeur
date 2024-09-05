@@ -5,6 +5,18 @@ export type IProvidersTableFilters = {
   status: string;
 };
 
+export type IDocumentFields = {
+  companyPrivateHireOperatorLicenseUrls: string[];
+  companyPrivateHireOperatorLicenseExpiryDate: IDateValue;
+  companyPrivateHireOperatorLicenseStatus: 'pending' | 'rejected' | 'approved';
+  personalIDorPassportUrls: string[];
+  personalIDorPassportExpiryDate: IDateValue;
+  personalIDorPassportStatus: 'pending' | 'rejected' | 'approved';
+  vatRegistrationCertificateUrls: string[];
+  vatRegistrationCertificateExpiryDate: IDateValue;
+  vatRegistrationCertificateStatus: 'pending' | 'rejected' | 'approved';
+};
+
 export type IProviderAccount = {
   id: string;
   city: string;
@@ -20,15 +32,7 @@ export type IProviderAccount = {
   companyRegistrationNumber: string;
   taxIdentificationNumber: string;
   vatNumber: string;
-  companyPrivateHireOperatorLicenseUrls: string[];
-  companyPrivateHireOperatorLicenseExpiryDate: IDateValue;
-  companyPrivateHireOperatorLicenseStatus: 'pending' | 'rejected' | 'approved';
-  personalIDorPassportUrls: string[];
-  personalIDorPassportExpiryDate: IDateValue;
-  personalIDorPassportStatus: 'pending' | 'rejected' | 'approved';
-  vatRegistrationCertificateUrls: string[];
-  vatRegistrationCertificateExpiryDate: IDateValue;
-  vatRegistrationCertificateStatus: 'pending' | 'rejected' | 'approved';
+  documents: IDocumentFields;
   partnerAgreement: PartnerAgreement;
   paymentDetails: PaymentDetails;
 };

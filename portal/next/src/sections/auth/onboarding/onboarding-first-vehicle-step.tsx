@@ -5,8 +5,12 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 
 import { Field } from 'src/components/hook-form';
 
@@ -83,85 +87,98 @@ export function FirstVehicleStep({ currentVehicle, onSubmit }: Props) {
   const serviceClasses = CAR_MODELS.find((car) => car.value === values.model)?.serviceClass || [];
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack
-          rowGap={3}
-          columnGap={2}
-          display="grid"
-          gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
-        >
-          <Field.Select
-            name="model"
-            label="Car Model"
-            InputLabelProps={{ shrink: true }}
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              Select a car model
-            </MenuItem>
-            {CAR_MODELS.map((car) => (
-              <MenuItem key={car.value} value={car.value}>
-                {car.value}
-              </MenuItem>
-            ))}
-          </Field.Select>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        First Vehicle Information
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        Please fill in the details of your first vehicle. Make sure all the information is accurate
+        before proceeding.
+      </Typography>
 
-          <Field.Select
-            name="productionYear"
-            label="Production Year"
-            InputLabelProps={{ shrink: true }}
-            displayEmpty
-            disabled={!values.model}
-          >
-            <MenuItem value="" disabled>
-              Select a production year
-            </MenuItem>
-            {YEAR_OPTIONS.map((year) => (
-              <MenuItem key={year} value={year}>
-                {year}
-              </MenuItem>
-            ))}
-          </Field.Select>
+      <Divider sx={{ my: 3 }} />
+      <Card sx={{ p: 3 }}>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack
+              rowGap={3}
+              columnGap={2}
+              display="grid"
+              gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
+            >
+              <Field.Select
+                name="model"
+                label="Car Model"
+                InputLabelProps={{ shrink: true }}
+                displayEmpty
+              >
+                <MenuItem value="" disabled>
+                  Select a car model
+                </MenuItem>
+                {CAR_MODELS.map((car) => (
+                  <MenuItem key={car.value} value={car.value}>
+                    {car.value}
+                  </MenuItem>
+                ))}
+              </Field.Select>
 
-          <Field.Select
-            name="color"
-            label="Color"
-            InputLabelProps={{ shrink: true }}
-            displayEmpty
-            disabled={!values.model}
-          >
-            <MenuItem value="" disabled>
-              Select a color
-            </MenuItem>
-            {COLOR_OPTIONS.map((color) => (
-              <MenuItem key={color} value={color}>
-                {color}
-              </MenuItem>
-            ))}
-          </Field.Select>
+              <Field.Select
+                name="productionYear"
+                label="Production Year"
+                InputLabelProps={{ shrink: true }}
+                displayEmpty
+                disabled={!values.model}
+              >
+                <MenuItem value="" disabled>
+                  Select a production year
+                </MenuItem>
+                {YEAR_OPTIONS.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Field.Select>
 
-          <Field.Text name="licensePlate" label="License Plate" />
+              <Field.Select
+                name="color"
+                label="Color"
+                InputLabelProps={{ shrink: true }}
+                displayEmpty
+                disabled={!values.model}
+              >
+                <MenuItem value="" disabled>
+                  Select a color
+                </MenuItem>
+                {COLOR_OPTIONS.map((color) => (
+                  <MenuItem key={color} value={color}>
+                    {color}
+                  </MenuItem>
+                ))}
+              </Field.Select>
 
-          <Field.Select
-            name="serviceClass"
-            label="Service Class"
-            InputLabelProps={{ shrink: true }}
-            displayEmpty
-            disabled={!values.model}
-          >
-            <MenuItem value="" disabled>
-              Select a service class
-            </MenuItem>
-            {serviceClasses.map((serviceClass) => (
-              <MenuItem key={serviceClass} value={serviceClass}>
-                {serviceClass}
-              </MenuItem>
-            ))}
-          </Field.Select>
-        </Stack>
-        <input type="submit" style={{ display: 'none' }} />
-      </form>
-    </FormProvider>
+              <Field.Text name="licensePlate" label="License Plate" />
+
+              <Field.Select
+                name="serviceClass"
+                label="Service Class"
+                InputLabelProps={{ shrink: true }}
+                displayEmpty
+                disabled={!values.model}
+              >
+                <MenuItem value="" disabled>
+                  Select a service class
+                </MenuItem>
+                {serviceClasses.map((serviceClass) => (
+                  <MenuItem key={serviceClass} value={serviceClass}>
+                    {serviceClass}
+                  </MenuItem>
+                ))}
+              </Field.Select>
+            </Stack>
+            <input type="submit" style={{ display: 'none' }} />
+          </form>
+        </FormProvider>
+      </Card>
+    </Box>
   );
 }

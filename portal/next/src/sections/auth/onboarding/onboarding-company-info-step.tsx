@@ -5,7 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 
 import { Field, schemaHelper } from 'src/components/hook-form';
 
@@ -60,27 +64,41 @@ export function CompanyInfoStep({ currentProvider, onSubmit }: Props) {
   const { handleSubmit } = methods;
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack
-          rowGap={3}
-          columnGap={2}
-          display="grid"
-          gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
-        >
-          <Field.Text name="companyName" label="Company Name" />
-          <Field.Phone name="phoneNumber" label="Phone number" />
-          <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
-          <Field.Text name="address" label="Address" />
-          <Field.Text name="state" label="State/region" />
-          <Field.Text name="city" label="City" />
-          <Field.Text name="postCode" label="Post code" />
-          <Field.Text name="taxIdentificationNumber" label="Tax Identification Number" />
-          <Field.Text name="companyRegistrationNumber" label="Company Registration Number" />
-          <Field.Text name="vatNumber" label="VAT Number" />
-        </Stack>
-        <input type="submit" style={{ display: 'none' }} />
-      </form>
-    </FormProvider>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Company Information
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        Please fill in the details of your company. Make sure all the information is accurate before
+        proceeding.
+      </Typography>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Card sx={{ p: 3 }}>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack
+              rowGap={3}
+              columnGap={2}
+              display="grid"
+              gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
+            >
+              <Field.Text name="companyName" label="Company Name" />
+              <Field.Phone name="phoneNumber" label="Phone number" />
+              <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
+              <Field.Text name="address" label="Address" />
+              <Field.Text name="state" label="State/region" />
+              <Field.Text name="city" label="City" />
+              <Field.Text name="postCode" label="Post code" />
+              <Field.Text name="taxIdentificationNumber" label="Tax Identification Number" />
+              <Field.Text name="companyRegistrationNumber" label="Company Registration Number" />
+              <Field.Text name="vatNumber" label="VAT Number" />
+            </Stack>
+            <input type="submit" style={{ display: 'none' }} />
+          </form>
+        </FormProvider>
+      </Card>
+    </Box>
   );
 }

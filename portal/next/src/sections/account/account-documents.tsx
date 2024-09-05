@@ -1,6 +1,6 @@
 'use client';
 
-import type { IProviderAccount } from 'src/types/user';
+import type { IDocumentFields } from 'src/types/provider';
 
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -54,7 +54,7 @@ export const UserDocumentsSchema = zod.object({
 // ----------------------------------------------------------------------
 
 type Props = {
-  currentProvider?: IProviderAccount;
+  currentProvider?: IDocumentFields;
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -109,7 +109,7 @@ export function AccountDocuments({ currentProvider }: Props) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Documents updated successfully!');
-      router.push(paths.dashboard.providers.root);
+      router.push(paths.dashboard.providers);
       console.info('DATA', data);
     } catch (error) {
       console.error('Error submitting form:', error);

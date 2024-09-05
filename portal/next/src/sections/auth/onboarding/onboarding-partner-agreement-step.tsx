@@ -7,8 +7,10 @@ import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
 import { Field } from 'src/components/hook-form';
@@ -29,13 +31,15 @@ type Props = {
 };
 
 export function PartnerAgreementStep({ currentAgreement, onSubmit }: Props) {
+  const defaultValues = {
+    agreeToTerms: currentAgreement?.agreeToTerms ?? false,
+    signature: currentAgreement?.signature ?? '',
+  };
+
   const methods = useForm<PartnerAgreementSchemaType>({
     mode: 'all',
     resolver: zodResolver(PartnerAgreementSchema),
-    defaultValues: {
-      agreeToTerms: currentAgreement?.agreeToTerms ?? false,
-      signature: currentAgreement?.signature ?? '',
-    },
+    defaultValues,
   });
 
   const {
@@ -44,40 +48,46 @@ export function PartnerAgreementStep({ currentAgreement, onSubmit }: Props) {
   } = methods;
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={3}>
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Partner Agreement
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              Please review the following terms and conditions carefully before proceeding. By
-              agreeing to this partner agreement, you confirm that you have read, understood, and
-              accepted the terms of this agreement.
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 3 }}>
-              (Include your specific partner agreement details here, outlining the responsibilities,
-              rights, and obligations of both parties. Make sure this text is comprehensive and
-              clear to avoid any misunderstandings.)
-            </Typography>
-          </Card>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Partner Agreement
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        Please review the following terms and conditions before proceeding.By agreeing to this
+        partner agreement, you confirm that you have read, understood, and accepted the terms of
+        this agreement.
+      </Typography>
 
-          {/* Signature Field */}
-          <Field.Text
-            name="signature"
-            label="Sign with your name"
-            error={!!errors.signature}
-            helperText={errors.signature?.message}
-            sx={{ mt: 2 }}
-          />
+      <Divider sx={{ my: 3 }} />
+      <Card sx={{ p: 3 }}>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack spacing={3}>
+              <Card sx={{ p: 3 }}>
+                <Typography variant="body2" sx={{ mb: 3 }}>
+                  (Include your specific partner agreement details here, outlining the
+                  responsibilities, rights, and obligations of both parties. Make sure this text is
+                  comprehensive and clear to avoid any misunderstandings.)
+                </Typography>
+              </Card>
 
-          {/* Agreement Checkbox */}
-          <Field.Checkbox name="agreeToTerms" label="I agree to the partner agreement" />
-        </Stack>
+              {/* Signature Field */}
+              <Field.Text
+                name="signature"
+                label="Sign with your name"
+                error={!!errors.signature}
+                helperText={errors.signature?.message}
+                sx={{ mt: 2 }}
+              />
 
-        <input type="submit" style={{ display: 'none' }} />
-      </form>
-    </FormProvider>
+              {/* Agreement Checkbox */}
+              <Field.Checkbox name="agreeToTerms" label="I agree to the partner agreement" />
+            </Stack>
+
+            <input type="submit" style={{ display: 'none' }} />
+          </form>
+        </FormProvider>
+      </Card>
+    </Box>
   );
 }

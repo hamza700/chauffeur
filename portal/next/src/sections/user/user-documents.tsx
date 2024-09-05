@@ -1,6 +1,6 @@
 'use client';
 
-import type { IUserItem } from 'src/types/user';
+import type { IUserDocumentFields } from 'src/types/user';
 
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -51,7 +51,7 @@ export const UserDocumentsSchema = zod.object({
 // ----------------------------------------------------------------------
 
 type Props = {
-  currentUser?: IUserItem;
+  currentUser?: IUserDocumentFields;
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -178,7 +178,7 @@ export function UserDocuments({ currentUser }: Props) {
 
             <Stack spacing={1.5}>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="subtitle2">Driver's License</Typography>
+                <Typography variant="subtitle2">Driver&rsquo;s License</Typography>
                 {currentUser?.driversLicenseStatus &&
                   getStatusLabel(currentUser.driversLicenseStatus)}
               </Stack>

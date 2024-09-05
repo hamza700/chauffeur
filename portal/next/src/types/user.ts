@@ -7,6 +7,17 @@ export type IUserTableFilters = {
   status: string;
 };
 
+export type IUserDocumentFields = {
+  profilePicUrl: string;
+  profilePicStatus: 'pending' | 'rejected' | 'approved';
+  driversLicenseUrls: string[];
+  driversLicenseExpiryDate: IDateValue;
+  driversLicenseStatus: 'pending' | 'rejected' | 'approved';
+  privateHireLicenseUrls: string[];
+  privateHireLicenseExpiryDate: IDateValue;
+  privateHireLicenseStatus: 'pending' | 'rejected' | 'approved';
+};
+
 export type IUserItem = {
   id: string;
   firstName: string;
@@ -19,12 +30,5 @@ export type IUserItem = {
   driversLicense: string;
   privateHireLicense: string;
   licensePlate: string;
-  profilePicUrl: string;
-  profilePicStatus: 'pending' | 'rejected' | 'approved';
-  driversLicenseUrls: string[];
-  driversLicenseExpiryDate: IDateValue;
-  driversLicenseStatus: 'pending' | 'rejected' | 'approved';
-  privateHireLicenseUrls: string[];
-  privateHireLicenseExpiryDate: IDateValue;
-  privateHireLicenseStatus: 'pending' | 'rejected' | 'approved';
+  documents: IUserDocumentFields;
 };

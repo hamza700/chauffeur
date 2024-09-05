@@ -55,30 +55,58 @@ export function OnboardingView() {
       licensePlate: '',
       serviceClass: '',
     },
-    uploadDocuments: {
-      companyPrivateHireOperatorLicenseFiles: [],
-      personalIDorPassportFiles: [],
-      vatRegistrationCertificateFiles: [],
-      companyPrivateHireOperatorLicenseExpiry: null,
-      personalIDorPassportExpiry: null,
-      vatRegistrationCertificateExpiry: null,
-      chauffeurProfilePicFile: null,
-      chauffeurDriversLicenseFiles: [],
-      chauffeurPrivateHireLicenseFiles: [],
-      chauffeurDriversLicenseExpiry: null,
-      chauffeurPrivateHireLicenseExpiry: null,
-      vehiclePicFile: null,
-      vehiclePrivateHireLicenseFiles: [],
-      vehiclePrivateHireLicenseExpiry: null,
-      vehicleMotTestCertificateFiles: [],
-      vehicleMotTestCertificateExpiry: null,
-      vehicleInsuranceFiles: [],
-      vehicleInsuranceExpiry: null,
-      vehicleRegistrationFiles: [],
-      vehicleLeasingContractFiles: [],
+    providerDocuments: {
+      companyPrivateHireOperatorLicenseUrls: [],
+      companyPrivateHireOperatorLicenseExpiryDate: null,
+      companyPrivateHireOperatorLicenseStatus: 'pending',
+      personalIDorPassportUrls: [],
+      personalIDorPassportExpiryDate: null,
+      personalIDorPassportStatus: 'pending',
+      vatRegistrationCertificateUrls: [],
+      vatRegistrationCertificateExpiryDate: null,
+      vatRegistrationCertificateStatus: 'pending',
     },
-    partnerAgreement: {},
-    paymentDetails: {},
+    chauffeurDocuments: {
+      profilePicUrl: '',
+      profilePicStatus: 'pending',
+      driversLicenseUrls: [],
+      driversLicenseExpiryDate: null,
+      driversLicenseStatus: 'pending',
+      privateHireLicenseUrls: [],
+      privateHireLicenseExpiryDate: null,
+      privateHireLicenseStatus: 'pending',
+    },
+    vehicleDocuments: {
+      privateHireLicenseUrls: [],
+      privateHireLicenseExpiryDate: null,
+      privateHireLicenseStatus: 'pending',
+      motTestCertificateUrls: [],
+      motTestCertificateExpiryDate: null,
+      motTestCertificateStatus: 'pending',
+      vehiclePicUrl: '',
+      vehiclePicStatus: 'pending',
+      vehicleInsuranceUrls: [],
+      vehicleInsuranceExpiryDate: null,
+      vehicleInsuranceStatus: 'pending',
+      vehicleRegistrationUrls: [],
+      vehicleRegistrationStatus: 'pending',
+      leasingContractUrls: [],
+      leasingContractStatus: 'pending',
+    },
+    partnerAgreement: {
+      agreeToTerms: false,
+      signature: '',
+    },
+    paymentDetails: {
+      paymentMethod: 'paypal',
+      paypalEmail: '',
+      bankAccountOwnerName: '',
+      bankName: '',
+      bankCountry: null,
+      bankAccountNumber: '',
+      iban: '',
+      swiftCode: '',
+    },
   });
 
   const handleNext = () => {
@@ -121,38 +149,74 @@ export function OnboardingView() {
         licensePlate: '',
         serviceClass: '',
       },
-      uploadDocuments: {
-        companyPrivateHireOperatorLicenseFiles: [],
-        personalIDorPassportFiles: [],
-        vatRegistrationCertificateFiles: [],
-        companyPrivateHireOperatorLicenseExpiry: null,
-        personalIDorPassportExpiry: null,
-        vatRegistrationCertificateExpiry: null,
-        chauffeurProfilePicFile: null,
-        chauffeurDriversLicenseFiles: [],
-        chauffeurPrivateHireLicenseFiles: [],
-        chauffeurDriversLicenseExpiry: null,
-        chauffeurPrivateHireLicenseExpiry: null,
-        vehiclePicFile: null,
-        vehiclePrivateHireLicenseFiles: [],
-        vehiclePrivateHireLicenseExpiry: null,
-        vehicleMotTestCertificateFiles: [],
-        vehicleMotTestCertificateExpiry: null,
-        vehicleInsuranceFiles: [],
-        vehicleInsuranceExpiry: null,
-        vehicleRegistrationFiles: [],
-        vehicleLeasingContractFiles: [],
+      providerDocuments: {
+        companyPrivateHireOperatorLicenseUrls: [],
+        companyPrivateHireOperatorLicenseExpiryDate: null,
+        companyPrivateHireOperatorLicenseStatus: 'pending',
+        personalIDorPassportUrls: [],
+        personalIDorPassportExpiryDate: null,
+        personalIDorPassportStatus: 'pending',
+        vatRegistrationCertificateUrls: [],
+        vatRegistrationCertificateExpiryDate: null,
+        vatRegistrationCertificateStatus: 'pending',
       },
-      partnerAgreement: {},
-      paymentDetails: {},
+      chauffeurDocuments: {
+        profilePicUrl: '',
+        profilePicStatus: 'pending',
+        driversLicenseUrls: [],
+        driversLicenseExpiryDate: null,
+        driversLicenseStatus: 'pending',
+        privateHireLicenseUrls: [],
+        privateHireLicenseExpiryDate: null,
+        privateHireLicenseStatus: 'pending',
+      },
+      vehicleDocuments: {
+        privateHireLicenseUrls: [],
+        privateHireLicenseExpiryDate: null,
+        privateHireLicenseStatus: 'pending',
+        motTestCertificateUrls: [],
+        motTestCertificateExpiryDate: null,
+        motTestCertificateStatus: 'pending',
+        vehiclePicUrl: '',
+        vehiclePicStatus: 'pending',
+        vehicleInsuranceUrls: [],
+        vehicleInsuranceExpiryDate: null,
+        vehicleInsuranceStatus: 'pending',
+        vehicleRegistrationUrls: [],
+        vehicleRegistrationStatus: 'pending',
+        leasingContractUrls: [],
+        leasingContractStatus: 'pending',
+      },
+      partnerAgreement: {
+        agreeToTerms: false,
+        signature: '',
+      },
+      paymentDetails: {
+        paymentMethod: 'paypal',
+        paypalEmail: '',
+        bankAccountOwnerName: '',
+        bankName: '',
+        bankCountry: null,
+        bankAccountNumber: '',
+        iban: '',
+        swiftCode: '',
+      },
     });
   };
 
   const handleStepSubmit = (stepName: string, data: any) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [stepName]: data,
-    }));
+    setFormData((prevData) => {
+      if (stepName === 'uploadDocuments') {
+        return {
+          ...prevData,
+          ...data, // This is for merging the document-related sections
+        };
+      }
+      return {
+        ...prevData,
+        [stepName]: data,
+      };
+    });
     handleNext();
   };
 
@@ -182,18 +246,27 @@ export function OnboardingView() {
       case 3:
         return (
           <UploadDocumentsStep
-            currentProvider={formData.uploadDocuments}
-            currentChauffeur={formData.uploadDocuments}
-            currentVehicle={formData.uploadDocuments}
-            onSubmit={(data) => handleStepSubmit('uploadDocuments', data)}
+            currentProvider={formData.providerDocuments}
+            currentChauffeur={formData.chauffeurDocuments}
+            currentVehicle={formData.vehicleDocuments}
+            onSubmit={(data) => handleStepSubmit('uploadDocuments', data)} // Handle documents differently
+            // onSubmit={(data) => handleStepSubmit(data)}
           />
         );
       case 4:
         return (
-          <PartnerAgreementStep onSubmit={(data) => handleStepSubmit('partnerAgreement', data)} />
+          <PartnerAgreementStep
+            currentAgreement={formData.partnerAgreement}
+            onSubmit={(data) => handleStepSubmit('partnerAgreement', data)}
+          />
         );
       case 5:
-        return <PaymentDetailsStep onSubmit={(data) => handleStepSubmit('paymentDetails', data)} />;
+        return (
+          <PaymentDetailsStep
+            currentPaymentDetails={formData.paymentDetails}
+            onSubmit={(data) => handleStepSubmit('paymentDetails', data)}
+          />
+        );
       case 6:
         return <ApplicationSummaryStep formData={formData} />;
       default:

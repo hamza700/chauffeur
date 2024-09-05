@@ -1,12 +1,13 @@
-import type { IUserItem } from 'src/types/user';
-import type { IVehicleItem } from 'src/types/vehicle';
-import type { IProviderAccount } from 'src/types/provider';
+import type { IUserDocumentFields } from 'src/types/user';
+import type { IDocumentFields } from 'src/types/provider';
+import type { IVehicleDocumentFields } from 'src/types/vehicle';
 
 import { z as zod } from 'zod';
 import { useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
@@ -17,105 +18,105 @@ import { Field, schemaHelper } from 'src/components/hook-form';
 export type OnboardingDocumentsSchemaType = zod.infer<typeof OnboardingDocumentsSchema>;
 
 export const OnboardingDocumentsSchema = zod.object({
-  companyPrivateHireOperatorLicenseFiles: schemaHelper.files({
+  companyPrivateHireOperatorLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire operator license is required!',
       minFiles: 1,
     },
   }),
-  personalIDorPassportFiles: schemaHelper.files({
+  personalIDorPassportUrls: schemaHelper.files({
     message: {
       required_error: 'Personal ID or passport is required!',
       minFiles: 1,
     },
   }),
-  vatRegistrationCertificateFiles: schemaHelper.files({
+  vatRegistrationCertificateUrls: schemaHelper.files({
     message: {
       required_error: 'VAT registration certificate is required!',
       minFiles: 1,
     },
   }),
-  companyPrivateHireOperatorLicenseExpiry: schemaHelper.date({
+  companyPrivateHireOperatorLicenseExpiryDate: schemaHelper.date({
     message: {
       required_error: 'Private hire operator license expiry date is required!',
     },
   }),
-  personalIDorPassportExpiry: schemaHelper.date({
+  personalIDorPassportExpiryDate: schemaHelper.date({
     message: {
       required_error: 'Personal ID or passport expiry date is required!',
     },
   }),
-  vatRegistrationCertificateExpiry: schemaHelper.date({
+  vatRegistrationCertificateExpiryDate: schemaHelper.date({
     message: {
       required_error: 'VAT registration certificate expiry date is required!',
     },
   }),
-  chauffeurProfilePicFile: schemaHelper.file({
+  profilePicUrl: schemaHelper.file({
     message: { required_error: 'Profile picture is required!' },
   }),
-  chauffeurDriversLicenseFiles: schemaHelper.files({
+  chauffeurDriversLicenseUrls: schemaHelper.files({
     message: { required_error: "Driver's license is required!", minFiles: 1 },
   }),
-  chauffeurPrivateHireLicenseFiles: schemaHelper.files({
+  chauffeurPrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
       minFiles: 1,
     },
   }),
-  chauffeurDriversLicenseExpiry: schemaHelper.date({
+  chauffeurDriversLicenseExpiryDate: schemaHelper.date({
     message: { required_error: "Driver's license expiry date is required!" },
   }),
-  chauffeurPrivateHireLicenseExpiry: schemaHelper.date({
+  chauffeurPrivateHireLicenseExpiryDate: schemaHelper.date({
     message: {
       required_error: 'Private hire license expiry date is required!',
     },
   }),
-  vehiclePicFile: schemaHelper.file({
+  vehiclePicUrl: schemaHelper.file({
     message: { required_error: 'Vehicle picture is required!' },
   }),
-  vehiclePrivateHireLicenseFiles: schemaHelper.files({
+  vehiclePrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
       minFiles: 1,
     },
   }),
-  vehiclePrivateHireLicenseExpiry: schemaHelper.date({
+  vehiclePrivateHireLicenseExpiryDate: schemaHelper.date({
     message: {
       required_error: 'Private hire license expiry date is required!',
     },
   }),
-  vehicleMotTestCertificateFiles: schemaHelper.files({
+  vehicleMotTestCertificateUrls: schemaHelper.files({
     message: {
       required_error: 'MOT test certificate is required!',
       minFiles: 1,
     },
   }),
-  vehicleMotTestCertificateExpiry: schemaHelper.date({
+  vehicleMotTestCertificateExpiryDate: schemaHelper.date({
     message: {
       required_error: 'MOT test certificate expiry date is required!',
     },
   }),
-  vehicleInsuranceFiles: schemaHelper.files({
+  vehicleInsuranceUrls: schemaHelper.files({
     message: { required_error: 'Vehicle insurance is required!', minFiles: 1 },
   }),
-  vehicleInsuranceExpiry: schemaHelper.date({
+  vehicleInsuranceExpiryDate: schemaHelper.date({
     message: { required_error: 'Vehicle insurance expiry date is required!' },
   }),
-  vehicleRegistrationFiles: schemaHelper.files({
+  vehicleRegistrationUrls: schemaHelper.files({
     message: {
       required_error: 'Vehicle registration is required!',
       minFiles: 1,
     },
   }),
-  vehicleLeasingContractFiles: schemaHelper.files({
+  vehicleLeasingContractUrls: schemaHelper.files({
     message: { required_error: 'Leasing contract is required!', minFiles: 1 },
   }),
 });
 
 type Props = {
-  currentProvider?: IProviderAccount;
-  currentChauffeur?: IUserItem;
-  currentVehicle?: IVehicleItem;
+  currentProvider?: IDocumentFields;
+  currentChauffeur?: IUserDocumentFields;
+  currentVehicle?: IVehicleDocumentFields;
   onSubmit: (data: OnboardingDocumentsSchemaType) => void;
 };
 
@@ -127,29 +128,33 @@ export function UploadDocumentsStep({
 }: Props) {
   const defaultValues = useMemo(
     () => ({
-      companyPrivateHireOperatorLicenseFiles:
+      companyPrivateHireOperatorLicenseUrls:
         currentProvider?.companyPrivateHireOperatorLicenseUrls || [],
-      personalIDorPassportFiles: currentProvider?.personalIDorPassportUrls || [],
-      vatRegistrationCertificateFiles: currentProvider?.vatRegistrationCertificateUrls || [],
-      companyPrivateHireOperatorLicenseExpiry:
+      personalIDorPassportUrls: currentProvider?.personalIDorPassportUrls || [],
+      vatRegistrationCertificateUrls: currentProvider?.vatRegistrationCertificateUrls || [],
+      companyPrivateHireOperatorLicenseExpiryDate:
         currentProvider?.companyPrivateHireOperatorLicenseExpiryDate || null,
-      personalIDorPassportExpiry: currentProvider?.personalIDorPassportExpiryDate || null,
-      vatRegistrationCertificateExpiry:
+      personalIDorPassportExpiryDate: currentProvider?.personalIDorPassportExpiryDate || null,
+      vatRegistrationCertificateExpiryDate:
         currentProvider?.vatRegistrationCertificateExpiryDate || null,
-      chauffeurProfilePicFile: null,
-      chauffeurDriversLicenseFiles: currentChauffeur?.driversLicenseUrls || [],
-      chauffeurPrivateHireLicenseFiles: currentChauffeur?.privateHireLicenseUrls || [],
-      chauffeurDriversLicenseExpiry: currentChauffeur?.driversLicenseExpiryDate || null,
-      chauffeurPrivateHireLicenseExpiry: currentChauffeur?.privateHireLicenseExpiryDate || null,
-      vehiclePicFile: null,
-      vehiclePrivateHireLicenseFiles: currentVehicle?.privateHireLicenseUrls || [],
-      vehiclePrivateHireLicenseExpiry: currentVehicle?.privateHireLicenseExpiryDate || null,
-      vehicleMotTestCertificateFiles: currentVehicle?.motTestCertificateUrls || [],
-      vehicleMotTestCertificateExpiry: currentVehicle?.motTestCertificateExpiryDate || null,
-      vehicleInsuranceFiles: currentVehicle?.vehicleInsuranceUrls || [],
-      vehicleInsuranceExpiry: currentVehicle?.vehicleInsuranceExpiryDate || null,
-      vehicleRegistrationFiles: currentVehicle?.vehicleRegistrationUrls || [],
-      vehicleLeasingContractFiles: currentVehicle?.leasingContractUrls || [],
+
+      // Chauffeur documents
+      profilePicUrl: currentChauffeur?.profilePicUrl || null,
+      chauffeurDriversLicenseUrls: currentChauffeur?.driversLicenseUrls || [],
+      chauffeurPrivateHireLicenseUrls: currentChauffeur?.privateHireLicenseUrls || [],
+      chauffeurDriversLicenseExpiryDate: currentChauffeur?.driversLicenseExpiryDate || null,
+      chauffeurPrivateHireLicenseExpiryDate: currentChauffeur?.privateHireLicenseExpiryDate || null,
+
+      // Vehicle documents
+      vehiclePicUrl: currentVehicle?.vehiclePicUrl || null,
+      vehiclePrivateHireLicenseUrls: currentVehicle?.privateHireLicenseUrls || [],
+      vehiclePrivateHireLicenseExpiryDate: currentVehicle?.privateHireLicenseExpiryDate || null,
+      vehicleMotTestCertificateUrls: currentVehicle?.motTestCertificateUrls || [],
+      vehicleMotTestCertificateExpiryDate: currentVehicle?.motTestCertificateExpiryDate || null,
+      vehicleInsuranceUrls: currentVehicle?.vehicleInsuranceUrls || [],
+      vehicleInsuranceExpiryDate: currentVehicle?.vehicleInsuranceExpiryDate || null,
+      vehicleRegistrationUrls: currentVehicle?.vehicleRegistrationUrls || [],
+      vehicleLeasingContractUrls: currentVehicle?.leasingContractUrls || [],
     }),
     [currentProvider, currentChauffeur, currentVehicle]
   );
@@ -169,139 +174,205 @@ export function UploadDocumentsStep({
 
   const values = watch();
 
-  const handleRemoveFile = useCallback(
-    (inputFile: File | string, fieldName: keyof OnboardingDocumentsSchemaType) => {
-      const fieldValue = values[fieldName];
-      if (Array.isArray(fieldValue)) {
-        const filtered = fieldValue.filter((file) => file !== inputFile);
-        setValue(fieldName, filtered, { shouldValidate: true });
-      } else if (typeof fieldValue === 'string' && fieldName.endsWith('File')) {
-        setValue(fieldName, null, { shouldValidate: true });
-      }
+  const handleRemoveFile = (
+    inputFile: File | string,
+    fieldName: keyof OnboardingDocumentsSchemaType
+  ) => {
+    const fieldValue = values[fieldName];
+    if (Array.isArray(fieldValue)) {
+      const filtered = fieldValue.filter((file) => file !== inputFile);
+      setValue(fieldName, filtered, { shouldValidate: true });
+    } else if (typeof fieldValue === 'string') {
+      setValue(fieldName, null, { shouldValidate: true });
+    }
+  };
+
+  const handleRemoveAllFiles = (fieldName: keyof OnboardingDocumentsSchemaType) => {
+    setValue(fieldName, [], { shouldValidate: true });
+  };
+
+  const handleDrop = useCallback(
+    (files: File[], fieldName: keyof OnboardingDocumentsSchemaType) => {
+      const currentFiles = values[fieldName];
+      const updatedFiles = Array.isArray(currentFiles) ? [...currentFiles, ...files] : files[0];
+      setValue(fieldName, updatedFiles, { shouldValidate: true });
     },
     [setValue, values]
   );
 
-  const handleRemoveAllFiles = useCallback(
-    (fieldName: keyof OnboardingDocumentsSchemaType) => {
-      setValue(fieldName, [], { shouldValidate: true });
-    },
-    [setValue]
-  );
+  const onSubmitHandler = (data: OnboardingDocumentsSchemaType) => {
+    const updatedData = {
+      providerDocuments: {
+        companyPrivateHireOperatorLicenseUrls: data.companyPrivateHireOperatorLicenseUrls,
+        companyPrivateHireOperatorLicenseExpiryDate:
+          data.companyPrivateHireOperatorLicenseExpiryDate,
+        personalIDorPassportUrls: data.personalIDorPassportUrls,
+        personalIDorPassportExpiryDate: data.personalIDorPassportExpiryDate,
+        vatRegistrationCertificateUrls: data.vatRegistrationCertificateUrls,
+        vatRegistrationCertificateExpiryDate: data.vatRegistrationCertificateExpiryDate,
+      },
+      chauffeurDocuments: {
+        profilePicUrl: data.profilePicUrl,
+        driversLicenseUrls: data.chauffeurDriversLicenseUrls,
+        driversLicenseExpiryDate: data.chauffeurDriversLicenseExpiryDate,
+        privateHireLicenseUrls: data.chauffeurPrivateHireLicenseUrls,
+        privateHireLicenseExpiryDate: data.chauffeurPrivateHireLicenseExpiryDate,
+      },
+      vehicleDocuments: {
+        vehiclePicUrl: data.vehiclePicUrl,
+        privateHireLicenseUrls: data.vehiclePrivateHireLicenseUrls,
+        privateHireLicenseExpiryDate: data.vehiclePrivateHireLicenseExpiryDate,
+        motTestCertificateUrls: data.vehicleMotTestCertificateUrls,
+        motTestCertificateExpiryDate: data.vehicleMotTestCertificateExpiryDate,
+        vehicleInsuranceUrls: data.vehicleInsuranceUrls,
+        vehicleInsuranceExpiryDate: data.vehicleInsuranceExpiryDate,
+        vehicleRegistrationUrls: data.vehicleRegistrationUrls,
+        leasingContractUrls: data.vehicleLeasingContractUrls,
+      },
+    };
+    onSubmit(updatedData);
+  };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={3}>
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Company Documents
-            </Typography>
-            <DocumentSection
-              title="Company Private Hire Operator License"
-              fieldName="companyPrivateHireOperatorLicenseFiles"
-              expiryField="companyPrivateHireOperatorLicenseExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Personal ID or Passport"
-              fieldName="personalIDorPassportFiles"
-              expiryField="personalIDorPassportExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="VAT Registration Certificate"
-              fieldName="vatRegistrationCertificateFiles"
-              expiryField="vatRegistrationCertificateExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-          </Card>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Upload Documents
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        Please upload the following documents. Make sure all the information is accurate before
+        proceeding.
+      </Typography>
 
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Chauffeur Documents
-            </Typography>
-            <DocumentSection
-              title="Profile Picture"
-              fieldName="chauffeurProfilePicFile"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Driver's License"
-              fieldName="chauffeurDriversLicenseFiles"
-              expiryField="chauffeurDriversLicenseExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Private Hire License"
-              fieldName="chauffeurPrivateHireLicenseFiles"
-              expiryField="chauffeurPrivateHireLicenseExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-          </Card>
+      <Divider sx={{ my: 3 }} />
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmitHandler)}>
+          <Stack spacing={3}>
+            {/* Provider Documents */}
+            <Card sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Company Documents
+              </Typography>
+              <DocumentSection
+                title="Company Private Hire Operator License"
+                fieldName="companyPrivateHireOperatorLicenseUrls"
+                expiryField="companyPrivateHireOperatorLicenseExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Personal ID or Passport"
+                fieldName="personalIDorPassportUrls"
+                expiryField="personalIDorPassportExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="VAT Registration Certificate"
+                fieldName="vatRegistrationCertificateUrls"
+                expiryField="vatRegistrationCertificateExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+            </Card>
 
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Vehicle Documents
-            </Typography>
-            <DocumentSection
-              title="Vehicle Picture"
-              fieldName="vehiclePicFile"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Private Hire License"
-              fieldName="vehiclePrivateHireLicenseFiles"
-              expiryField="vehiclePrivateHireLicenseExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="MOT Test Certificate"
-              fieldName="vehicleMotTestCertificateFiles"
-              expiryField="vehicleMotTestCertificateExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Vehicle Registration"
-              fieldName="vehicleRegistrationFiles"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Vehicle Insurance"
-              fieldName="vehicleInsuranceFiles"
-              expiryField="vehicleInsuranceExpiry"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-            <Divider sx={{ my: 3 }} />
-            <DocumentSection
-              title="Leasing Contract"
-              fieldName="vehicleLeasingContractFiles"
-              onRemove={handleRemoveFile}
-              onRemoveAll={handleRemoveAllFiles}
-            />
-          </Card>
-        </Stack>
-      </form>
-    </FormProvider>
+            {/* Chauffeur Documents */}
+            <Card sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Chauffeur Documents
+              </Typography>
+              <DocumentSection
+                title="Profile Picture"
+                fieldName="profilePicUrl"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Driver's License"
+                fieldName="chauffeurDriversLicenseUrls"
+                expiryField="chauffeurDriversLicenseExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Private Hire License"
+                fieldName="chauffeurPrivateHireLicenseUrls"
+                expiryField="chauffeurPrivateHireLicenseExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+            </Card>
+
+            {/* Vehicle Documents */}
+            <Card sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Vehicle Documents
+              </Typography>
+              <DocumentSection
+                title="Vehicle Picture"
+                fieldName="vehiclePicUrl"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Private Hire License"
+                fieldName="vehiclePrivateHireLicenseUrls"
+                expiryField="vehiclePrivateHireLicenseExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="MOT Test Certificate"
+                fieldName="vehicleMotTestCertificateUrls"
+                expiryField="vehicleMotTestCertificateExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Vehicle Registration"
+                fieldName="vehicleRegistrationUrls"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Vehicle Insurance"
+                fieldName="vehicleInsuranceUrls"
+                expiryField="vehicleInsuranceExpiryDate"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+              <Divider sx={{ my: 3 }} />
+              <DocumentSection
+                title="Leasing Contract"
+                fieldName="vehicleLeasingContractUrls"
+                onRemove={handleRemoveFile}
+                onRemoveAll={handleRemoveAllFiles}
+                onDrop={handleDrop} // Handle file drop for correct handling
+              />
+            </Card>
+          </Stack>
+          <input type="submit" style={{ display: 'none' }} />
+        </form>
+      </FormProvider>
+    </Box>
   );
 }
 
@@ -311,6 +382,7 @@ type DocumentSectionProps = {
   expiryField?: keyof OnboardingDocumentsSchemaType;
   onRemove: (file: File | string, fieldName: keyof OnboardingDocumentsSchemaType) => void;
   onRemoveAll: (fieldName: keyof OnboardingDocumentsSchemaType) => void;
+  onDrop: (files: File[], fieldName: keyof OnboardingDocumentsSchemaType) => void; // Add onDrop prop
 };
 
 function DocumentSection({
@@ -319,6 +391,7 @@ function DocumentSection({
   expiryField,
   onRemove,
   onRemoveAll,
+  onDrop, // Destructure onDrop prop
 }: DocumentSectionProps) {
   const { watch } = useFormContext<OnboardingDocumentsSchemaType>();
   const fieldValue = watch(fieldName);
@@ -335,6 +408,7 @@ function DocumentSection({
         thumbnail
         onRemove={(file) => onRemove(file, fieldName)}
         onRemoveAll={() => onRemoveAll(fieldName)}
+        onDrop={(files) => onDrop(files, fieldName)} // Add onDrop handler
       />
     </Stack>
   );
