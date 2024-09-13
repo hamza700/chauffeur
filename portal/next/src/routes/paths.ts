@@ -74,7 +74,10 @@ export const paths = {
       updatePassword: `${ROOTS.AUTH}/supabase/update-password`,
       resetPassword: `${ROOTS.AUTH}/supabase/reset-password`,
     },
-    onboarding: `${ROOTS.AUTH}/onboarding`,
+    onboarding: {
+      provider: `${ROOTS.AUTH}/onboarding/provider`,
+      chauffeur: `${ROOTS.AUTH}/onboarding/chauffeur`,
+    },
   },
   authDemo: {
     split: {
@@ -97,25 +100,25 @@ export const paths = {
     root: ROOTS.DASHBOARD,
     settings: `${ROOTS.DASHBOARD}/settings`,
     providers: `${ROOTS.DASHBOARD}/providers`,
-    booking: {
-      root: `${ROOTS.DASHBOARD}/booking`,
+    bookings: {
+      root: `${ROOTS.DASHBOARD}/bookings`,
       details: (id: string) => `${ROOTS.DASHBOARD}/booking/${id}`,
     },
-    chauffeur: {
-      root: `${ROOTS.DASHBOARD}/chauffeur`,
-      new: `${ROOTS.DASHBOARD}/chauffeur/new`,
-      details: (id: string) => `${ROOTS.DASHBOARD}/chauffeur/${id}`,
-      edit: (id: string) => `${ROOTS.DASHBOARD}/chauffeur/${id}/edit`,
+    chauffeurs: {
+      root: `${ROOTS.DASHBOARD}/chauffeurs`,
+      new: `${ROOTS.DASHBOARD}/chauffeurs/new`,
+      details: (id: string) => `${ROOTS.DASHBOARD}/chauffeurs/${id}`,
+      edit: (id: string) => `${ROOTS.DASHBOARD}/chauffeurs/${id}/edit`,
     },
-    vehicle: {
-      root: `${ROOTS.DASHBOARD}/vehicle`,
-      new: `${ROOTS.DASHBOARD}/vehicle/new`,
-      details: (id: string) => `${ROOTS.DASHBOARD}/vehicle/${id}`,
-      edit: (id: string) => `${ROOTS.DASHBOARD}/vehicle/${id}/edit`,
+    vehicles: {
+      root: `${ROOTS.DASHBOARD}/vehicles`,
+      new: `${ROOTS.DASHBOARD}/vehicles/new`,
+      details: (id: string) => `${ROOTS.DASHBOARD}/vehicles/${id}`,
+      edit: (id: string) => `${ROOTS.DASHBOARD}/vehicles/${id}/edit`,
     },
-    invoice: {
-      root: `${ROOTS.DASHBOARD}/invoice`,
-      details: (id: string) => `${ROOTS.DASHBOARD}/invoice/${id}`,
+    invoices: {
+      root: `${ROOTS.DASHBOARD}/invoices`,
+      details: (id: string) => `${ROOTS.DASHBOARD}/invoices/${id}`,
     },
     documents: {
       root: `${ROOTS.DASHBOARD}/documents`,

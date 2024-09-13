@@ -6,8 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Link from '@mui/material/Link';
-import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -19,8 +20,9 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { Iconify } from 'src/components/iconify';
+import { AnimateLogo2 } from 'src/components/animate';
 import { Form, Field } from 'src/components/hook-form';
+import { Iconify, SocialIcon } from 'src/components/iconify';
 
 import { useAuthContext } from 'src/auth/hooks';
 import { signInWithPassword } from 'src/auth/context/supabase';
@@ -78,8 +80,10 @@ export function SupabaseSignInView() {
     }
   });
 
+  const renderLogo = <AnimateLogo2 sx={{ mb: 3, mx: 'auto' }} />;
+
   const renderHead = (
-    <Stack spacing={1.5} sx={{ mb: 5 }}>
+    <Stack alignItems="center" spacing={1.5} sx={{ mb: 5 }}>
       <Typography variant="h5">Sign in to your account</Typography>
 
       <Stack direction="row" spacing={0.5}>
@@ -141,8 +145,39 @@ export function SupabaseSignInView() {
     </Stack>
   );
 
+  const renderSignInWithSocials = (
+    <>
+      <Divider
+        sx={{
+          my: 3,
+          typography: 'overline',
+          color: 'text.disabled',
+          '&::before, :after': { borderTopStyle: 'dashed' },
+        }}
+      >
+        OR
+      </Divider>
+
+      <Stack direction="row" justifyContent="center" spacing={1}>
+        <IconButton>
+          <SocialIcon icon="google" width={22} />
+        </IconButton>
+
+        <IconButton>
+          <SocialIcon icon="github" width={22} />
+        </IconButton>
+
+        <IconButton>
+          <SocialIcon icon="twitter" width={22} />
+        </IconButton>
+      </Stack>
+    </>
+  );
+
   return (
     <>
+      {renderLogo}
+
       {renderHead}
 
       {!!errorMsg && (
@@ -154,6 +189,8 @@ export function SupabaseSignInView() {
       <Form methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </Form>
+
+      {renderSignInWithSocials}
     </>
   );
 }

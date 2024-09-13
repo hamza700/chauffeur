@@ -44,6 +44,10 @@ export type UpdatePasswordParams = {
   };
 };
 
+export type UpdateOnboardingParams = {
+  onboarded: boolean;
+};
+
 /** **************************************
  * Sign in
  *************************************** */
@@ -75,7 +79,11 @@ export const signUp = async ({
     password,
     options: {
       emailRedirectTo: `${window.location.origin}${paths.dashboard.root}`,
-      data: { display_name: `${firstName} ${lastName}` },
+      data: {
+        display_name: `${firstName} ${lastName}`,
+        role: 'provider',
+        onboarded: false,
+      },
     },
   });
 
@@ -130,6 +138,24 @@ export const resetPassword = async ({
  *************************************** */
 export const updatePassword = async ({ password }: UpdatePasswordParams): Promise<UserResponse> => {
   const { data, error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Update user onboarding status
+ *************************************** */
+export const updateOnboarding = async ({
+  onboarded,
+}: UpdateOnboardingParams): Promise<UserResponse> => {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { onboarded },
+  });
 
   if (error) {
     console.error(error);

@@ -57,7 +57,7 @@ export const navData = [
       { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard },
       {
         title: 'Bookings',
-        path: paths.dashboard.booking.root,
+        path: paths.dashboard.bookings.root,
         icon: ICONS.money,
         info: (
           <Label
@@ -79,20 +79,20 @@ export const navData = [
     items: [
       {
         title: 'Chauffeurs',
-        path: paths.dashboard.chauffeur.root,
+        path: paths.dashboard.chauffeurs.root,
         icon: ICONS.user,
         children: [
-          { title: 'List', path: paths.dashboard.chauffeur.root },
-          { title: 'Create', path: paths.dashboard.chauffeur.new },
+          { title: 'List', path: paths.dashboard.chauffeurs.root },
+          { title: 'Create', path: paths.dashboard.chauffeurs.new },
         ],
       },
       {
         title: 'Vehicles',
-        path: paths.dashboard.vehicle.root,
+        path: paths.dashboard.vehicles.root,
         icon: ICONS.car,
         children: [
-          { title: 'List', path: paths.dashboard.vehicle.root },
-          { title: 'Create', path: paths.dashboard.vehicle.new },
+          { title: 'List', path: paths.dashboard.vehicles.root },
+          { title: 'Create', path: paths.dashboard.vehicles.new },
         ],
       },
       {
@@ -103,7 +103,7 @@ export const navData = [
       },
       {
         title: 'Invoice',
-        path: paths.dashboard.invoice.root,
+        path: paths.dashboard.invoices.root,
         icon: ICONS.invoice,
         roles: ['admin'],
       },

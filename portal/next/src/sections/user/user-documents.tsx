@@ -102,7 +102,7 @@ export function UserDocuments({ currentUser }: Props) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Documents updated successfully!');
-      router.push(paths.dashboard.chauffeur.root);
+      router.push(paths.dashboard.chauffeurs.root);
       console.info('DATA', data);
     } catch (error) {
       console.error('Error submitting form:', error); // Improved error handling

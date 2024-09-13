@@ -21,6 +21,9 @@ import { EmptyContent } from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useTable, rowInPage, getComparator } from 'src/components/table';
 
+import { useMockedUser } from 'src/auth/hooks';
+import { RoleBasedGuard } from 'src/auth/guard';
+
 import { FileManagerTable } from '../file-manager-table';
 import { FileManagerFilters } from '../file-manager-filters';
 import { FileManagerFiltersResult } from '../file-manager-filters-result';
@@ -28,6 +31,10 @@ import { FileManagerFiltersResult } from '../file-manager-filters-result';
 // ----------------------------------------------------------------------
 
 export function FileManagerView() {
+  const [role, setRole] = useState('admin');
+
+  const { user } = useMockedUser();
+
   const table = useTable({ defaultRowsPerPage: 10 });
 
   const openDateRange = useBoolean();
@@ -118,27 +125,29 @@ export function FileManagerView() {
   return (
     <>
       <DashboardContent>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Documents</Typography>
-        </Stack>
+        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h4">Documents</Typography>
+          </Stack>
 
-        <Stack spacing={2.5} sx={{ my: { xs: 3, md: 5 } }}>
-          {renderFilters}
+          <Stack spacing={2.5} sx={{ my: { xs: 3, md: 5 } }}>
+            {renderFilters}
 
-          {canReset && renderResults}
-        </Stack>
+            {canReset && renderResults}
+          </Stack>
 
-        {notFound ? (
-          <EmptyContent filled sx={{ py: 10 }} />
-        ) : (
-          <FileManagerTable
-            table={table}
-            dataFiltered={dataFiltered}
-            onDeleteRow={handleDeleteItem}
-            notFound={notFound}
-            onOpenConfirm={confirm.onTrue}
-          />
-        )}
+          {notFound ? (
+            <EmptyContent filled sx={{ py: 10 }} />
+          ) : (
+            <FileManagerTable
+              table={table}
+              dataFiltered={dataFiltered}
+              onDeleteRow={handleDeleteItem}
+              notFound={notFound}
+              onOpenConfirm={confirm.onTrue}
+            />
+          )}
+        </RoleBasedGuard>
       </DashboardContent>
 
       <ConfirmDialog

@@ -170,7 +170,7 @@ export function OrderListView() {
 
   const handleViewRow = useCallback(
     (id: string) => {
-      router.push(paths.dashboard.booking.details(id));
+      router.push(paths.dashboard.bookings.details(id));
     },
     [router]
   );
@@ -189,7 +189,7 @@ export function OrderListView() {
         heading="Bookings"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Bookings', href: paths.dashboard.booking.root },
+          { name: 'Bookings', href: paths.dashboard.bookings.root },
           { name: 'List' },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}

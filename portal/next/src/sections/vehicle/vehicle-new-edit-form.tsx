@@ -105,7 +105,7 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
       toast.success(currentVehicle ? 'Update success!' : 'Create success!');
-      router.push(paths.dashboard.vehicle.root); // Update with the correct path
+      router.push(paths.dashboard.vehicles.root); // Update with the correct path
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
@@ -116,7 +116,7 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Vehicle deleted successfully');
-      router.push(paths.dashboard.vehicle.root); // Update with the correct path
+      router.push(paths.dashboard.vehicles.root); // Update with the correct path
       // Implement additional delete logic here
     } catch (error) {
       console.error(error);

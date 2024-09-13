@@ -159,7 +159,7 @@ export function VehicleListView() {
 
   const handleEditRow = useCallback(
     (id: string) => {
-      router.push(paths.dashboard.vehicle.edit(id));
+      router.push(paths.dashboard.vehicles.edit(id));
     },
     [router]
   );
@@ -179,13 +179,13 @@ export function VehicleListView() {
           heading="Vehicles"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Vehicles', href: paths.dashboard.vehicle.root },
+            { name: 'Vehicles', href: paths.dashboard.vehicles.root },
             { name: 'List' },
           ]}
           action={
             <Button
               component={RouterLink}
-              href={paths.dashboard.vehicle.new}
+              href={paths.dashboard.vehicles.new}
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >

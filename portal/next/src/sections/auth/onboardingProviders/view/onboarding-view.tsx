@@ -5,6 +5,12 @@ import { useState } from 'react';
 import Divider from '@mui/material/Divider';
 import { Box, Step, Stack, Button, Stepper, StepLabel } from '@mui/material';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useAuthContext } from 'src/auth/hooks';
+import { updateOnboarding } from 'src/auth/context/supabase';
+
 import { CompanyInfoStep } from '../onboarding-company-info-step';
 import { FirstVehicleStep } from '../onboarding-first-vehicle-step';
 import { FirstChauffeurStep } from '../onboarding-first-chauffeur-step';
@@ -24,6 +30,9 @@ const steps = [
 ];
 
 export function OnboardingView() {
+  const router = useRouter();
+  const { checkUserSession } = useAuthContext();
+
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
     companyInfo: {
@@ -220,6 +229,17 @@ export function OnboardingView() {
     handleNext();
   };
 
+  const handleSubmitOnboarding = async () => {
+    try {
+      await updateOnboarding({ onboarded: true });
+      await checkUserSession?.();
+
+      router.push(paths.dashboard.root);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -292,13 +312,25 @@ export function OnboardingView() {
         }}
       />
       <Box>
-        {activeStep === steps.length ? (
+        {activeStep === steps.length - 1 ? (
           <Box>
-            <Button onClick={handleReset}>Reset</Button>
+            {/* Render Application Summary on the last step */}
+            {renderStepContent(activeStep)}
+
+            {/* Add Reset and Finish buttons */}
+            <Stack direction="row" justifyContent="space-between" sx={{ mt: 3 }}>
+              <Button onClick={handleReset}>Reset</Button>
+              <Button variant="contained" onClick={handleSubmitOnboarding}>
+                Finish Onboarding
+              </Button>
+            </Stack>
           </Box>
         ) : (
           <Box>
+            {/* Render content for other steps */}
             {renderStepContent(activeStep)}
+
+            {/* Add Back and Next buttons */}
             <Stack direction="row" justifyContent="space-between" sx={{ mt: 3 }}>
               <Button disabled={activeStep === 0} onClick={handleBack}>
                 Back
@@ -311,7 +343,7 @@ export function OnboardingView() {
                     ?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                 }}
               >
-                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                {activeStep === steps.length - 2 ? 'Finish' : 'Next'}
               </Button>
             </Stack>
           </Box>

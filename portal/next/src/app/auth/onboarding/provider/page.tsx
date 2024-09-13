@@ -1,6 +1,6 @@
 import { CONFIG } from "src/config-global";
 
-import { OnboardingView } from "src/sections/auth/onboarding/view";
+import { OnboardingView } from "src/sections/auth/onboardingProviders/view";
 
 // ----------------------------------------------------------------------
 

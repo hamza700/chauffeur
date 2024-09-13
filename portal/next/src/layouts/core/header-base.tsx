@@ -192,6 +192,7 @@ export function HeaderBase({
               {/* -- Sign in button -- */}
               {signIn && <SignInButton />}
 
+
               {/* -- Purchase button -- */}
               {purchase && (
                 <Button

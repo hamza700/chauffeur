@@ -37,7 +37,6 @@ export function OnboardingLayout({ sx, children }: OnboardingLayoutProps) {
           onOpenNav={mobileNavOpen.onTrue}
           slotsDisplay={{
             signIn: false,
-            account: false,
             purchase: false,
             contacts: false,
             searchbar: false,
@@ -45,6 +44,8 @@ export function OnboardingLayout({ sx, children }: OnboardingLayoutProps) {
             menuButton: false,
             localization: false,
             notifications: false,
+            helpLink: false,
+            settings: false,
           }}
           slots={{
             topArea: (

@@ -31,7 +31,7 @@ export function ApplicationSummaryStep({ formData }: Props) {
             Phone Number: {formData.companyInfo?.phoneNumber || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Country: {formData.companyInfo?.country?.name || 'N/A'}
+            Country: {formData.companyInfo?.country || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Address: {formData.companyInfo?.address || 'N/A'}
@@ -81,7 +81,7 @@ export function ApplicationSummaryStep({ formData }: Props) {
             License Plate: {formData.firstChauffeur?.licensePlate || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Country: {formData.firstChauffeur?.country?.name || 'N/A'}
+            Country: {formData.firstChauffeur?.country || 'N/A'}
           </Typography>
         </Card>
 

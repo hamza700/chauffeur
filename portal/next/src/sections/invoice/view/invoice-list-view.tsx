@@ -47,6 +47,9 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { useMockedUser } from 'src/auth/hooks';
+import { RoleBasedGuard } from 'src/auth/guard';
+
 import { InvoiceAnalytic } from '../invoice-analytic';
 import { InvoiceTableRow } from '../invoice-table-row';
 import { InvoiceTableToolbar } from '../invoice-table-toolbar';
@@ -216,6 +219,10 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function InvoiceListView() {
+  const [role, setRole] = useState('admin');
+
+  const { user } = useMockedUser();
+
   const theme = useTheme();
 
   const router = useRouter();
@@ -318,7 +325,7 @@ export function InvoiceListView() {
 
   const handleViewRow = useCallback(
     (id: string) => {
-      router.push(paths.dashboard.invoice.details(id));
+      router.push(paths.dashboard.invoices.details(id));
     },
     [router]
   );
@@ -334,185 +341,187 @@ export function InvoiceListView() {
   return (
     <>
       <DashboardContent>
-        <CustomBreadcrumbs
-          heading="Invoice"
-          links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Invoice', href: paths.dashboard.invoice.root },
-            { name: 'List' },
-          ]}
-          sx={{ mb: { xs: 3, md: 5 } }}
-        />
-
-        <Card sx={{ mb: { xs: 3, md: 5 } }}>
-          <Scrollbar sx={{ minHeight: 108 }}>
-            <Stack
-              direction="row"
-              divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-              sx={{ py: 2 }}
-            >
-              <InvoiceAnalytic
-                title="Total"
-                total={tableData.length}
-                percent={100}
-                price={sumBy(tableData, (invoice) => invoice.totalAmount)}
-                icon="solar:bill-list-bold-duotone"
-                color={theme.vars.palette.info.main}
-              />
-
-              <InvoiceAnalytic
-                title="Paid"
-                total={getInvoiceLength('paid')}
-                percent={getPercentByStatus('paid')}
-                price={getTotalAmount('paid')}
-                icon="solar:file-check-bold-duotone"
-                color={theme.vars.palette.success.main}
-              />
-
-              <InvoiceAnalytic
-                title="Pending"
-                total={getInvoiceLength('pending')}
-                percent={getPercentByStatus('pending')}
-                price={getTotalAmount('pending')}
-                icon="solar:sort-by-time-bold-duotone"
-                color={theme.vars.palette.warning.main}
-              />
-
-              <InvoiceAnalytic
-                title="Overdue"
-                total={getInvoiceLength('overdue')}
-                percent={getPercentByStatus('overdue')}
-                price={getTotalAmount('overdue')}
-                icon="solar:bell-bing-bold-duotone"
-                color={theme.vars.palette.error.main}
-              />
-            </Stack>
-          </Scrollbar>
-        </Card>
-
-        <Card>
-          <Tabs
-            value={filters.state.status}
-            onChange={handleFilterStatus}
-            sx={{
-              px: 2.5,
-              boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
-            }}
-          >
-            {TABS.map((tab) => (
-              <Tab
-                key={tab.value}
-                value={tab.value}
-                label={tab.label}
-                iconPosition="end"
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === filters.state.status) && 'filled') ||
-                      'soft'
-                    }
-                    color={tab.color}
-                  >
-                    {tab.count}
-                  </Label>
-                }
-              />
-            ))}
-          </Tabs>
-
-          <InvoiceTableToolbar
-            filters={filters}
-            dateError={dateError}
-            onResetPage={table.onResetPage}
-            tableData={tableData}
+        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+          <CustomBreadcrumbs
+            heading="Invoice"
+            links={[
+              { name: 'Dashboard', href: paths.dashboard.root },
+              { name: 'Invoice', href: paths.dashboard.invoices.root },
+              { name: 'List' },
+            ]}
+            sx={{ mb: { xs: 3, md: 5 } }}
           />
 
-          {canReset && (
-            <InvoiceTableFiltersResult
-              filters={filters}
-              onResetPage={table.onResetPage}
-              totalResults={dataFiltered.length}
-              sx={{ p: 2.5, pt: 0 }}
-            />
-          )}
-
-          <Box sx={{ position: 'relative' }}>
-            <TableSelectedAction
-              dense={table.dense}
-              numSelected={table.selected.length}
-              rowCount={dataFiltered.length}
-              onSelectAllRows={(checked) => {
-                table.onSelectAllRows(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                );
-              }}
-              action={
-                <Stack direction="row">
-                  <Tooltip title="Delete">
-                    <IconButton color="primary" onClick={confirm.onTrue}>
-                      <Iconify icon="solar:trash-bin-trash-bold" />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              }
-            />
-
-            <Scrollbar sx={{ minHeight: 444 }}>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 800 }}>
-                <TableHeadCustom
-                  order={table.order}
-                  orderBy={table.orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={dataFiltered.length}
-                  numSelected={table.selected.length}
-                  onSort={table.onSort}
-                  onSelectAllRows={(checked) =>
-                    table.onSelectAllRows(
-                      checked,
-                      dataFiltered.map((row) => row.id)
-                    )
-                  }
+          <Card sx={{ mb: { xs: 3, md: 5 } }}>
+            <Scrollbar sx={{ minHeight: 108 }}>
+              <Stack
+                direction="row"
+                divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
+                sx={{ py: 2 }}
+              >
+                <InvoiceAnalytic
+                  title="Total"
+                  total={tableData.length}
+                  percent={100}
+                  price={sumBy(tableData, (invoice) => invoice.totalAmount)}
+                  icon="solar:bill-list-bold-duotone"
+                  color={theme.vars.palette.info.main}
                 />
 
-                <TableBody>
-                  {dataFiltered
-                    .slice(
-                      table.page * table.rowsPerPage,
-                      table.page * table.rowsPerPage + table.rowsPerPage
-                    )
-                    .map((row) => (
-                      <InvoiceTableRow
-                        key={row.id}
-                        row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
-                        onViewRow={() => handleViewRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
-                      />
-                    ))}
+                <InvoiceAnalytic
+                  title="Paid"
+                  total={getInvoiceLength('paid')}
+                  percent={getPercentByStatus('paid')}
+                  price={getTotalAmount('paid')}
+                  icon="solar:file-check-bold-duotone"
+                  color={theme.vars.palette.success.main}
+                />
 
-                  <TableEmptyRows
-                    height={table.dense ? 56 : 56 + 20}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                <InvoiceAnalytic
+                  title="Pending"
+                  total={getInvoiceLength('pending')}
+                  percent={getPercentByStatus('pending')}
+                  price={getTotalAmount('pending')}
+                  icon="solar:sort-by-time-bold-duotone"
+                  color={theme.vars.palette.warning.main}
+                />
+
+                <InvoiceAnalytic
+                  title="Overdue"
+                  total={getInvoiceLength('overdue')}
+                  percent={getPercentByStatus('overdue')}
+                  price={getTotalAmount('overdue')}
+                  icon="solar:bell-bing-bold-duotone"
+                  color={theme.vars.palette.error.main}
+                />
+              </Stack>
+            </Scrollbar>
+          </Card>
+
+          <Card>
+            <Tabs
+              value={filters.state.status}
+              onChange={handleFilterStatus}
+              sx={{
+                px: 2.5,
+                boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+              }}
+            >
+              {TABS.map((tab) => (
+                <Tab
+                  key={tab.value}
+                  value={tab.value}
+                  label={tab.label}
+                  iconPosition="end"
+                  icon={
+                    <Label
+                      variant={
+                        ((tab.value === 'all' || tab.value === filters.state.status) && 'filled') ||
+                        'soft'
+                      }
+                      color={tab.color}
+                    >
+                      {tab.count}
+                    </Label>
+                  }
+                />
+              ))}
+            </Tabs>
+
+            <InvoiceTableToolbar
+              filters={filters}
+              dateError={dateError}
+              onResetPage={table.onResetPage}
+              tableData={tableData}
+            />
+
+            {canReset && (
+              <InvoiceTableFiltersResult
+                filters={filters}
+                onResetPage={table.onResetPage}
+                totalResults={dataFiltered.length}
+                sx={{ p: 2.5, pt: 0 }}
+              />
+            )}
+
+            <Box sx={{ position: 'relative' }}>
+              <TableSelectedAction
+                dense={table.dense}
+                numSelected={table.selected.length}
+                rowCount={dataFiltered.length}
+                onSelectAllRows={(checked) => {
+                  table.onSelectAllRows(
+                    checked,
+                    dataFiltered.map((row) => row.id)
+                  );
+                }}
+                action={
+                  <Stack direction="row">
+                    <Tooltip title="Delete">
+                      <IconButton color="primary" onClick={confirm.onTrue}>
+                        <Iconify icon="solar:trash-bin-trash-bold" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                }
+              />
+
+              <Scrollbar sx={{ minHeight: 444 }}>
+                <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 800 }}>
+                  <TableHeadCustom
+                    order={table.order}
+                    orderBy={table.orderBy}
+                    headLabel={TABLE_HEAD}
+                    rowCount={dataFiltered.length}
+                    numSelected={table.selected.length}
+                    onSort={table.onSort}
+                    onSelectAllRows={(checked) =>
+                      table.onSelectAllRows(
+                        checked,
+                        dataFiltered.map((row) => row.id)
+                      )
+                    }
                   />
 
-                  <TableNoData notFound={notFound} />
-                </TableBody>
-              </Table>
-            </Scrollbar>
-          </Box>
+                  <TableBody>
+                    {dataFiltered
+                      .slice(
+                        table.page * table.rowsPerPage,
+                        table.page * table.rowsPerPage + table.rowsPerPage
+                      )
+                      .map((row) => (
+                        <InvoiceTableRow
+                          key={row.id}
+                          row={row}
+                          selected={table.selected.includes(row.id)}
+                          onSelectRow={() => table.onSelectRow(row.id)}
+                          onViewRow={() => handleViewRow(row.id)}
+                          onDeleteRow={() => handleDeleteRow(row.id)}
+                        />
+                      ))}
 
-          <TablePaginationCustom
-            page={table.page}
-            dense={table.dense}
-            count={dataFiltered.length}
-            rowsPerPage={table.rowsPerPage}
-            onPageChange={table.onChangePage}
-            onChangeDense={table.onChangeDense}
-            onRowsPerPageChange={table.onChangeRowsPerPage}
-          />
-        </Card>
+                    <TableEmptyRows
+                      height={table.dense ? 56 : 56 + 20}
+                      emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                    />
+
+                    <TableNoData notFound={notFound} />
+                  </TableBody>
+                </Table>
+              </Scrollbar>
+            </Box>
+
+            <TablePaginationCustom
+              page={table.page}
+              dense={table.dense}
+              count={dataFiltered.length}
+              rowsPerPage={table.rowsPerPage}
+              onPageChange={table.onChangePage}
+              onChangeDense={table.onChangeDense}
+              onRowsPerPageChange={table.onChangeRowsPerPage}
+            />
+          </Card>
+        </RoleBasedGuard>
       </DashboardContent>
 
       <ConfirmDialog

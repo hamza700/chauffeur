@@ -98,7 +98,7 @@ export function UserNewEditForm({ currentUser }: Props) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
       toast.success(currentUser ? 'Update success!' : 'Create success!');
-      router.push(paths.dashboard.chauffeur.root);
+      router.push(paths.dashboard.chauffeurs.root);
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
@@ -109,7 +109,7 @@ export function UserNewEditForm({ currentUser }: Props) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('User deleted successfully');
-      router.push(paths.dashboard.chauffeur.root);
+      router.push(paths.dashboard.chauffeurs.root);
       // Implement additional delete logic here
     } catch (error) {
       console.error(error);

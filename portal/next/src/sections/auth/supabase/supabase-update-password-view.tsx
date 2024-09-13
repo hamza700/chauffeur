@@ -17,7 +17,7 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { NewPasswordIcon } from 'src/assets/icons';
+import { SentIcon } from 'src/assets/icons';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -75,7 +75,7 @@ export function SupabaseUpdatePasswordView() {
 
   const renderHead = (
     <>
-      <NewPasswordIcon sx={{ mx: 'auto' }} />
+      <SentIcon sx={{ mx: 'auto' }} />
 
       <Stack spacing={1} sx={{ mt: 3, mb: 5, textAlign: 'center', whiteSpace: 'pre-line' }}>
         <Typography variant="h5">Update password</Typography>
@@ -108,7 +108,7 @@ export function SupabaseUpdatePasswordView() {
 
       <Field.Text
         name="confirmPassword"
-        label="Confirm password"
+        label="Confirm new password"
         type={password.value ? 'text' : 'password'}
         InputLabelProps={{ shrink: true }}
         InputProps={{
@@ -124,8 +124,8 @@ export function SupabaseUpdatePasswordView() {
 
       <LoadingButton
         fullWidth
-        type="submit"
         size="large"
+        type="submit"
         variant="contained"
         loading={isSubmitting}
         loadingIndicator="Update password..."

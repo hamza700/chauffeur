@@ -1,4 +1,4 @@
-import { AuthSplitLayout } from 'src/layouts/auth-split';
+import { AuthCenteredLayout } from 'src/layouts/auth-centered';
 
 // ----------------------------------------------------------------------
 
@@ -7,5 +7,5 @@ type Props = {
 };
 
 export default function Layout({ children }: Props) {
-  return <AuthSplitLayout>{children}</AuthSplitLayout>;
+  return <AuthCenteredLayout>{children}</AuthCenteredLayout>;
 }

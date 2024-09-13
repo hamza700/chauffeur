@@ -46,7 +46,7 @@ export function VehicleEditView({ vehicle: currentVehicle }: Props) {
         heading="Edit"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Vehicles', href: paths.dashboard.vehicle.root },
+          { name: 'Vehicles', href: paths.dashboard.vehicles.root },
           //   { name: `${currentUser?.firstName} ${currentUser?.lastName}` },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}

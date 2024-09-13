@@ -198,7 +198,7 @@ export function UserListView() {
 
   const handleEditRow = useCallback(
     (id: string) => {
-      router.push(paths.dashboard.chauffeur.edit(id));
+      router.push(paths.dashboard.chauffeurs.edit(id));
     },
     [router]
   );
@@ -218,13 +218,13 @@ export function UserListView() {
           heading="Chauffeurs"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Chauffeurs', href: paths.dashboard.chauffeur.root },
+            { name: 'Chauffeurs', href: paths.dashboard.chauffeurs.root },
             { name: 'List' },
           ]}
           action={
             <Button
               component={RouterLink}
-              href={paths.dashboard.chauffeur.new}
+              href={paths.dashboard.chauffeurs.new}
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >

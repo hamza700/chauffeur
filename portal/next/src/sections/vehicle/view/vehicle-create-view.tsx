@@ -34,7 +34,7 @@ export function VehicleCreateView() {
         heading="Create a new vehicle"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Vehicles', href: paths.dashboard.vehicle.root },
+          { name: 'Vehicles', href: paths.dashboard.vehicles.root },
           { name: 'New vehicle' },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}

@@ -32,7 +32,7 @@ export function OrderDetailsView({ order }: Props) {
   const handleAcceptJob = () => {
     if (order) {
       setStatus('upcoming');
-      router.push(paths.dashboard.booking.root);
+      router.push(paths.dashboard.bookings.root);
     }
   };
 
@@ -50,7 +50,7 @@ export function OrderDetailsView({ order }: Props) {
   return (
     <DashboardContent>
       <OrderDetailsToolbar
-        backLink={paths.dashboard.booking.root}
+        backLink={paths.dashboard.bookings.root}
         orderNumber={order.orderNumber}
         status={status}
         createdAt={new Date(order.date)} // Convert string to Date

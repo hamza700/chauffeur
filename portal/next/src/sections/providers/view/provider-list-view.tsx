@@ -40,6 +40,9 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { useMockedUser } from 'src/auth/hooks';
+import { RoleBasedGuard } from 'src/auth/guard';
+
 import { ProviderTableRow } from '../provider-table-row';
 import { ProviderTableToolbar } from '../provider-table-toolbar';
 import { ProviderTableFiltersResult } from '../provider-table-filters-result';
@@ -105,21 +108,25 @@ const STATUS_OPTIONS = [
 ];
 
 const TABLE_HEAD = [
-    { id: 'companyName', label: 'Company Name' },
-    { id: 'email', label: 'Email' },
-    { id: 'phoneNumber', label: 'Phone Number' },
-    { id: 'city', label: 'City' },
-    { id: 'state', label: 'State' },
-    { id: 'address', label: 'Address' },
-    { id: 'postCode', label: 'Post Code' },
-    { id: 'country', label: 'Country' },
-    { id: 'status', label: 'Status' },
+  { id: 'companyName', label: 'Company Name' },
+  { id: 'email', label: 'Email' },
+  { id: 'phoneNumber', label: 'Phone Number' },
+  { id: 'city', label: 'City' },
+  { id: 'state', label: 'State' },
+  { id: 'address', label: 'Address' },
+  { id: 'postCode', label: 'Post Code' },
+  { id: 'country', label: 'Country' },
+  { id: 'status', label: 'Status' },
   { id: '', width: 88 },
 ];
 
 // ----------------------------------------------------------------------
 
 export function ProviderListView() {
+  const [role, setRole] = useState('admin');
+
+  const { user } = useMockedUser();
+
   const table = useTable();
 
   const router = useRouter();
@@ -168,7 +175,6 @@ export function ProviderListView() {
     });
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
-
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
       table.onResetPage();
@@ -180,143 +186,145 @@ export function ProviderListView() {
   return (
     <>
       <DashboardContent>
-        <CustomBreadcrumbs
-          heading="Providers"
-          links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Providers', href: paths.dashboard.providers },
-            { name: 'List' },
-          ]}
-          sx={{ mb: { xs: 3, md: 5 } }}
-        />
-
-        <Card>
-          <Tabs
-            value={filters.state.status}
-            onChange={handleFilterStatus}
-            sx={{
-              px: 2.5,
-              boxShadow: (theme) =>
-                `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
-            }}
-          >
-            {STATUS_OPTIONS.map((tab) => (
-              <Tab
-                key={tab.value}
-                iconPosition="end"
-                value={tab.value}
-                label={tab.label}
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === filters.state.status) && 'filled') ||
-                      'soft'
-                    }
-                    color={
-                      (tab.value === 'active' && 'success') ||
-                      (tab.value === 'pending' && 'warning') ||
-                      (tab.value === 'rejected' && 'error') ||
-                      'default'
-                    }
-                  >
-                    {['active', 'pending', 'rejected'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
-                      : tableData.length}
-                  </Label>
-                }
-              />
-            ))}
-          </Tabs>
-
-          <ProviderTableToolbar
-            filters={filters}
-            onResetPage={table.onResetPage}
-            tableData={tableData}
+        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+          <CustomBreadcrumbs
+            heading="Providers"
+            links={[
+              { name: 'Dashboard', href: paths.dashboard.root },
+              { name: 'Providers', href: paths.dashboard.providers },
+              { name: 'List' },
+            ]}
+            sx={{ mb: { xs: 3, md: 5 } }}
           />
 
-          {canReset && (
-            <ProviderTableFiltersResult
-              filters={filters}
-              totalResults={dataFiltered.length}
-              onResetPage={table.onResetPage}
-              sx={{ p: 2.5, pt: 0 }}
-            />
-          )}
-
-          <Box sx={{ position: 'relative' }}>
-            <TableSelectedAction
-              dense={table.dense}
-              numSelected={table.selected.length}
-              rowCount={dataFiltered.length}
-              onSelectAllRows={(checked) =>
-                table.onSelectAllRows(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                )
-              }
-              action={
-                <Tooltip title="Delete">
-                  <IconButton color="primary" onClick={confirm.onTrue}>
-                    <Iconify icon="solar:trash-bin-trash-bold" />
-                  </IconButton>
-                </Tooltip>
-              }
-            />
-
-            <Scrollbar>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
-                <TableHeadCustom
-                  order={table.order}
-                  orderBy={table.orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={dataFiltered.length}
-                  numSelected={table.selected.length}
-                  onSort={table.onSort}
-                  onSelectAllRows={(checked) =>
-                    table.onSelectAllRows(
-                      checked,
-                      dataFiltered.map((row) => row.id)
-                    )
+          <Card>
+            <Tabs
+              value={filters.state.status}
+              onChange={handleFilterStatus}
+              sx={{
+                px: 2.5,
+                boxShadow: (theme) =>
+                  `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+              }}
+            >
+              {STATUS_OPTIONS.map((tab) => (
+                <Tab
+                  key={tab.value}
+                  iconPosition="end"
+                  value={tab.value}
+                  label={tab.label}
+                  icon={
+                    <Label
+                      variant={
+                        ((tab.value === 'all' || tab.value === filters.state.status) && 'filled') ||
+                        'soft'
+                      }
+                      color={
+                        (tab.value === 'active' && 'success') ||
+                        (tab.value === 'pending' && 'warning') ||
+                        (tab.value === 'rejected' && 'error') ||
+                        'default'
+                      }
+                    >
+                      {['active', 'pending', 'rejected'].includes(tab.value)
+                        ? tableData.filter((user) => user.status === tab.value).length
+                        : tableData.length}
+                    </Label>
                   }
                 />
+              ))}
+            </Tabs>
 
-                <TableBody>
-                  {dataFiltered
-                    .slice(
-                      table.page * table.rowsPerPage,
-                      table.page * table.rowsPerPage + table.rowsPerPage
-                    )
-                    .map((row) => (
-                      <ProviderTableRow
-                        key={row.id}
-                        row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
-                      />
-                    ))}
+            <ProviderTableToolbar
+              filters={filters}
+              onResetPage={table.onResetPage}
+              tableData={tableData}
+            />
 
-                  <TableEmptyRows
-                    height={table.dense ? 56 : 56 + 20}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+            {canReset && (
+              <ProviderTableFiltersResult
+                filters={filters}
+                totalResults={dataFiltered.length}
+                onResetPage={table.onResetPage}
+                sx={{ p: 2.5, pt: 0 }}
+              />
+            )}
+
+            <Box sx={{ position: 'relative' }}>
+              <TableSelectedAction
+                dense={table.dense}
+                numSelected={table.selected.length}
+                rowCount={dataFiltered.length}
+                onSelectAllRows={(checked) =>
+                  table.onSelectAllRows(
+                    checked,
+                    dataFiltered.map((row) => row.id)
+                  )
+                }
+                action={
+                  <Tooltip title="Delete">
+                    <IconButton color="primary" onClick={confirm.onTrue}>
+                      <Iconify icon="solar:trash-bin-trash-bold" />
+                    </IconButton>
+                  </Tooltip>
+                }
+              />
+
+              <Scrollbar>
+                <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
+                  <TableHeadCustom
+                    order={table.order}
+                    orderBy={table.orderBy}
+                    headLabel={TABLE_HEAD}
+                    rowCount={dataFiltered.length}
+                    numSelected={table.selected.length}
+                    onSort={table.onSort}
+                    onSelectAllRows={(checked) =>
+                      table.onSelectAllRows(
+                        checked,
+                        dataFiltered.map((row) => row.id)
+                      )
+                    }
                   />
 
-                  <TableNoData notFound={notFound} />
-                </TableBody>
-              </Table>
-            </Scrollbar>
-          </Box>
+                  <TableBody>
+                    {dataFiltered
+                      .slice(
+                        table.page * table.rowsPerPage,
+                        table.page * table.rowsPerPage + table.rowsPerPage
+                      )
+                      .map((row) => (
+                        <ProviderTableRow
+                          key={row.id}
+                          row={row}
+                          selected={table.selected.includes(row.id)}
+                          onSelectRow={() => table.onSelectRow(row.id)}
+                          onDeleteRow={() => handleDeleteRow(row.id)}
+                        />
+                      ))}
 
-          <TablePaginationCustom
-            page={table.page}
-            dense={table.dense}
-            count={dataFiltered.length}
-            rowsPerPage={table.rowsPerPage}
-            onPageChange={table.onChangePage}
-            onChangeDense={table.onChangeDense}
-            onRowsPerPageChange={table.onChangeRowsPerPage}
-          />
-        </Card>
+                    <TableEmptyRows
+                      height={table.dense ? 56 : 56 + 20}
+                      emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                    />
+
+                    <TableNoData notFound={notFound} />
+                  </TableBody>
+                </Table>
+              </Scrollbar>
+            </Box>
+
+            <TablePaginationCustom
+              page={table.page}
+              dense={table.dense}
+              count={dataFiltered.length}
+              rowsPerPage={table.rowsPerPage}
+              onPageChange={table.onChangePage}
+              onChangeDense={table.onChangeDense}
+              onRowsPerPageChange={table.onChangeRowsPerPage}
+            />
+          </Card>
+        </RoleBasedGuard>
       </DashboardContent>
 
       <ConfirmDialog

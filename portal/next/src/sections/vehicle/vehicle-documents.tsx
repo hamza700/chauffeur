@@ -122,7 +122,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Documents updated successfully!');
-      router.push(paths.dashboard.vehicle.root);
+      router.push(paths.dashboard.vehicles.root);
       console.info('DATA', data);
     } catch (error) {
       console.error('Error submitting form:', error); // Improved error handling
