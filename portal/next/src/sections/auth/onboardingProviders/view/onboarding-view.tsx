@@ -5,11 +5,9 @@ import { useState } from 'react';
 import Divider from '@mui/material/Divider';
 import { Box, Step, Stack, Button, Stepper, StepLabel } from '@mui/material';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
 import { useAuthContext } from 'src/auth/hooks';
 import { updateOnboarding } from 'src/auth/context/supabase';
+import { useRouter } from 'src/routes/hooks';
 
 import { CompanyInfoStep } from '../onboarding-company-info-step';
 import { FirstVehicleStep } from '../onboarding-first-vehicle-step';
@@ -31,6 +29,7 @@ const steps = [
 
 export function OnboardingView() {
   const router = useRouter();
+
   const { checkUserSession } = useAuthContext();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -234,7 +233,7 @@ export function OnboardingView() {
       await updateOnboarding({ onboarded: true });
       await checkUserSession?.();
 
-      router.push(paths.dashboard.root);
+      router.refresh();
     } catch (error) {
       console.error(error);
     }

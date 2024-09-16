@@ -76,7 +76,10 @@ export const paths = {
     },
     onboarding: {
       provider: `${ROOTS.AUTH}/onboarding/provider`,
-      chauffeur: `${ROOTS.AUTH}/onboarding/chauffeur`,
+      chauffeur: {
+        root:  `${ROOTS.AUTH}/onboarding/chauffeur`,
+        complete: `${ROOTS.AUTH}/onboarding/chauffeur/complete`,
+      },
     },
   },
   authDemo: {

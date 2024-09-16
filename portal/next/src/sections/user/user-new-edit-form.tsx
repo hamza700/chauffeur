@@ -27,6 +27,7 @@ import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { signUpChauffeur } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
@@ -96,6 +97,11 @@ export function UserNewEditForm({ currentUser }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
+      await signUpChauffeur({
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
       reset();
       toast.success(currentUser ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.chauffeurs.root);

@@ -31,7 +31,7 @@ export function OnboardGuard({ children }: Props) {
         if (role === 'provider' && isOnboarded) {
           router.replace(paths.dashboard.root);
         } else if (role === 'chauffeur' && isOnboarded) {
-          router.replace(paths.dashboard.root);
+          router.replace(paths.auth.onboarding.chauffeur.complete);
         } else {
           // User is authenticated but not onboarded, allow onboarding page to render
           setIsChecking(false);

@@ -23,6 +23,7 @@ import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
 import { updatePassword } from 'src/auth/context/supabase';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -44,6 +45,8 @@ export const UpdatePasswordSchema = zod
 // ----------------------------------------------------------------------
 
 export function SupabaseUpdatePasswordView() {
+  const { user } = useAuthContext();
+
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
@@ -66,7 +69,13 @@ export function SupabaseUpdatePasswordView() {
     try {
       await updatePassword({ password: data.password });
 
-      router.push(paths.dashboard.root);
+      const role = user?.user_metadata?.role;
+      
+      if (role === 'provider') {
+        router.push(paths.dashboard.root);
+      } else if (role === 'chauffeur') {
+        router.push(paths.auth.onboarding.chauffeur.root);
+      }
     } catch (error) {
       console.error(error);
       setErrorMsg(error instanceof Error ? error.message : error);

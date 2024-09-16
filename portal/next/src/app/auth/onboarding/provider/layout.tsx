@@ -1,6 +1,6 @@
 import { OnboardingLayout } from 'src/layouts/onboarding';
 
-import { OnboardGuard } from 'src/auth/guard/onboard-guard';
+import { AuthGuard } from 'src/auth/guard';
 
 // ----------------------------------------------------------------------
 
@@ -10,8 +10,8 @@ type Props = {
 
 export default function Layout({ children }: Props) {
   return (
-    <OnboardGuard>
+    <AuthGuard>
       <OnboardingLayout>{children}</OnboardingLayout>
-    </OnboardGuard>
+    </AuthGuard>
   );
 }

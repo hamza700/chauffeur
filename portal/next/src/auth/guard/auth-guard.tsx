@@ -29,13 +29,20 @@ export function AuthGuard({ children }: Props) {
       const isOnboarded = user?.user_metadata?.onboarded;
 
       // Redirect based on onboarding status
-      if (role === 'provider' && !isOnboarded) {
-        router.replace(paths.auth.onboarding.provider); // Redirect to provider onboarding
-      } else if (role === 'chauffeur' && !isOnboarded) {
-        router.replace(paths.auth.onboarding.chauffeur); // Redirect to chauffeur onboarding
-      } else {
-        setIsChecking(false); // User is onboarded, no more checks
+      if (role === 'provider') {
+        if (!isOnboarded) {
+          router.replace(paths.auth.onboarding.provider); // Redirect to provider onboarding
+        } else if (!pathname.startsWith(paths.dashboard.root)) {
+          router.replace(paths.dashboard.root); 
+        }
+      } else if (role === 'chauffeur') {
+        if (!isOnboarded) {
+          router.replace(paths.auth.onboarding.chauffeur.root); // Redirect to chauffeur onboarding
+        } else {
+          router.replace(paths.auth.onboarding.chauffeur.complete);
+        }
       }
+      setIsChecking(false); // User is onboarded, no more checks
     } else {
       // If user is not authenticated, redirect to sign-in
       router.replace(`${paths.auth.supabase.signIn}?returnTo=${pathname}`);

@@ -29,6 +29,13 @@ export type SignUpParams = {
   options?: SignUpWithPasswordCredentials['options'];
 };
 
+export type ChauffeurSignUpParams = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  options?: SignUpWithPasswordCredentials['options'];
+};
+
 export type ResetPasswordParams = {
   email: string;
   options?: {
@@ -82,6 +89,41 @@ export const signUp = async ({
       data: {
         display_name: `${firstName} ${lastName}`,
         role: 'provider',
+        onboarded: false,
+      },
+    },
+  });
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  if (!data?.user?.identities?.length) {
+    throw new Error('This user already exists');
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Chauffeur Sign up
+ *************************************** */
+export const signUpChauffeur = async ({
+  email,
+  firstName,
+  lastName,
+}: ChauffeurSignUpParams): Promise<AuthResponse> => {
+  const password = Math.random().toString(36).slice(-8);
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}${paths.auth.supabase.resetPassword}`,
+      data: {
+        display_name: `${firstName} ${lastName}`,
+        role: 'chauffeur',
         onboarded: false,
       },
     },
