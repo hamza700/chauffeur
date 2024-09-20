@@ -32,7 +32,7 @@ export function UserCreateView() {
   return (
     <DashboardContent>
       <CustomBreadcrumbs
-        heading="Create a new user"
+        heading="Create a new chauffeur"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
           { name: 'Chauffeurs', href: paths.dashboard.chauffeurs.root },

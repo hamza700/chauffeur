@@ -97,7 +97,7 @@ export function ApplicationSummaryStep({ formData }: Props) {
             Production Year: {formData.firstVehicle?.productionYear || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Color: {formData.firstVehicle?.color || 'N/A'}
+            Color: {formData.firstVehicle?.colour || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             License Plate: {formData.firstVehicle?.licensePlate || 'N/A'}
@@ -203,7 +203,7 @@ export function ApplicationSummaryStep({ formData }: Props) {
             Bank Name: {formData.paymentDetails?.bankName || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Bank Country: {formData.paymentDetails?.bankCountry?.name || 'N/A'}
+            Bank Country: {formData.paymentDetails?.bankCountry || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Account Number: {formData.paymentDetails?.bankAccountNumber || 'N/A'}

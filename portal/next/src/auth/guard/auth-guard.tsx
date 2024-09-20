@@ -25,21 +25,30 @@ export function AuthGuard({ children }: Props) {
 
     // If user is authenticated, check their onboarding status
     if (authenticated) {
-      const role = user?.user_metadata?.role;
-      const isOnboarded = user?.user_metadata?.onboarded;
+      const roles = user?.user_metadata?.roles || [];
+      const isChauffeurOnboarded = user?.user_metadata?.chauffeur_onboarded;
+      const isProviderOnboarded = user?.user_metadata?.provider_onboarded;
 
-      // Redirect based on onboarding status
-      if (role === 'provider') {
-        if (!isOnboarded) {
+      // Check if user has both roles
+      if (roles.includes('chauffeur') && roles.includes('provider')) {
+        if (!isProviderOnboarded) {
+          router.replace(paths.auth.onboarding.provider); // Redirect to provider onboarding
+        } else if (!isChauffeurOnboarded) {
+          router.replace(paths.auth.onboarding.chauffeur.root); // Redirect to chauffeur onboarding
+        } else if (!pathname.startsWith(paths.dashboard.root)) {
+          router.replace(paths.dashboard.root); // Redirect to dashboard
+        }
+      } else if (roles.includes('provider')) {
+        if (!isProviderOnboarded) {
           router.replace(paths.auth.onboarding.provider); // Redirect to provider onboarding
         } else if (!pathname.startsWith(paths.dashboard.root)) {
-          router.replace(paths.dashboard.root); 
+          router.replace(paths.dashboard.root); // Redirect to dashboard
         }
-      } else if (role === 'chauffeur') {
-        if (!isOnboarded) {
+      } else if (roles.includes('chauffeur')) {
+        if (!isChauffeurOnboarded) {
           router.replace(paths.auth.onboarding.chauffeur.root); // Redirect to chauffeur onboarding
         } else {
-          router.replace(paths.auth.onboarding.chauffeur.complete);
+          router.replace(paths.auth.onboarding.chauffeur.complete); // Redirect to chauffeur complete
         }
       }
       setIsChecking(false); // User is onboarded, no more checks

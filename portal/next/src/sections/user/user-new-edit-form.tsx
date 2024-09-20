@@ -3,31 +3,31 @@
 import type { IUserItem } from 'src/types/user';
 
 import { z as zod } from 'zod';
-import { useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { useMemo, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
-import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { transformToChauffeurData } from 'src/utils/data-transformers';
+
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { signUpChauffeur } from 'src/auth/context/supabase';
+
+import { insertChauffeur, updateChauffeur, deleteChauffeur } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ export function UserNewEditForm({ currentUser }: Props) {
 
   const defaultValues = useMemo(
     () => ({
-      status: currentUser?.status || '',
+      status: currentUser?.status || 'pending',
       isVerified: currentUser?.isVerified || true,
       firstName: currentUser?.firstName || '',
       lastName: currentUser?.lastName || '',
@@ -87,37 +87,51 @@ export function UserNewEditForm({ currentUser }: Props) {
   const {
     reset,
     watch,
-    control,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
   const values = watch();
 
+  useEffect(() => {
+    reset(defaultValues);
+  }, [currentUser, reset, defaultValues]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await signUpChauffeur({
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      });
+      if (currentUser) {
+        // Update existing user
+        await updateChauffeur(currentUser.id, transformToChauffeurData(data));
+        toast.success('Update success!');
+      } else {
+        // Insert new user
+        await insertChauffeur(transformToChauffeurData(data));
+        // await signUpChauffeur({
+        //   email: data.email,
+        //   firstName: data.firstName,
+        //   lastName: data.lastName,
+        // });
+        toast.success('Create success!');
+      }
       reset();
-      toast.success(currentUser ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.chauffeurs.root);
       console.info('DATA', data);
     } catch (error) {
+      toast.error(error.details); // Use the error message from Supabase
       console.error(error);
     }
   });
 
   const handleDelete = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('User deleted successfully');
-      router.push(paths.dashboard.chauffeurs.root);
-      // Implement additional delete logic here
+      if (currentUser) {
+        await deleteChauffeur(currentUser.id);
+        toast.success('User deleted successfully');
+        router.push(paths.dashboard.chauffeurs.root);
+      }
     } catch (error) {
+      toast.error(error.details); // Use the error message from Supabase
       console.error(error);
     }
   };
@@ -142,7 +156,7 @@ export function UserNewEditForm({ currentUser }: Props) {
               <Box sx={{ mb: 5, textAlign: 'center' }}>
                 <Box
                   component="img"
-                  src={currentUser.profilePicUrl}
+                  src={currentUser.documents.profilePicUrl}
                   sx={{
                     width: 120,
                     height: 120,
@@ -151,63 +165,6 @@ export function UserNewEditForm({ currentUser }: Props) {
                   }}
                 />
               </Box>
-
-              <FormControlLabel
-                labelPlacement="start"
-                control={
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        {...field}
-                        checked={field.value !== 'active'}
-                        onChange={(event) =>
-                          field.onChange(event.target.checked ? 'rejected' : 'active')
-                        }
-                      />
-                    )}
-                  />
-                }
-                label={
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                      Rejected
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Apply disable account
-                    </Typography>
-                  </>
-                }
-                sx={{
-                  mx: 0,
-                  mb: 3,
-                  width: 1,
-                  justifyContent: 'space-between',
-                }}
-              />
-
-              <Field.Switch
-                name="isVerified"
-                labelPlacement="start"
-                label={
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                      Email verified
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Disabling this will automatically send the user a verification email
-                    </Typography>
-                  </>
-                }
-                sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
-              />
-
-              <Stack justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
-                <Button variant="soft" color="error" onClick={confirm.onTrue}>
-                  Delete user
-                </Button>
-              </Stack>
             </Card>
           </Grid>
         )}
@@ -235,7 +192,12 @@ export function UserNewEditForm({ currentUser }: Props) {
               />
             </Box>
 
-            <Stack alignItems="flex-end" sx={{ mt: 3 }}>
+            <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
+              {currentUser && (
+                <Button variant="soft" color="error" onClick={confirm.onTrue}>
+                  Delete user
+                </Button>
+              )}
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
                 {!currentUser ? 'Create user' : 'Save changes'}
               </LoadingButton>

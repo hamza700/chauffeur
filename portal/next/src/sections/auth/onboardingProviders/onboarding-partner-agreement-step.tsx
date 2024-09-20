@@ -32,8 +32,8 @@ type Props = {
 
 export function PartnerAgreementStep({ currentAgreement, onSubmit }: Props) {
   const defaultValues = {
-    agreeToTerms: currentAgreement?.agreeToTerms ?? false,
-    signature: currentAgreement?.signature ?? '',
+    agreeToTerms: currentAgreement?.agreeToTerms || false,
+    signature: currentAgreement?.signature || '',
   };
 
   const methods = useForm<PartnerAgreementSchemaType>({

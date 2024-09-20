@@ -18,6 +18,8 @@ import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 import { UserQuickEditForm } from './user-quick-edit-form';
 
 // ----------------------------------------------------------------------
@@ -31,6 +33,9 @@ type Props = {
 };
 
 export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }: Props) {
+  const { user } = useAuthContext();
+  const role = user?.user_metadata?.role;
+
   const confirm = useBoolean();
 
   const popover = usePopover();
@@ -64,7 +69,7 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
             color={
               (row.status === 'active' && 'success') ||
               (row.status === 'pending' && 'warning') ||
-              (row.status === 'banned' && 'error') ||
+              (row.status === 'rejected' && 'error') ||
               'default'
             }
           >
@@ -74,14 +79,16 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
 
         <TableCell>
           <Stack direction="row" alignItems="center">
-            <Tooltip title="Quick Edit" placement="top" arrow>
-              <IconButton
-                color={quickEdit.value ? 'inherit' : 'default'}
-                onClick={quickEdit.onTrue}
-              >
-                <Iconify icon="solar:pen-bold" />
-              </IconButton>
-            </Tooltip>
+            {role === 'admin' && (
+              <Tooltip title="Quick Edit" placement="top" arrow>
+                <IconButton
+                  color={quickEdit.value ? 'inherit' : 'default'}
+                  onClick={quickEdit.onTrue}
+                >
+                  <Iconify icon="solar:pen-bold" />
+                </IconButton>
+              </Tooltip>
+            )}
 
             <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
               <Iconify icon="eva:more-vertical-fill" />

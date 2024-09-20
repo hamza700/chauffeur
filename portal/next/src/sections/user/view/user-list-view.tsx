@@ -2,7 +2,7 @@
 
 import type { IUserItem, IUserTableFilters } from 'src/types/user';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -19,6 +19,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
+
+import { transformChauffeurData } from 'src/utils/data-transformers';
 
 import { varAlpha } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -41,94 +43,14 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+// Import Supabase functions
+import { getChauffeurs, deleteChauffeur } from 'src/auth/context/supabase';
+
 import { UserTableRow } from '../user-table-row';
 import { UserTableToolbar } from '../user-table-toolbar';
 import { UserTableFiltersResult } from '../user-table-filters-result';
 
 // ----------------------------------------------------------------------
-export const mockUserList: IUserItem[] = [
-  {
-    id: '1',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phoneNumber: '+123456789',
-    status: 'active',
-    country: 'USA',
-    isVerified: true,
-    driversLicense: '123456',
-    privateHireLicense: '654321',
-    licensePlate: '12345',
-    profilePicUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-    profilePicStatus: 'approved',
-    driversLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    driversLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    driversLicenseStatus: 'approved',
-    privateHireLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    privateHireLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    privateHireLicenseStatus: 'approved',
-  },
-  {
-    id: '2',
-    firstName: 'Liam',
-    lastName: 'Doe',
-    email: 'liam.doe@example.com',
-    phoneNumber: '+123456789',
-    status: 'active',
-    country: 'USA',
-    isVerified: true,
-    driversLicense: '123456',
-    privateHireLicense: '654321',
-    licensePlate: '122345',
-    profilePicUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-    profilePicStatus: 'approved',
-    driversLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    driversLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    driversLicenseStatus: 'approved',
-    privateHireLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    privateHireLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    privateHireLicenseStatus: 'approved',
-  },
-  {
-    id: '3',
-    firstName: 'Jakc',
-    lastName: 'Doe',
-    email: 'jakc.doe@example.com',
-    phoneNumber: '+123456789',
-    status: 'active',
-    country: 'USA',
-    isVerified: true,
-    driversLicense: '123456',
-    privateHireLicense: '654321',
-    licensePlate: '123445',
-    profilePicUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-    profilePicStatus: 'approved',
-    driversLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    driversLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    driversLicenseStatus: 'approved',
-    privateHireLicenseUrls: [
-      'https://randomuser.me/api/portraits/men/1.jpg',
-      'https://randomuser.me/api/portraits/men/1.jpg',
-    ],
-    privateHireLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    privateHireLicenseStatus: 'approved',
-  },
-];
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -149,15 +71,33 @@ const TABLE_HEAD = [
 
 export function UserListView() {
   const table = useTable();
-
   const router = useRouter();
-
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState<IUserItem[]>(mockUserList);
+  // Replace mock data with real data from Supabase
+  const [tableData, setTableData] = useState<IUserItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const filters = useSetState<IUserTableFilters>({ name: '', status: 'all' });
 
+  // Fetch all users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      const { data, error } = await getChauffeurs();
+      if (error) {
+        toast.error('Failed to fetch users');
+      } else {
+        const transformedData = data?.map(transformChauffeurData);
+        setTableData(transformedData || []);
+      }
+      setLoading(false);
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Apply filter logic
   const dataFiltered = applyFilter({
     inputData: tableData,
     comparator: getComparator(table.order, table.orderBy),
@@ -165,31 +105,32 @@ export function UserListView() {
   });
 
   const dataInPage = rowInPage(dataFiltered, table.page, table.rowsPerPage);
-
   const canReset = !!filters.state.name || filters.state.status !== 'all';
-
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
+    async (id: string) => {
+      try {
+        const { error } = await deleteChauffeur(id);
+        if (error) {
+          toast.error('Failed to delete user');
+          return;
+        }
+        const deleteRow = tableData.filter((row) => row.id !== id);
+        toast.success('Delete success!');
+        setTableData(deleteRow);
+        table.onUpdatePageDeleteRow(dataInPage.length);
+      } catch (error) {
+        toast.error('Error deleting user');
+      }
     },
     [dataInPage.length, table, tableData]
   );
 
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
     toast.success('Delete success!');
-
     setTableData(deleteRows);
-
     table.onUpdatePageDeleteRows({
       totalRowsInPage: dataInPage.length,
       totalRowsFiltered: dataFiltered.length,
@@ -204,7 +145,7 @@ export function UserListView() {
   );
 
   const handleFilterStatus = useCallback(
-    (event: React.SyntheticEvent, newValue: string) => {
+    async (event: React.SyntheticEvent, newValue: string) => {
       table.onResetPage();
       filters.setState({ status: newValue });
     },

@@ -50,7 +50,7 @@ export type NewVehicleSchemaType = zod.infer<typeof NewVehicleSchema>;
 export const NewVehicleSchema = zod.object({
   model: zod.string().min(1, { message: 'Model is required!' }),
   productionYear: zod.string().min(1, { message: 'Production year is required!' }),
-  color: zod.string().min(1, { message: 'Color is required!' }),
+  colour: zod.string().min(1, { message: 'Colour is required!' }),
   licensePlate: zod.string().min(1, { message: 'License plate is required!' }),
   serviceClass: zod.string().min(1, { message: 'Service class is required!' }),
 });
@@ -67,7 +67,7 @@ export function FirstVehicleStep({ currentVehicle, onSubmit }: Props) {
     () => ({
       model: currentVehicle?.model || '',
       productionYear: currentVehicle?.productionYear || '',
-      color: currentVehicle?.color || '',
+      colour: currentVehicle?.colour || '',
       licensePlate: currentVehicle?.licensePlate || '',
       serviceClass: currentVehicle?.serviceClass || '',
     }),
@@ -140,18 +140,18 @@ export function FirstVehicleStep({ currentVehicle, onSubmit }: Props) {
               </Field.Select>
 
               <Field.Select
-                name="color"
+                name="colour"
                 label="Color"
                 InputLabelProps={{ shrink: true }}
                 displayEmpty
                 disabled={!values.model}
               >
                 <MenuItem value="" disabled>
-                  Select a color
+                  Select a colour
                 </MenuItem>
-                {COLOR_OPTIONS.map((color) => (
-                  <MenuItem key={color} value={color}>
-                    {color}
+                {COLOR_OPTIONS.map((colour) => (
+                  <MenuItem key={colour} value={colour}>
+                    {colour}
                   </MenuItem>
                 ))}
               </Field.Select>

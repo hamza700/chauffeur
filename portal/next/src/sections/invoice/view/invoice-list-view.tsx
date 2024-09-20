@@ -219,8 +219,6 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function InvoiceListView() {
-  const [role, setRole] = useState('admin');
-
   const { user } = useMockedUser();
 
   const theme = useTheme();
@@ -341,7 +339,12 @@ export function InvoiceListView() {
   return (
     <>
       <DashboardContent>
-        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+        <RoleBasedGuard
+          hasContent
+          currentRole={user?.user_metadata?.role}
+          acceptRoles={['admin']}
+          sx={{ py: 10 }}
+        >
           <CustomBreadcrumbs
             heading="Invoice"
             links={[

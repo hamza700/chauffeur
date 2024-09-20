@@ -5,9 +5,29 @@ import { useState } from 'react';
 import Divider from '@mui/material/Divider';
 import { Box, Step, Stack, Button, Stepper, StepLabel } from '@mui/material';
 
-import { useAuthContext } from 'src/auth/hooks';
-import { updateOnboarding } from 'src/auth/context/supabase';
 import { useRouter } from 'src/routes/hooks';
+
+import { uuidv4 } from 'src/utils/uuidv4';
+import {
+  transformToVehicleData,
+  transformToProviderData,
+  transformToChauffeurData,
+} from 'src/utils/data-transformers';
+
+import { toast } from 'src/components/snackbar';
+
+import { useAuthContext } from 'src/auth/hooks';
+import {
+  updateRole,
+  addUserRole,
+  insertVehicle,
+  insertProvider,
+  updateProvider,
+  insertChauffeur,
+  signUpChauffeur,
+  updateChauffeur,
+  updateOnboarding,
+} from 'src/auth/context/supabase';
 
 import { CompanyInfoStep } from '../onboarding-company-info-step';
 import { FirstVehicleStep } from '../onboarding-first-vehicle-step';
@@ -30,7 +50,7 @@ const steps = [
 export function OnboardingView() {
   const router = useRouter();
 
-  const { checkUserSession } = useAuthContext();
+  const { checkUserSession, user } = useAuthContext();
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -59,7 +79,7 @@ export function OnboardingView() {
     firstVehicle: {
       model: '',
       productionYear: '',
-      color: '',
+      colour: '',
       licensePlate: '',
       serviceClass: '',
     },
@@ -153,7 +173,7 @@ export function OnboardingView() {
       firstVehicle: {
         model: '',
         productionYear: '',
-        color: '',
+        colour: '',
         licensePlate: '',
         serviceClass: '',
       },
@@ -227,14 +247,107 @@ export function OnboardingView() {
     });
     handleNext();
   };
-
   const handleSubmitOnboarding = async () => {
     try {
-      await updateOnboarding({ onboarded: true });
-      await checkUserSession?.();
+      const userId = user?.id;
 
+      if (!userId) {
+        toast.error('User not authenticated');
+        return;
+      }
+
+      await addUserRole(userId, 'provider');
+      toast.success('Provider role added successfully');
+
+      // Insert provider details
+      const providerData = transformToProviderData({
+        ...formData.companyInfo,
+        ...formData.providerDocuments,
+        ...formData.partnerAgreement,
+        ...formData.paymentDetails,
+        email: user?.email,
+        firstName: user?.user_metadata?.first_name,
+        lastName: user?.user_metadata?.last_name,
+        id: userId,
+        onboarded: false, // Initially set to false
+      });
+      await insertProvider(providerData);
+      toast.success('Provider details added successfully');
+
+      // Update provider onboarding status
+      await updateOnboarding({ role: 'provider', onboarded: true });
+      await updateProvider(userId, { onboarded: true });
+      toast.success('Provider onboarding status updated successfully');
+
+      let chauffeurUserId = userId;
+
+      // Check if provider email is the same as chauffeur email
+      if (user?.email === formData.firstChauffeur.email) {
+        // Add chauffeur role to the same user
+        await addUserRole(userId, 'chauffeur');
+        await updateRole();
+        toast.success('Chauffeur role added successfully');
+
+        // Insert chauffeur details
+        const chauffeurData = transformToChauffeurData({
+          ...formData.firstChauffeur,
+          ...formData.chauffeurDocuments,
+          providerId: userId,
+          id: userId,
+          onboarded: false, // Initially set to false
+        });
+        await insertChauffeur(chauffeurData);
+        toast.success('Chauffeur details added successfully');
+      } else {
+        // Chauffeur signup
+        const chauffeurSignupData = {
+          email: formData.firstChauffeur.email,
+          firstName: formData.firstChauffeur.firstName,
+          lastName: formData.firstChauffeur.lastName,
+        };
+        const { data: chauffeurSignupResponse } = await signUpChauffeur(chauffeurSignupData);
+        toast.success('Chauffeur signed up successfully');
+
+        chauffeurUserId = chauffeurSignupResponse.user?.id;
+
+        // Add chauffeur role
+        await addUserRole(chauffeurUserId, 'chauffeur');
+        toast.success('Chauffeur role added successfully');
+
+        // Insert chauffeur details
+        const chauffeurData = transformToChauffeurData({
+          ...formData.firstChauffeur,
+          ...formData.chauffeurDocuments,
+          providerId: userId,
+          id: chauffeurUserId,
+          onboarded: false, // Initially set to false
+        });
+        await insertChauffeur(chauffeurData);
+        toast.success('Chauffeur details added successfully');
+      }
+
+      // Insert vehicle details
+      const vehicleData = transformToVehicleData({
+        ...formData.firstVehicle,
+        ...formData.vehicleDocuments,
+        providerId: userId,
+        id: uuidv4(),
+      });
+      await insertVehicle(vehicleData);
+      toast.success('Vehicle details inserted successfully');
+
+      // Update chauffeur onboarding status if userId is the same as provider's userId
+      if (userId === chauffeurUserId) {
+        await updateOnboarding({ role: 'chauffeur', onboarded: true });
+        toast.success('Chauffeur onboarding status updated successfully');
+      }
+
+      await updateChauffeur(chauffeurUserId, { onboarded: true });
+
+      await checkUserSession?.();
       router.refresh();
     } catch (error) {
+      toast.error(error.message || 'An error occurred');
       console.error(error);
     }
   };
@@ -269,7 +382,6 @@ export function OnboardingView() {
             currentChauffeur={formData.chauffeurDocuments}
             currentVehicle={formData.vehicleDocuments}
             onSubmit={(data) => handleStepSubmit('uploadDocuments', data)} // Handle documents differently
-            // onSubmit={(data) => handleStepSubmit(data)}
           />
         );
       case 4:

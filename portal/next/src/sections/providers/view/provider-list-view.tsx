@@ -14,7 +14,6 @@ import TableBody from '@mui/material/TableBody';
 import { Tooltip, IconButton } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
@@ -123,13 +122,9 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function ProviderListView() {
-  const [role, setRole] = useState('admin');
-
   const { user } = useMockedUser();
 
   const table = useTable();
-
-  const router = useRouter();
 
   const confirm = useBoolean();
 
@@ -186,7 +181,7 @@ export function ProviderListView() {
   return (
     <>
       <DashboardContent>
-        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+        <RoleBasedGuard hasContent currentRole={user?.user_metadata?.role} acceptRoles={['admin']} sx={{ py: 10 }}>
           <CustomBreadcrumbs
             heading="Providers"
             links={[

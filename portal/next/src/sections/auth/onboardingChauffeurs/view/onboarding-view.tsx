@@ -1,7 +1,7 @@
 'use client';
 
 import { z as zod } from 'zod';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
@@ -16,10 +16,19 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useRouter } from 'src/routes/hooks';
 
+import { transformToVehicleData, transformToChauffeurData } from 'src/utils/data-transformers';
+
+import { toast } from 'src/components/snackbar';
 import { Field, schemaHelper } from 'src/components/hook-form';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { updateOnboarding } from 'src/auth/context/supabase';
+import {
+  updateVehicle,
+  updateChauffeur,
+  updateOnboarding,
+  getChauffeurById,
+  filterVehiclesByLicensePlate,
+} from 'src/auth/context/supabase';
 
 export type OnboardingDocumentsSchemaType = zod.infer<typeof OnboardingDocumentsSchema>;
 
@@ -89,7 +98,7 @@ export const OnboardingDocumentsSchema = zod.object({
 export function OnboardingView() {
   const router = useRouter();
 
-  const { checkUserSession } = useAuthContext();
+  const { user, checkUserSession } = useAuthContext();
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -124,6 +133,33 @@ export function OnboardingView() {
 
   const values = watch();
 
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user?.id) {
+        toast.error('User not authenticated');
+        return;
+      }
+  
+      try {
+        const { data: chauffeur, error } = await getChauffeurById(user?.id);
+        if (error) {
+          console.error(error);
+          return;
+        }
+  
+        if (chauffeur?.onboarded) {
+          await updateOnboarding({ role: 'chauffeur', onboarded: true });
+          await checkUserSession?.();
+          router.refresh();
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      }
+    };
+  
+    checkOnboardingStatus();
+  }, [user?.id, checkUserSession, router]);
+
   const handleRemoveFile = (
     inputFile: File | string,
     fieldName: keyof OnboardingDocumentsSchemaType
@@ -151,6 +187,13 @@ export function OnboardingView() {
   );
 
   const onSubmitHandler = async (data: OnboardingDocumentsSchemaType) => {
+    const userId = user?.id;
+  
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+  
     const updatedData = {
       chauffeurDocuments: {
         profilePicUrl: data.profilePicUrl,
@@ -171,12 +214,70 @@ export function OnboardingView() {
         leasingContractUrls: data.vehicleLeasingContractUrls,
       },
     };
+  
     try {
-      await updateOnboarding({ onboarded: true });
+      // Update chauffeur details
+      const chauffeurData = transformToChauffeurData({
+        ...updatedData.chauffeurDocuments,
+        userId,
+      });
+      const { error: updateChauffeurError } = await updateChauffeur(userId, chauffeurData);
+      if (updateChauffeurError) {
+        toast.error(updateChauffeurError.details || 'Failed to update chauffeur details');
+        throw updateChauffeurError;
+      }
+      toast.success('Chauffeur details updated successfully');
+  
+      // Retrieve updated chauffeur details to get the license plate
+      const { data: chauffeur, error: getChauffeurError } = await getChauffeurById(userId);
+      if (getChauffeurError) {
+        toast.error(getChauffeurError.details || 'Failed to retrieve chauffeur details');
+        throw getChauffeurError;
+      }
+  
+      const licensePlate = chauffeur?.license_plate;
+      if (!licensePlate) {
+        toast.error('License plate not found in chauffeur details');
+        return;
+      }
+  
+      // Check if the license plate is in the vehicles table
+      const { data: vehicles, error: filterVehiclesError } = await filterVehiclesByLicensePlate(licensePlate);
+      if (filterVehiclesError) {
+        toast.error(filterVehiclesError.details || 'Failed to check vehicle details');
+        throw filterVehiclesError;
+      }
+  
+      if (vehicles && vehicles.length > 0) {
+        // Update vehicle details
+        const vehicleData = transformToVehicleData({
+          ...updatedData.vehicleDocuments,
+        });
+        const { error: updateVehicleError } = await updateVehicle(vehicles[0].id, vehicleData);
+        if (updateVehicleError) {
+          toast.error(updateVehicleError.details || 'Failed to update vehicle details');
+          throw updateVehicleError;
+        }
+        toast.success('Vehicle details updated successfully');
+      } else {
+        toast.error(
+          "Your provider still hasn't added your vehicle. Tell them to add it and then come back to complete your onboarding."
+        );
+        return;
+      }
+  
+      // Update onboarding status
+      const { error: updateOnboardingError } = await updateChauffeur(userId, { onboarded: true });
+      if (updateOnboardingError) {
+        toast.error(updateOnboardingError.message || 'Failed to update onboarding status');
+        throw updateOnboardingError;
+      }
+      toast.success('Onboarding status updated successfully');
+  
       await checkUserSession?.();
-
       router.refresh();
     } catch (error) {
+      toast.error(error.message || 'An error occurred during onboarding');
       console.error(error);
       setErrorMsg('An error occurred during onboarding.');
     }

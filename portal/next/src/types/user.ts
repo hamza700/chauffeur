@@ -20,6 +20,7 @@ export type IUserDocumentFields = {
 
 export type IUserItem = {
   id: string;
+  providerId: string;
   firstName: string;
   lastName: string;
   email: string;

@@ -22,8 +22,8 @@ import { SentIcon } from 'src/assets/icons';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
-import { updatePassword } from 'src/auth/context/supabase';
 import { useAuthContext } from 'src/auth/hooks';
+import { updatePassword } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ export function SupabaseUpdatePasswordView() {
       await updatePassword({ password: data.password });
 
       const role = user?.user_metadata?.role;
-      
+
       if (role === 'provider') {
         router.push(paths.dashboard.root);
       } else if (role === 'chauffeur') {

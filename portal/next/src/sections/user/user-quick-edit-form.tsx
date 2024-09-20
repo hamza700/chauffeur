@@ -4,37 +4,29 @@ import { z as zod } from 'zod';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import MenuItem from '@mui/material/MenuItem';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
 import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { Form, Field } from 'src/components/hook-form';
+
+import { updateUser } from 'src/auth/context/supabase'; // Import the updateUser function
+import { useRouter } from 'src/routes/hooks';
+import { Alert } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
 export type UserQuickEditSchemaType = zod.infer<typeof UserQuickEditSchema>;
 
 export const UserQuickEditSchema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required!' }),
-  lastName: zod.string().min(1, { message: 'Last name is required!' }),
-  email: zod
-    .string()
-    .min(1, { message: 'Email is required!' })
-    .email({ message: 'Email must be a valid email address!' }),
-  phoneNumber: schemaHelper.phoneNumber({ isValidPhoneNumber }),
-  country: schemaHelper.objectOrNull<string | null>({
-    message: { required_error: 'Country is required!' },
-  }),
-  driversLicense: zod.string().min(1, { message: "Driver's license is required!" }),
-  privateHireLicense: zod.string().min(1, { message: 'Private hire license is required!' }),
+  status: zod.string().min(1, { message: 'Status is required!' }),
 });
 
 // ----------------------------------------------------------------------
@@ -46,15 +38,11 @@ type Props = {
 };
 
 export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
+  const router = useRouter();
+
   const defaultValues = useMemo(
     () => ({
-      firstName: currentUser?.firstName || '',
-      lastName: currentUser?.lastName || '',
-      email: currentUser?.email || '',
-      phoneNumber: currentUser?.phoneNumber || '',
-      country: currentUser?.country || '',
-      driversLicense: currentUser?.driversLicense || '',
-      privateHireLicense: currentUser?.privateHireLicense || '',
+      status: currentUser?.status || '',
     }),
     [currentUser]
   );
@@ -72,22 +60,22 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!currentUser) return;
 
     try {
+      const { data: updatedData, error } = await updateUser(currentUser.id, data);
+      if (error) {
+        throw error;
+      }
+
       reset();
       onClose();
 
-      toast.promise(promise, {
-        loading: 'Loading...',
-        success: 'Update success!',
-        error: 'Update error!',
-      });
-
-      await promise;
-
-      console.info('DATA', data);
+      toast.success('Update success!');
+      router.refresh();
+      console.info('Updated Data', updatedData);
     } catch (error) {
+      toast.error('Update error!');
       console.error(error);
     }
   });
@@ -95,37 +83,25 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
   return (
     <Dialog
       fullWidth
-      maxWidth={false}
+      maxWidth="xs" // Make the dialog smaller
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { maxWidth: 720 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Quick Update</DialogTitle>
+        <DialogTitle >Update Status</DialogTitle>
 
         <DialogContent>
-          <Alert variant="outlined" severity="info" sx={{ mb: 3 }}>
-            Account is waiting for confirmation
-          </Alert>
-
           <Box
             rowGap={3}
             columnGap={2}
             display="grid"
-            gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
+            gridTemplateColumns="1fr" // Single column layout
           >
-            <Field.Text name="firstName" label="First Name" />
-            <Field.Text name="lastName" label="Last Name" />
-            <Field.Text name="email" label="Email Address" />
-            <Field.Phone name="phoneNumber" label="Phone Number" />
-            <Field.Text name="driversLicense" label="Driver's License" />
-            <Field.Text name="privateHireLicense" label="Private Hire License" />
-            <Field.CountrySelect
-              fullWidth
-              name="country"
-              label="Country"
-              placeholder="Choose a country"
-            />
+            <Field.Select name="status" >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+            </Field.Select>
           </Box>
         </DialogContent>
 

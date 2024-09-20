@@ -27,9 +27,10 @@ export type IVehicleDocumentFields = {
 
 export type IVehicleItem = {
   id: string;
+  providerId: string;
   licensePlate: string;
   model: string;
-  colour: string; // Use British English spelling for consistency
+  colour: string; 
   productionYear: string;
   serviceClass: string;
   status: string;

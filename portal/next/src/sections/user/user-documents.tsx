@@ -71,6 +71,7 @@ export function UserDocuments({ currentUser }: Props) {
       privateHireLicenseFiles: currentUser?.privateHireLicenseUrls || [],
       driversLicenseExpiry: currentUser?.driversLicenseExpiryDate || null,
       privateHireLicenseExpiry: currentUser?.privateHireLicenseExpiryDate || null,
+
     }),
     [currentUser]
   );
@@ -188,7 +189,7 @@ export function UserDocuments({ currentUser }: Props) {
                 sx={{ width: '50%' }}
               />
               <Stack direction="row" spacing={1.5}>
-                {currentUser?.driversLicenseUrls.map((url, index) => (
+                {currentUser?.driversLicenseUrls?.map((url, index) => (
                   <img
                     key={url + index}
                     src={url}
@@ -234,7 +235,7 @@ export function UserDocuments({ currentUser }: Props) {
                 sx={{ width: '50%' }}
               />
               <Stack direction="row" spacing={1.5}>
-                {currentUser?.privateHireLicenseUrls.map((url, index) => (
+                {currentUser?.privateHireLicenseUrls?.map((url, index) => (
                   <img
                     key={url + index}
                     src={url}

@@ -31,8 +31,6 @@ import { FileManagerFiltersResult } from '../file-manager-filters-result';
 // ----------------------------------------------------------------------
 
 export function FileManagerView() {
-  const [role, setRole] = useState('admin');
-
   const { user } = useMockedUser();
 
   const table = useTable({ defaultRowsPerPage: 10 });
@@ -125,7 +123,12 @@ export function FileManagerView() {
   return (
     <>
       <DashboardContent>
-        <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+        <RoleBasedGuard
+          hasContent
+          currentRole={user?.user_metadata?.role}
+          acceptRoles={['admin']}
+          sx={{ py: 10 }}
+        >
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant="h4">Documents</Typography>
           </Stack>

@@ -2,8 +2,6 @@
 
 import type { IInvoice } from 'src/types/invoice';
 
-import { useState } from 'react';
-
 import { paths } from 'src/routes/paths';
 
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -22,13 +20,16 @@ type Props = {
 };
 
 export function InvoiceDetailsView({ invoice }: Props) {
-  const [role, setRole] = useState('admin');
-
   const { user } = useMockedUser();
 
   return (
     <DashboardContent>
-      <RoleBasedGuard hasContent currentRole={user?.role} acceptRoles={[role]} sx={{ py: 10 }}>
+      <RoleBasedGuard
+        hasContent
+        currentRole={user?.user_metadata?.role}
+        acceptRoles={['admin']}
+        sx={{ py: 10 }}
+      >
         <CustomBreadcrumbs
           heading={invoice?.invoiceNumber}
           links={[
