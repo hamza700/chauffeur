@@ -43,6 +43,7 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { useAuthContext } from 'src/auth/hooks';
 // Import Supabase functions
 import { getChauffeurs, deleteChauffeur } from 'src/auth/context/supabase';
 
@@ -70,6 +71,8 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function UserListView() {
+  const { user } = useAuthContext();
+  const providerId = user?.id;
   const table = useTable();
   const router = useRouter();
   const confirm = useBoolean();
@@ -84,7 +87,7 @@ export function UserListView() {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
-      const { data, error } = await getChauffeurs();
+      const { data, error } = await getChauffeurs(providerId);
       if (error) {
         toast.error('Failed to fetch users');
       } else {

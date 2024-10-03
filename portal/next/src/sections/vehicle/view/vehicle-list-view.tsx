@@ -2,7 +2,7 @@
 
 import type { IVehicleItem, IVehicleTableFilters } from 'src/types/vehicle';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -19,6 +19,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
+
+import { transformVehicleData } from 'src/utils/data-transformers';
 
 import { varAlpha } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -41,11 +43,12 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { useAuthContext } from 'src/auth/hooks';
+import { getVehicles, deleteVehicle } from 'src/auth/context/supabase';
+
 import { VehicleTableRow } from '../vehicle-table-row';
 import { VehicleTableToolbar } from '../vehicle-table-toolbar';
 import { VehicleTableFiltersResult } from '../vehicle-table-filters-result';
-import { deleteVehicle, getVehicles } from 'src/auth/context/supabase';
-import { transformVehicleData } from 'src/utils/data-transformers';
 
 // ----------------------------------------------------------------------
 
@@ -69,6 +72,8 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function VehicleListView() {
+  const { user } = useAuthContext();
+  const providerId = user?.id;
   const table = useTable();
 
   const router = useRouter();
@@ -84,7 +89,7 @@ export function VehicleListView() {
   useEffect(() => {
     const fetchVehicles = async () => {
       setLoading(true);
-      const { data, error } = await getVehicles();
+      const { data, error } = await getVehicles(providerId);
       if (error) {
         toast.error('Failed to fetch vehicles');
       } else {

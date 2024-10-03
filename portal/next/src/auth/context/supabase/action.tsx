@@ -449,11 +449,11 @@ export const deleteProvider = async (userId: string): Promise<{ error: Postgrest
 /** **************************************
  * Get all chauffeurs
  *************************************** */
-export const getChauffeurs = async (): Promise<{
+export const getChauffeurs = async (providerId: string): Promise<{
   data: ChauffeurData[] | null;
   error: PostgrestError | null;
 }> => {
-  const { data, error } = await supabase.from('chauffeurs').select('*');
+  const { data, error } = await supabase.from('chauffeurs').select('*').eq('provider_id', providerId);
 
   if (error) {
     console.error(error);
@@ -532,11 +532,11 @@ export const deleteChauffeur = async (
 /** **************************************
  * Get all vehicles
  *************************************** */
-export const getVehicles = async (): Promise<{
+export const getVehicles = async (providerId: string): Promise<{
   data: VehicleData[] | null;
   error: PostgrestError | null;
 }> => {
-  const { data, error } = await supabase.from('vehicles').select('*');
+  const { data, error } = await supabase.from('vehicles').select('*').eq('provider_id', providerId);
 
   if (error) {
     console.error(error);
