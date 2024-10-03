@@ -27,7 +27,8 @@ import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
-import { insertChauffeur, updateChauffeur, deleteChauffeur } from 'src/auth/context/supabase';
+import { useAuthContext } from 'src/auth/hooks';
+import { updateChauffeur, deleteChauffeur, signUpChauffeur } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
@@ -59,6 +60,9 @@ type Props = {
 };
 
 export function UserNewEditForm({ currentUser }: Props) {
+  const { user } = useAuthContext();
+  const userId = user?.id;
+
   const router = useRouter();
   const confirm = useBoolean();
 
@@ -105,13 +109,19 @@ export function UserNewEditForm({ currentUser }: Props) {
         await updateChauffeur(currentUser.id, transformToChauffeurData(data));
         toast.success('Update success!');
       } else {
-        // Insert new user
-        await insertChauffeur(transformToChauffeurData(data));
-        // await signUpChauffeur({
-        //   email: data.email,
-        //   firstName: data.firstName,
-        //   lastName: data.lastName,
-        // });
+        const chauffeurData = transformToChauffeurData({
+          ...data,
+          providerId: userId,
+          onboarded: false,
+        });
+
+        await signUpChauffeur({
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          chauffeurData,
+        });
+
         toast.success('Create success!');
       }
       reset();

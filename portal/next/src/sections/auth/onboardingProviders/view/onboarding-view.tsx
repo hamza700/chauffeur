@@ -57,7 +57,7 @@ export function OnboardingView() {
     companyInfo: {
       companyName: '',
       phoneNumber: '',
-      country: null,
+      country: '',
       address: '',
       state: '',
       city: '',
@@ -67,14 +67,14 @@ export function OnboardingView() {
       vatNumber: '',
     },
     firstChauffeur: {
-      firstName: '',
-      lastName: '',
-      email: '',
+      firstName: user?.user_metadata?.first_name,
+      lastName: user?.user_metadata?.last_name,
+      email: user?.email,
       phoneNumber: '',
       driversLicense: '',
       privateHireLicense: '',
       licensePlate: '',
-      country: null,
+      country: '',
     },
     firstVehicle: {
       model: '',
@@ -151,7 +151,7 @@ export function OnboardingView() {
       companyInfo: {
         companyName: '',
         phoneNumber: '',
-        country: null,
+        country: '',
         address: '',
         state: '',
         city: '',
@@ -161,14 +161,14 @@ export function OnboardingView() {
         vatNumber: '',
       },
       firstChauffeur: {
-        firstName: '',
-        lastName: '',
-        email: '',
+        firstName: user?.user_metadata?.first_name,
+        lastName: user?.user_metadata?.last_name,
+        email: user?.email,
         phoneNumber: '',
         driversLicense: '',
         privateHireLicense: '',
         licensePlate: '',
-        country: null,
+        country: '',
       },
       firstVehicle: {
         model: '',
@@ -247,6 +247,7 @@ export function OnboardingView() {
     });
     handleNext();
   };
+
   const handleSubmitOnboarding = async () => {
     try {
       const userId = user?.id;
@@ -279,52 +280,21 @@ export function OnboardingView() {
       await updateProvider(userId, { onboarded: true });
       toast.success('Provider onboarding status updated successfully');
 
-      let chauffeurUserId = userId;
+      // Add chauffeur role to the same user
+      await addUserRole(userId, 'chauffeur');
+      await updateRole();
+      toast.success('Chauffeur role added successfully');
 
-      // Check if provider email is the same as chauffeur email
-      if (user?.email === formData.firstChauffeur.email) {
-        // Add chauffeur role to the same user
-        await addUserRole(userId, 'chauffeur');
-        await updateRole();
-        toast.success('Chauffeur role added successfully');
-
-        // Insert chauffeur details
-        const chauffeurData = transformToChauffeurData({
-          ...formData.firstChauffeur,
-          ...formData.chauffeurDocuments,
-          providerId: userId,
-          id: userId,
-          onboarded: false, // Initially set to false
-        });
-        await insertChauffeur(chauffeurData);
-        toast.success('Chauffeur details added successfully');
-      } else {
-        // Chauffeur signup
-        const chauffeurSignupData = {
-          email: formData.firstChauffeur.email,
-          firstName: formData.firstChauffeur.firstName,
-          lastName: formData.firstChauffeur.lastName,
-        };
-        const { data: chauffeurSignupResponse } = await signUpChauffeur(chauffeurSignupData);
-        toast.success('Chauffeur signed up successfully');
-
-        chauffeurUserId = chauffeurSignupResponse.user?.id;
-
-        // Add chauffeur role
-        await addUserRole(chauffeurUserId, 'chauffeur');
-        toast.success('Chauffeur role added successfully');
-
-        // Insert chauffeur details
-        const chauffeurData = transformToChauffeurData({
-          ...formData.firstChauffeur,
-          ...formData.chauffeurDocuments,
-          providerId: userId,
-          id: chauffeurUserId,
-          onboarded: false, // Initially set to false
-        });
-        await insertChauffeur(chauffeurData);
-        toast.success('Chauffeur details added successfully');
-      }
+      // Insert chauffeur details
+      const chauffeurData = transformToChauffeurData({
+        ...formData.firstChauffeur,
+        ...formData.chauffeurDocuments,
+        providerId: userId,
+        id: userId,
+        onboarded: false,
+      });
+      await insertChauffeur(chauffeurData);
+      toast.success('Chauffeur details added successfully');
 
       // Insert vehicle details
       const vehicleData = transformToVehicleData({
@@ -336,13 +306,9 @@ export function OnboardingView() {
       await insertVehicle(vehicleData);
       toast.success('Vehicle details inserted successfully');
 
-      // Update chauffeur onboarding status if userId is the same as provider's userId
-      if (userId === chauffeurUserId) {
-        await updateOnboarding({ role: 'chauffeur', onboarded: true });
-        toast.success('Chauffeur onboarding status updated successfully');
-      }
-
-      await updateChauffeur(chauffeurUserId, { onboarded: true });
+      await updateOnboarding({ role: 'chauffeur', onboarded: true });
+      await updateChauffeur(userId, { onboarded: true });
+      toast.success('Chauffeur onboarding status updated successfully');
 
       await checkUserSession?.();
       router.refresh();

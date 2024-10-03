@@ -34,7 +34,7 @@ type Props = {
 
 export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }: Props) {
   const { user } = useAuthContext();
-  const role = user?.user_metadata?.role;
+  const role = user?.user_metadata?.roles;
 
   const confirm = useBoolean();
 

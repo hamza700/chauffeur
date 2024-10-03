@@ -17,7 +17,7 @@ import DialogContent from '@mui/material/DialogContent';
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
 
-import { updateUser } from 'src/auth/context/supabase'; // Import the updateUser function
+import { updateChauffeur } from 'src/auth/context/supabase'; // Import the updateUser function
 import { useRouter } from 'src/routes/hooks';
 import { Alert } from '@mui/material';
 
@@ -63,7 +63,7 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
     if (!currentUser) return;
 
     try {
-      const { data: updatedData, error } = await updateUser(currentUser.id, data);
+      const { data: updatedData, error } = await updateChauffeur(currentUser.id, data);
       if (error) {
         throw error;
       }
@@ -88,7 +88,7 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
       onClose={onClose}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle >Update Status</DialogTitle>
+        <DialogTitle>Update Status</DialogTitle>
 
         <DialogContent>
           <Box
@@ -97,7 +97,7 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
             display="grid"
             gridTemplateColumns="1fr" // Single column layout
           >
-            <Field.Select name="status" >
+            <Field.Select name="status">
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="rejected">Rejected</MenuItem>
               <MenuItem value="pending">Pending</MenuItem>

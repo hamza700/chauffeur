@@ -1,7 +1,7 @@
 'use client';
 
 import { z as zod } from 'zod';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -21,6 +21,10 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { useAuthContext } from 'src/auth/hooks';
+import { deleteVehicle, insertVehicle, updateVehicle } from 'src/auth/context/supabase';
+import { transformToVehicleData } from 'src/utils/data-transformers';
+import { uuidv4 } from 'src/utils/uuidv4';
 
 // ----------------------------------------------------------------------
 
@@ -58,7 +62,7 @@ export type NewVehicleSchemaType = zod.infer<typeof NewVehicleSchema>;
 export const NewVehicleSchema = zod.object({
   model: zod.string().min(1, { message: 'Model is required!' }),
   productionYear: zod.string().min(1, { message: 'Production year is required!' }),
-  color: zod.string().min(1, { message: 'Color is required!' }),
+  colour: zod.string().min(1, { message: 'Color is required!' }),
   licensePlate: zod.string().min(1, { message: 'License plate is required!' }),
   serviceClass: zod.string().min(1, { message: 'Service class is required!' }),
 });
@@ -70,6 +74,9 @@ type Props = {
 };
 
 export function VehicleNewEditForm({ currentVehicle }: Props) {
+  const { user } = useAuthContext();
+  const userId = user?.id;
+
   const router = useRouter();
   const confirm = useBoolean();
 
@@ -77,7 +84,7 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
     () => ({
       model: currentVehicle?.model || '',
       productionYear: currentVehicle?.productionYear || '',
-      color: currentVehicle?.colour || '',
+      colour: currentVehicle?.colour || '',
       licensePlate: currentVehicle?.licensePlate || '',
       serviceClass: currentVehicle?.serviceClass || '',
     }),
@@ -100,12 +107,30 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
 
   const values = watch();
 
+  useEffect(() => {
+    reset(defaultValues);
+  }, [currentVehicle, reset, defaultValues]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
+      if (currentVehicle) {
+        // Update existing user
+        await updateVehicle(currentVehicle.id, transformToVehicleData(data));
+        toast.success('Update success!');
+      } else {
+        const vehicleData = transformToVehicleData({
+          ...data,
+          providerId: userId,
+          id: uuidv4(),
+        });
+
+        await insertVehicle(vehicleData);
+
+        toast.success('Create success!');
+      }
       reset();
-      toast.success(currentVehicle ? 'Update success!' : 'Create success!');
-      router.push(paths.dashboard.vehicles.root); // Update with the correct path
+      router.push(paths.dashboard.vehicles.root);
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
@@ -114,11 +139,13 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
 
   const handleDelete = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('Vehicle deleted successfully');
-      router.push(paths.dashboard.vehicles.root); // Update with the correct path
-      // Implement additional delete logic here
+      if (currentVehicle) {
+        await deleteVehicle(currentVehicle.id);
+        toast.success('Vehicle deleted successfully');
+        router.push(paths.dashboard.vehicles.root);
+      }
     } catch (error) {
+      toast.error(error.details); // Use the error message from Supabase
       console.error(error);
     }
   };
@@ -170,18 +197,18 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
               </Field.Select>
 
               <Field.Select
-                name="color"
+                name="colour"
                 label="Color"
                 InputLabelProps={{ shrink: true }}
                 displayEmpty
                 disabled={!values.model}
               >
                 <MenuItem value="" disabled>
-                  Select a color
+                  Select a colour
                 </MenuItem>
-                {COLOR_OPTIONS.map((color) => (
-                  <MenuItem key={color} value={color}>
-                    {color}
+                {COLOR_OPTIONS.map((colour) => (
+                  <MenuItem key={colour} value={colour}>
+                    {colour}
                   </MenuItem>
                 ))}
               </Field.Select>
@@ -206,7 +233,12 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
               </Field.Select>
             </Box>
 
-            <Stack alignItems="flex-end" sx={{ mt: 3 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
+              {currentVehicle && (
+                <Button variant="soft" color="error" onClick={confirm.onTrue}>
+                  Delete vehicle
+                </Button>
+              )}
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
                 {!currentVehicle ? 'Create vehicle' : 'Save changes'}
               </LoadingButton>

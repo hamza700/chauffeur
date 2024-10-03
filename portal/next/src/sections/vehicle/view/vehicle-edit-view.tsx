@@ -1,20 +1,27 @@
 'use client';
 
-import { useTabs } from 'src/hooks/use-tabs';
+import type { IVehicleItem } from 'src/types/vehicle';
+
+import { useState, useEffect } from 'react';
+
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
-import type { IVehicleItem } from 'src/types/vehicle';
-
 import { paths } from 'src/routes/paths';
+
+import { useTabs } from 'src/hooks/use-tabs';
+
+import { transformVehicleData } from 'src/utils/data-transformers';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { Iconify } from 'src/components/iconify';
-import { VehicleNewEditForm } from '../vehicle-new-edit-form';
+import { getVehicleById } from 'src/auth/context/supabase';
+
 import { VehicleDocuments } from '../vehicle-documents';
+import { VehicleNewEditForm } from '../vehicle-new-edit-form';
 
 // ----------------------------------------------------------------------
 
@@ -34,11 +41,34 @@ const TABS = [
 // ----------------------------------------------------------------------
 
 type Props = {
-  vehicle?: IVehicleItem;
+  vehicleId: string;
 };
 
-export function VehicleEditView({ vehicle: currentVehicle }: Props) {
+export function VehicleEditView({ vehicleId }: Props) {
+  const [currentVehicle, setCurrentVehicle] = useState<IVehicleItem | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const tabs = useTabs('vehicle');
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        const { data, error } = await getVehicleById(vehicleId);
+        if (error) {
+          setError(error.message);
+        } else {
+          const transformedData = transformVehicleData(data);
+          setCurrentVehicle(transformedData || undefined);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicle();
+  }, [vehicleId]);
 
   return (
     <DashboardContent>
@@ -47,7 +77,7 @@ export function VehicleEditView({ vehicle: currentVehicle }: Props) {
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
           { name: 'Vehicles', href: paths.dashboard.vehicles.root },
-          //   { name: `${currentUser?.firstName} ${currentUser?.lastName}` },
+          { name: `${currentVehicle?.brand} ${currentVehicle?.model}` },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />

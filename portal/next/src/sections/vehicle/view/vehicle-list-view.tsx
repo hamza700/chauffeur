@@ -2,7 +2,7 @@
 
 import type { IVehicleItem, IVehicleTableFilters } from 'src/types/vehicle';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -44,50 +44,10 @@ import {
 import { VehicleTableRow } from '../vehicle-table-row';
 import { VehicleTableToolbar } from '../vehicle-table-toolbar';
 import { VehicleTableFiltersResult } from '../vehicle-table-filters-result';
+import { deleteVehicle, getVehicles } from 'src/auth/context/supabase';
+import { transformVehicleData } from 'src/utils/data-transformers';
 
 // ----------------------------------------------------------------------
-export const mockVehicleList: IVehicleItem[] = [
-  {
-    id: '1',
-    licensePlate: 'AB123CD',
-    model: 'Audi A6',
-    colour: 'Black',
-    productionYear: '2022',
-    serviceClass: 'Business',
-    status: 'active',
-    privateHireLicenseUrls: [
-      'https://example.com/private-hire-license1.jpg',
-      'https://example.com/private-hire-license2.jpg',
-    ],
-    privateHireLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    privateHireLicenseStatus: 'approved',
-    motTestCertificateUrls: [
-      'https://example.com/mot-test-certificate1.jpg',
-      'https://example.com/mot-test-certificate2.jpg',
-    ],
-    motTestCertificateExpiryDate: '2024-01-01T00:00:00.000Z',
-    motTestCertificateStatus: 'approved',
-    vehiclePicUrl: 'https://example.com/vehicle-pic.jpg',
-    vehiclePicStatus: 'approved',
-    vehicleInsuranceUrls: [
-      'https://example.com/vehicle-insurance1.jpg',
-      'https://example.com/vehicle-insurance2.jpg',
-    ],
-    vehicleInsuranceExpiryDate: '2024-01-01T00:00:00.000Z',
-    vehicleInsuranceStatus: 'approved',
-    vehicleRegistrationUrls: [
-      'https://example.com/vehicle-registration1.jpg',
-      'https://example.com/vehicle-registration2.jpg',
-    ],
-    vehicleRegistrationStatus: 'approved',
-    leasingContractUrls: [
-      'https://example.com/leasing-contract1.jpg',
-      'https://example.com/leasing-contract2.jpg',
-    ],
-    leasingContractStatus: 'approved',
-  },
-  // Add more mock data as needed
-];
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -115,9 +75,27 @@ export function VehicleListView() {
 
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState<IVehicleItem[]>(mockVehicleList);
+  const [tableData, setTableData] = useState<IVehicleItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const filters = useSetState<IVehicleTableFilters>({ licensePlate: '', status: 'all' });
+
+  // Fetch all users from Supabase
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      setLoading(true);
+      const { data, error } = await getVehicles();
+      if (error) {
+        toast.error('Failed to fetch vehicles');
+      } else {
+        const transformedData = data?.map(transformVehicleData);
+        setTableData(transformedData || []);
+      }
+      setLoading(false);
+    };
+
+    fetchVehicles();
+  }, []);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -132,14 +110,20 @@ export function VehicleListView() {
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
+    async (id: string) => {
+      try {
+        const { error } = await deleteVehicle(id);
+        if (error) {
+          toast.error('Failed to delete vehicle');
+          return;
+        }
+        const deleteRow = tableData.filter((row) => row.id !== id);
+        toast.success('Delete success!');
+        setTableData(deleteRow);
+        table.onUpdatePageDeleteRow(dataInPage.length);
+      } catch (error) {
+        toast.error('Error deleting user');
+      }
     },
     [dataInPage.length, table, tableData]
   );

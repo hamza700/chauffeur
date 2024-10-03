@@ -89,7 +89,7 @@ export function UserEditView({ userId }: Props) {
       </Tabs>
 
       {tabs.value === 'personal' && <UserNewEditForm currentUser={currentUser} />}
-      {tabs.value === 'documents' && <UserDocuments currentUser={currentUser?.documents} />}
+      {tabs.value === 'documents' && <UserDocuments currentUser={currentUser} />}
     </DashboardContent>
   );
 }

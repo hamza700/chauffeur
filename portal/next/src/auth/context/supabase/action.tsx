@@ -34,6 +34,7 @@ export type ChauffeurSignUpParams = {
   email: string;
   firstName: string;
   lastName: string;
+  chauffeurData: Partial<ChauffeurData>;
   options?: SignUpWithPasswordCredentials['options'];
 };
 
@@ -191,6 +192,7 @@ export const signUpChauffeur = async ({
   email,
   firstName,
   lastName,
+  chauffeurData,
 }: ChauffeurSignUpParams): Promise<AuthResponse> => {
   const password = Math.random().toString(36).slice(-8);
 
@@ -206,6 +208,7 @@ export const signUpChauffeur = async ({
         roles: 'chauffeur',
         chauffeur_onboarded: false,
         provider_onboarded: false,
+        chauffeur_data: chauffeurData,
       },
     },
   });
@@ -300,6 +303,22 @@ export const updateRole = async (): Promise<UserResponse> => {
   // Update the user with the new roles
   const { data, error } = await supabase.auth.updateUser({
     data: { roles: updatedRoles },
+  });
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Update user metadata
+ *************************************** */
+export const updateUserMetadata = async (): Promise<UserResponse> => {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { chauffeur_data: null },
   });
 
   if (error) {
@@ -599,13 +618,14 @@ export const deleteVehicle = async (
 export const filterVehiclesByLicensePlate = async (
   licensePlate: string
 ): Promise<{
-  data: VehicleData[] | null;
+  data: VehicleData | null;
   error: PostgrestError | null;
 }> => {
   const { data, error } = await supabase
     .from('vehicles')
     .select('*')
-    .ilike('license_plate', `%${licensePlate}%`);
+    .eq('license_plate', licensePlate)
+    .single();
 
   if (error) {
     console.error(error);

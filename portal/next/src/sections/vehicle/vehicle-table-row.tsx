@@ -20,6 +20,7 @@ import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { VehicleQuickEditForm } from './vehicle-quick-edit-from';
+import { useAuthContext } from 'src/auth/hooks';
 
 
 // ----------------------------------------------------------------------
@@ -33,6 +34,9 @@ type Props = {
 };
 
 export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }: Props) {
+  const { user } = useAuthContext();
+  const role = user?.user_metadata?.roles;
+
   const confirm = useBoolean();
 
   const popover = usePopover();
@@ -72,14 +76,16 @@ export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDelet
 
         <TableCell>
           <Stack direction="row" alignItems="center">
-            <Tooltip title="Quick Edit" placement="top" arrow>
-              <IconButton
-                color={quickEdit.value ? 'inherit' : 'default'}
-                onClick={quickEdit.onTrue}
-              >
-                <Iconify icon="solar:pen-bold" />
-              </IconButton>
-            </Tooltip>
+          {role === 'admin' && (
+              <Tooltip title="Quick Edit" placement="top" arrow>
+                <IconButton
+                  color={quickEdit.value ? 'inherit' : 'default'}
+                  onClick={quickEdit.onTrue}
+                >
+                  <Iconify icon="solar:pen-bold" />
+                </IconButton>
+              </Tooltip>
+            )}
 
             <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
               <Iconify icon="eva:more-vertical-fill" />

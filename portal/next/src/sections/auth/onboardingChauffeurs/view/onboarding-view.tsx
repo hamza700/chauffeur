@@ -28,6 +28,9 @@ import {
   updateOnboarding,
   getChauffeurById,
   filterVehiclesByLicensePlate,
+  addUserRole,
+  insertChauffeur,
+  updateUserMetadata,
 } from 'src/auth/context/supabase';
 
 export type OnboardingDocumentsSchemaType = zod.infer<typeof OnboardingDocumentsSchema>;
@@ -133,33 +136,6 @@ export function OnboardingView() {
 
   const values = watch();
 
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!user?.id) {
-        toast.error('User not authenticated');
-        return;
-      }
-  
-      try {
-        const { data: chauffeur, error } = await getChauffeurById(user?.id);
-        if (error) {
-          console.error(error);
-          return;
-        }
-  
-        if (chauffeur?.onboarded) {
-          await updateOnboarding({ role: 'chauffeur', onboarded: true });
-          await checkUserSession?.();
-          router.refresh();
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-      }
-    };
-  
-    checkOnboardingStatus();
-  }, [user?.id, checkUserSession, router]);
-
   const handleRemoveFile = (
     inputFile: File | string,
     fieldName: keyof OnboardingDocumentsSchemaType
@@ -188,76 +164,48 @@ export function OnboardingView() {
 
   const onSubmitHandler = async (data: OnboardingDocumentsSchemaType) => {
     const userId = user?.id;
-  
+
     if (!userId) {
       toast.error('User not authenticated');
       return;
     }
-  
-    const updatedData = {
-      chauffeurDocuments: {
-        profilePicUrl: data.profilePicUrl,
-        driversLicenseUrls: data.chauffeurDriversLicenseUrls,
-        driversLicenseExpiryDate: data.chauffeurDriversLicenseExpiryDate,
-        privateHireLicenseUrls: data.chauffeurPrivateHireLicenseUrls,
-        privateHireLicenseExpiryDate: data.chauffeurPrivateHireLicenseExpiryDate,
-      },
-      vehicleDocuments: {
-        vehiclePicUrl: data.vehiclePicUrl,
-        privateHireLicenseUrls: data.vehiclePrivateHireLicenseUrls,
-        privateHireLicenseExpiryDate: data.vehiclePrivateHireLicenseExpiryDate,
-        motTestCertificateUrls: data.vehicleMotTestCertificateUrls,
-        motTestCertificateExpiryDate: data.vehicleMotTestCertificateExpiryDate,
-        vehicleInsuranceUrls: data.vehicleInsuranceUrls,
-        vehicleInsuranceExpiryDate: data.vehicleInsuranceExpiryDate,
-        vehicleRegistrationUrls: data.vehicleRegistrationUrls,
-        leasingContractUrls: data.vehicleLeasingContractUrls,
-      },
-    };
-  
+
     try {
-      // Update chauffeur details
-      const chauffeurData = transformToChauffeurData({
-        ...updatedData.chauffeurDocuments,
-        userId,
-      });
-      const { error: updateChauffeurError } = await updateChauffeur(userId, chauffeurData);
-      if (updateChauffeurError) {
-        toast.error(updateChauffeurError.details || 'Failed to update chauffeur details');
-        throw updateChauffeurError;
-      }
-      toast.success('Chauffeur details updated successfully');
-  
-      // Retrieve updated chauffeur details to get the license plate
-      const { data: chauffeur, error: getChauffeurError } = await getChauffeurById(userId);
-      if (getChauffeurError) {
-        toast.error(getChauffeurError.details || 'Failed to retrieve chauffeur details');
-        throw getChauffeurError;
-      }
-  
+      await addUserRole(userId, 'chauffeur');
+
+      const metadataChauffeurData = user.user_metadata?.chauffeur_data;
+
+      const combinedChauffeurData = {
+        ...metadataChauffeurData,
+        id: userId,
+        drivers_license_expiry_date: data.chauffeurDriversLicenseExpiryDate?.toString() ?? null,
+        private_hire_license_expiry_date: data.chauffeurPrivateHireLicenseExpiryDate?.toString() ?? null,
+      };
+
+      await insertChauffeur(combinedChauffeurData);
+      toast.success('Chauffeur details inserted successfully');
+
+      await updateUserMetadata();
+
+      const { data: chauffeur } = await getChauffeurById(userId);
+
       const licensePlate = chauffeur?.license_plate;
       if (!licensePlate) {
         toast.error('License plate not found in chauffeur details');
         return;
       }
-  
-      // Check if the license plate is in the vehicles table
-      const { data: vehicles, error: filterVehiclesError } = await filterVehiclesByLicensePlate(licensePlate);
-      if (filterVehiclesError) {
-        toast.error(filterVehiclesError.details || 'Failed to check vehicle details');
-        throw filterVehiclesError;
-      }
-  
-      if (vehicles && vehicles.length > 0) {
-        // Update vehicle details
-        const vehicleData = transformToVehicleData({
-          ...updatedData.vehicleDocuments,
-        });
-        const { error: updateVehicleError } = await updateVehicle(vehicles[0].id, vehicleData);
-        if (updateVehicleError) {
-          toast.error(updateVehicleError.details || 'Failed to update vehicle details');
-          throw updateVehicleError;
-        }
+
+      const { data: vehicle } = await filterVehiclesByLicensePlate(licensePlate);
+
+      console.log(vehicle);
+
+      if (vehicle) {
+        const vehicleData = {
+          private_hire_license_expiry_date: data.vehiclePrivateHireLicenseExpiryDate?.toString() ?? null,
+          mot_test_certificate_expiry_date: data.vehicleMotTestCertificateExpiryDate?.toString() ?? null,
+          vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate?.toString() ?? null,
+        };
+        await updateVehicle(vehicle.id, vehicleData);
         toast.success('Vehicle details updated successfully');
       } else {
         toast.error(
@@ -265,21 +213,16 @@ export function OnboardingView() {
         );
         return;
       }
-  
-      // Update onboarding status
-      const { error: updateOnboardingError } = await updateChauffeur(userId, { onboarded: true });
-      if (updateOnboardingError) {
-        toast.error(updateOnboardingError.message || 'Failed to update onboarding status');
-        throw updateOnboardingError;
-      }
+
+      await updateChauffeur(userId, { onboarded: true });
+      await updateOnboarding({ role: 'chauffeur', onboarded: true });
       toast.success('Onboarding status updated successfully');
-  
+
       await checkUserSession?.();
       router.refresh();
     } catch (error) {
       toast.error(error.message || 'An error occurred during onboarding');
       console.error(error);
-      setErrorMsg('An error occurred during onboarding.');
     }
   };
 

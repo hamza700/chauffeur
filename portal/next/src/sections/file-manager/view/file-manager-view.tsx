@@ -125,7 +125,7 @@ export function FileManagerView() {
       <DashboardContent>
         <RoleBasedGuard
           hasContent
-          currentRole={user?.user_metadata?.role}
+          currentRole={user?.user_metadata?.roles}
           acceptRoles={['admin']}
           sx={{ py: 10 }}
         >

@@ -181,7 +181,7 @@ export function ProviderListView() {
   return (
     <>
       <DashboardContent>
-        <RoleBasedGuard hasContent currentRole={user?.user_metadata?.role} acceptRoles={['admin']} sx={{ py: 10 }}>
+        <RoleBasedGuard hasContent currentRole={user?.user_metadata?.roles} acceptRoles={['admin']} sx={{ py: 10 }}>
           <CustomBreadcrumbs
             heading="Providers"
             links={[

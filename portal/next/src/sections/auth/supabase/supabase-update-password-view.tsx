@@ -69,7 +69,7 @@ export function SupabaseUpdatePasswordView() {
     try {
       await updatePassword({ password: data.password });
 
-      const role = user?.user_metadata?.role;
+      const role = user?.user_metadata?.roles;
 
       if (role === 'provider') {
         router.push(paths.dashboard.root);
