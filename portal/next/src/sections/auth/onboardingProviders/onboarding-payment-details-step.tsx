@@ -14,36 +14,25 @@ import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 
-import { Field, schemaHelper } from 'src/components/hook-form';
+import { Form, Field } from 'src/components/hook-form';
 
-// Define the basic schema using Zod for the payment method selection
-const PaymentMethodSchema = zod.object({
-  paymentMethod: zod.string().min(1, { message: 'Payment method is required!' }),
+const PaymentDetailsSchema = zod.object({
+  paymentMethod: zod.enum(
+    ['paypal', 'bankTransferDTAZV', 'bankTransferDomestic', 'bankTransferInternational'],
+    {
+      errorMap: () => ({ message: 'Payment method is required!' }),
+    }
+  ),
+  paypalEmail: zod.string().email({ message: 'Invalid email' }).optional().nullable(),
+  bankAccountOwnerName: zod.string().optional().nullable(),
+  bankName: zod.string().optional().nullable(),
+  bankCountry: zod.string().nullable().optional(),
+  bankAccountNumber: zod.string().optional().nullable(),
+  iban: zod.string().optional().nullable(),
+  swiftCode: zod.string().optional().nullable(),
 });
 
-// Define the PayPal schema
-const PayPalSchema = zod.object({
-  paypalEmail: zod
-    .string()
-    .min(1, { message: 'Paypal email is required!' })
-    .email({ message: 'Paypal email must be a valid email address!' }),
-});
-
-// Define the Bank Transfer schema
-const BankTransferSchema = zod.object({
-  bankAccountOwnerName: zod.string().min(1, { message: 'Bank account owner name is required!' }),
-  bankName: zod.string().min(1, { message: 'Bank name is required!' }),
-  bankCountry: schemaHelper.objectOrNull({
-    message: { required_error: 'Bank country is required!' },
-  }),
-  bankAccountNumber: zod.string().min(1, { message: 'Bank account number is required!' }),
-  iban: zod.string().min(1, { message: 'IBAN is required!' }),
-  swiftCode: zod.string().optional(), // Optional field
-});
-
-type PaymentDetailsSchemaType = zod.infer<typeof PaymentMethodSchema> &
-  Partial<zod.infer<typeof PayPalSchema>> &
-  Partial<zod.infer<typeof BankTransferSchema>>;
+type PaymentDetailsSchemaType = zod.infer<typeof PaymentDetailsSchema>;
 
 type Props = {
   currentPaymentDetails?: PaymentDetails;
@@ -53,67 +42,30 @@ type Props = {
 export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
   const defaultValues = {
     paymentMethod: currentPaymentDetails?.paymentMethod || '',
-    paypalEmail: currentPaymentDetails?.paypalEmail || '',
-    bankAccountOwnerName: currentPaymentDetails?.bankAccountOwnerName || '',
-    bankName: currentPaymentDetails?.bankName || '',
-    bankCountry: currentPaymentDetails?.bankCountry || '',
-    bankAccountNumber: currentPaymentDetails?.bankAccountNumber || '',
-    iban: currentPaymentDetails?.iban || '',
-    swiftCode: currentPaymentDetails?.swiftCode || '',
+    paypalEmail: currentPaymentDetails?.paypalEmail || null,
+    bankAccountOwnerName: currentPaymentDetails?.bankAccountOwnerName || null,
+    bankName: currentPaymentDetails?.bankName || null,
+    bankCountry: currentPaymentDetails?.bankCountry || null,
+    bankAccountNumber: currentPaymentDetails?.bankAccountNumber || null,
+    iban: currentPaymentDetails?.iban || null,
+    swiftCode: currentPaymentDetails?.swiftCode || null,
   };
 
   const methods = useForm<PaymentDetailsSchemaType>({
-    mode: 'all',
-    resolver: zodResolver(PaymentMethodSchema),
+    mode: 'onSubmit',
+    resolver: zodResolver(PaymentDetailsSchema),
     defaultValues,
   });
 
   const {
-    watch,
     handleSubmit,
-    setValue,
-    getValues,
-    trigger,
+    watch,
     formState: { errors },
   } = methods;
 
-  const selectedPaymentMethod = watch('paymentMethod');
+  const values = watch();
 
-  // Handle dynamic validation
-  const handlePaymentMethodChange = (method: string) => {
-    setValue('paymentMethod', method);
-    if (method === 'paypal') {
-      methods.register('paypalEmail');
-      trigger(); // Revalidate the form
-    } else {
-      methods.register('bankAccountOwnerName');
-      methods.register('bankName');
-      methods.register('bankCountry');
-      methods.register('bankAccountNumber');
-      methods.register('iban');
-      methods.register('swiftCode');
-      trigger(); // Revalidate the form
-    }
-  };
-
-  const handleSubmitForm = async () => {
-    let schemaToValidate;
-    if (selectedPaymentMethod === 'paypal') {
-      schemaToValidate = PaymentMethodSchema.merge(PayPalSchema);
-    } else {
-      schemaToValidate = PaymentMethodSchema.merge(BankTransferSchema);
-    }
-    const validationResult = await schemaToValidate.safeParseAsync(getValues());
-
-    if (validationResult.success) {
-      onSubmit(validationResult.data as PaymentDetailsSchemaType);
-    } else {
-      validationResult.error.errors.forEach((error) => {
-        const fieldName = error.path[0] as keyof typeof errors;
-        methods.setError(fieldName, { type: 'manual', message: error.message });
-      });
-    }
-  };
+  const handleSubmitForm = handleSubmit(onSubmit);
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
@@ -128,17 +80,9 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
       <Divider sx={{ my: 3 }} />
       <Card sx={{ p: 3 }}>
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(handleSubmitForm)}>
+          <Form methods={methods} onSubmit={handleSubmitForm}>
             <Stack spacing={3}>
-              <Field.Select
-                name="paymentMethod"
-                label="Select Payment Method"
-                required
-                fullWidth
-                displayEmpty
-                onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                // Don't set error and helperText here to avoid double display
-              >
+              <Field.Select name="paymentMethod" label="Select Payment Method" required fullWidth>
                 <MenuItem value="" disabled>
                   Select Payment Method
                 </MenuItem>
@@ -150,7 +94,7 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                 </MenuItem>
               </Field.Select>
 
-              {selectedPaymentMethod === 'paypal' && (
+              {values.paymentMethod === 'paypal' && (
                 <Field.Text
                   name="paypalEmail"
                   label="Paypal Email"
@@ -158,11 +102,10 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                   fullWidth
                   error={!!errors.paypalEmail}
                   helperText={errors.paypalEmail?.message}
-                  sx={{ mt: 2 }}
                 />
               )}
 
-              {selectedPaymentMethod !== 'paypal' && selectedPaymentMethod && (
+              {values.paymentMethod !== 'paypal' && values.paymentMethod && (
                 <>
                   <Field.Text
                     name="bankAccountOwnerName"
@@ -171,7 +114,6 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     fullWidth
                     error={!!errors.bankAccountOwnerName}
                     helperText={errors.bankAccountOwnerName?.message}
-                    sx={{ mt: 2 }}
                   />
                   <Field.Text
                     name="bankName"
@@ -180,7 +122,6 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     fullWidth
                     error={!!errors.bankName}
                     helperText={errors.bankName?.message}
-                    sx={{ mt: 2 }}
                   />
                   <Field.CountrySelect
                     name="bankCountry"
@@ -189,8 +130,6 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     required
                     fullWidth
                     error={!!errors.bankCountry}
-                    helperText={errors.bankCountry?.message}
-                    sx={{ mt: 2 }}
                   />
                   <Field.Text
                     name="bankAccountNumber"
@@ -199,7 +138,6 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     fullWidth
                     error={!!errors.bankAccountNumber}
                     helperText={errors.bankAccountNumber?.message}
-                    sx={{ mt: 2 }}
                   />
                   <Field.Text
                     name="iban"
@@ -208,14 +146,13 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     fullWidth
                     error={!!errors.iban}
                     helperText={errors.iban?.message}
-                    sx={{ mt: 2 }}
                   />
-                  <Field.Text name="swiftCode" label="SWIFT Code" fullWidth sx={{ mt: 2 }} />
+                  <Field.Text name="swiftCode" label="SWIFT Code" fullWidth />
                 </>
               )}
             </Stack>
             <input type="submit" style={{ display: 'none' }} />
-          </form>
+          </Form>
         </FormProvider>
       </Card>
     </Box>

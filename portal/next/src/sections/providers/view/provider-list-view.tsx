@@ -2,7 +2,7 @@
 
 import type { IProviderAccount, IProvidersTableFilters } from 'src/types/provider';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -17,6 +17,8 @@ import { paths } from 'src/routes/paths';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
+
+import { transformProviderData } from 'src/utils/data-transformers';
 
 import { varAlpha } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -39,65 +41,15 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuthContext } from 'src/auth/hooks';
 import { RoleBasedGuard } from 'src/auth/guard';
+import { getProviders, deleteProvider } from 'src/auth/context/supabase';
 
 import { ProviderTableRow } from '../provider-table-row';
 import { ProviderTableToolbar } from '../provider-table-toolbar';
 import { ProviderTableFiltersResult } from '../provider-table-filters-result';
 
 // ----------------------------------------------------------------------
-
-export const mockProviderList: IProviderAccount[] = [
-  {
-    id: '1',
-    city: 'New York',
-    email: 'john.doe@example.com',
-    state: 'NY',
-    address: '123 Main St',
-    postCode: '10001',
-    isVerified: true,
-    formCompleted: true,
-    phoneNumber: '+123456789',
-    country: 'USA',
-    companyName: 'Doe Inc.',
-    companyRegistrationNumber: '123456',
-    status: 'active',
-    companyPrivateHireOperatorLicenseUrls: ['https://example.com/license1.jpg'],
-    companyPrivateHireOperatorLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    companyPrivateHireOperatorLicenseStatus: 'approved',
-    personalIDorPassportUrls: ['https://example.com/id1.jpg'],
-    personalIDorPassportExpiryDate: '2024-01-01T00:00:00.000Z',
-    personalIDorPassportStatus: 'approved',
-    vatRegistrationCertificateUrls: ['https://example.com/vat1.jpg'],
-    vatRegistrationCertificateExpiryDate: '2024-01-01T00:00:00.000Z',
-    vatRegistrationCertificateStatus: 'approved',
-  },
-  {
-    id: '2',
-    city: 'Los Angeles',
-    email: 'liam.doe@example.com',
-    state: 'CA',
-    address: '456 Elm St',
-    postCode: '90001',
-    isVerified: true,
-    formCompleted: true,
-    phoneNumber: '+123456789',
-    country: 'USA',
-    companyName: 'Liam Inc.',
-    companyRegistrationNumber: '654321',
-    status: 'active',
-    companyPrivateHireOperatorLicenseUrls: ['https://example.com/license2.jpg'],
-    companyPrivateHireOperatorLicenseExpiryDate: '2024-01-01T00:00:00.000Z',
-    companyPrivateHireOperatorLicenseStatus: 'approved',
-    personalIDorPassportUrls: ['https://example.com/id2.jpg'],
-    personalIDorPassportExpiryDate: '2024-01-01T00:00:00.000Z',
-    personalIDorPassportStatus: 'approved',
-    vatRegistrationCertificateUrls: ['https://example.com/vat2.jpg'],
-    vatRegistrationCertificateExpiryDate: '2024-01-01T00:00:00.000Z',
-    vatRegistrationCertificateStatus: 'approved',
-  },
-];
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -122,15 +74,33 @@ const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export function ProviderListView() {
-  const { user } = useMockedUser();
+  const { user } = useAuthContext();
 
   const table = useTable();
 
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState<IProviderAccount[]>(mockProviderList);
+  const [tableData, setTableData] = useState<IProviderAccount[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const filters = useSetState<IProvidersTableFilters>({ companyName: '', status: 'all' });
+
+  // Fetch all users from Supabase
+  useEffect(() => {
+    const fetchProviders = async () => {
+      setLoading(true);
+      const { data, error } = await getProviders();
+      if (error) {
+        toast.error('Failed to fetch providers');
+      } else {
+        const transformedData = data?.map(transformProviderData);
+        setTableData(transformedData || []);
+      }
+      setLoading(false);
+    };
+
+    fetchProviders();
+  }, []);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -145,14 +115,20 @@ export function ProviderListView() {
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
+    async (id: string) => {
+      try {
+        const { error } = await deleteProvider(id);
+        if (error) {
+          toast.error('Failed to delete provider');
+          return;
+        }
+        const deleteRow = tableData.filter((row) => row.id !== id);
+        toast.success('Delete success!');
+        setTableData(deleteRow);
+        table.onUpdatePageDeleteRow(dataInPage.length);
+      } catch (error) {
+        toast.error('Error deleting provider');
+      }
     },
     [dataInPage.length, table, tableData]
   );
@@ -181,7 +157,12 @@ export function ProviderListView() {
   return (
     <>
       <DashboardContent>
-        <RoleBasedGuard hasContent currentRole={user?.user_metadata?.roles} acceptRoles={['admin']} sx={{ py: 10 }}>
+        <RoleBasedGuard
+          hasContent
+          currentRole={user?.user_metadata?.roles}
+          acceptRoles={['admin']}
+          sx={{ py: 10 }}
+        >
           <CustomBreadcrumbs
             heading="Providers"
             links={[
@@ -222,7 +203,7 @@ export function ProviderListView() {
                       }
                     >
                       {['active', 'pending', 'rejected'].includes(tab.value)
-                        ? tableData.filter((user) => user.status === tab.value).length
+                        ? tableData.filter((provider) => provider.status === tab.value).length
                         : tableData.length}
                     </Label>
                   }

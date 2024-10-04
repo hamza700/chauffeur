@@ -47,7 +47,6 @@ type Props = {
 export function UserEditView({ userId }: Props) {
   const [currentUser, setCurrentUser] = useState<IUserItem | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const tabs = useTabs('personal');
 
   useEffect(() => {
@@ -55,13 +54,13 @@ export function UserEditView({ userId }: Props) {
       try {
         const { data, error } = await getChauffeurById(userId);
         if (error) {
-          setError(error.message);
+          toast.error(error.message);
         } else {
           const transformedData = transformChauffeurData(data);
           setCurrentUser(transformedData || undefined);
         }
       } catch (err) {
-        setError(err.message);
+        toast.error(error.message);
       } finally {
         setLoading(false);
       }

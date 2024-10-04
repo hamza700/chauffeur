@@ -1,5 +1,7 @@
 'use client';
 
+import type { PaymentDetails } from 'src/types/provider';
+
 import { useState } from 'react';
 
 import Divider from '@mui/material/Divider';
@@ -24,7 +26,6 @@ import {
   insertProvider,
   updateProvider,
   insertChauffeur,
-  signUpChauffeur,
   updateChauffeur,
   updateOnboarding,
 } from 'src/auth/context/supabase';
@@ -65,6 +66,7 @@ export function OnboardingView() {
       taxIdentificationNumber: '',
       companyRegistrationNumber: '',
       vatNumber: '',
+      status: 'pending',
     },
     firstChauffeur: {
       firstName: user?.user_metadata?.first_name,
@@ -75,6 +77,7 @@ export function OnboardingView() {
       privateHireLicense: '',
       licensePlate: '',
       country: '',
+      status: 'pending',
     },
     firstVehicle: {
       model: '',
@@ -82,6 +85,7 @@ export function OnboardingView() {
       colour: '',
       licensePlate: '',
       serviceClass: '',
+      status: 'pending',
     },
     providerDocuments: {
       companyPrivateHireOperatorLicenseUrls: [],
@@ -126,14 +130,14 @@ export function OnboardingView() {
       signature: '',
     },
     paymentDetails: {
-      paymentMethod: 'paypal',
-      paypalEmail: '',
-      bankAccountOwnerName: '',
-      bankName: '',
+      paymentMethod: '' as PaymentDetails['paymentMethod'],
+      paypalEmail: null,
+      bankAccountOwnerName: null,
+      bankName: null,
       bankCountry: null,
-      bankAccountNumber: '',
-      iban: '',
-      swiftCode: '',
+      bankAccountNumber: null,
+      iban: null,
+      swiftCode: null,
     },
   });
 
@@ -159,6 +163,7 @@ export function OnboardingView() {
         taxIdentificationNumber: '',
         companyRegistrationNumber: '',
         vatNumber: '',
+        status: 'pending',
       },
       firstChauffeur: {
         firstName: user?.user_metadata?.first_name,
@@ -169,6 +174,7 @@ export function OnboardingView() {
         privateHireLicense: '',
         licensePlate: '',
         country: '',
+        status: 'pending',
       },
       firstVehicle: {
         model: '',
@@ -176,6 +182,7 @@ export function OnboardingView() {
         colour: '',
         licensePlate: '',
         serviceClass: '',
+        status: 'pending',
       },
       providerDocuments: {
         companyPrivateHireOperatorLicenseUrls: [],
@@ -220,14 +227,14 @@ export function OnboardingView() {
         signature: '',
       },
       paymentDetails: {
-        paymentMethod: 'paypal',
-        paypalEmail: '',
-        bankAccountOwnerName: '',
-        bankName: '',
+        paymentMethod: '' as PaymentDetails['paymentMethod'],
+        paypalEmail: null,
+        bankAccountOwnerName: null,
+        bankName: null,
         bankCountry: null,
-        bankAccountNumber: '',
-        iban: '',
-        swiftCode: '',
+        bankAccountNumber: null,
+        iban: null,
+        swiftCode: null,
       },
     });
   };

@@ -15,6 +15,7 @@ import { transformVehicleData } from 'src/utils/data-transformers';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
@@ -47,7 +48,6 @@ type Props = {
 export function VehicleEditView({ vehicleId }: Props) {
   const [currentVehicle, setCurrentVehicle] = useState<IVehicleItem | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const tabs = useTabs('vehicle');
 
   useEffect(() => {
@@ -55,13 +55,13 @@ export function VehicleEditView({ vehicleId }: Props) {
       try {
         const { data, error } = await getVehicleById(vehicleId);
         if (error) {
-          setError(error.message);
+          toast.error(error.message);
         } else {
           const transformedData = transformVehicleData(data);
           setCurrentVehicle(transformedData || undefined);
         }
       } catch (err) {
-        setError(err.message);
+        toast.error(err.message);
       } finally {
         setLoading(false);
       }

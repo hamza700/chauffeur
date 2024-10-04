@@ -75,7 +75,7 @@ export type ChauffeurData = {
   drivers_license_expiry_date: string | null;
   private_hire_license_expiry_date: string | null;
   provider_id: string;
-  onboarded: boolean;
+  onboarded?: boolean;
 };
 
 export type ProviderData = {
@@ -90,6 +90,8 @@ export type ProviderData = {
   country: string;
   company_name: string;
   company_registration_number: string;
+  tax_identification_number: string;
+  vat_number: string;
   company_private_hire_operator_license_expiry_date: string;
   company_private_hire_operator_license_status: string | null;
   personal_id_or_passport_expiry_date: string;
@@ -108,7 +110,7 @@ export type ProviderData = {
   bank_account_number: string | null;
   iban: string | null;
   swift_code: string | null;
-  onboarded: boolean;
+  onboarded?: boolean;
 };
 
 export type VehicleData = {

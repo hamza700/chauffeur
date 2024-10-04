@@ -1,15 +1,14 @@
 'use client';
 
-import type { IDocumentFields } from 'src/types/provider';
+import type { IProviderAccount } from 'src/types/provider';
 
 import { z as zod } from 'zod';
-import { useForm } from 'react-hook-form';
-import { useMemo, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo, useEffect, useCallback } from 'react';
+import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -17,20 +16,19 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useBoolean } from 'src/hooks/use-boolean';
+import { transformToProviderData } from 'src/utils/data-transformers';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
-import { Iconify } from 'src/components/iconify';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
-import { AccountNewFolderDialog } from './account-new-folder-dialog';
+import { updateProvider } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
-export type UserDocumentsSchemaType = zod.infer<typeof UserDocumentsSchema>;
+export type ProviderDocumentsSchemaType = zod.infer<typeof ProviderDocumentsSchema>;
 
-export const UserDocumentsSchema = zod.object({
+export const ProviderDocumentsSchema = zod.object({
   companyPrivateHireOperatorLicenseFiles: schemaHelper.files({
     message: { required_error: 'Private hire operator license is required!', minFiles: 1 },
   }),
@@ -54,7 +52,7 @@ export const UserDocumentsSchema = zod.object({
 // ----------------------------------------------------------------------
 
 type Props = {
-  currentProvider?: IDocumentFields;
+  currentProvider?: IProviderAccount;
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -65,34 +63,31 @@ const FILE_STATUS_OPTIONS = [
 
 export function AccountDocuments({ currentProvider }: Props) {
   const router = useRouter();
-  const upload = useBoolean();
 
   const defaultValues = useMemo(
     () => ({
-      companyPrivateHireOperatorLicenseFiles:
-        currentProvider?.companyPrivateHireOperatorLicenseUrls || [],
-      personalIDorPassportFiles: currentProvider?.personalIDorPassportUrls || [],
-      vatRegistrationCertificateFiles: currentProvider?.vatRegistrationCertificateUrls || [],
-      companyPrivateHireOperatorLicenseExpiry:
-        currentProvider?.companyPrivateHireOperatorLicenseExpiryDate || null,
-      personalIDorPassportExpiry: currentProvider?.personalIDorPassportExpiryDate || null,
-      vatRegistrationCertificateExpiry:
-        currentProvider?.vatRegistrationCertificateExpiryDate || null,
+      companyPrivateHireOperatorLicenseFiles: currentProvider?.documents.companyPrivateHireOperatorLicenseUrls || [],
+      personalIDorPassportFiles: currentProvider?.documents.personalIDorPassportUrls || [],
+      vatRegistrationCertificateFiles: currentProvider?.documents.vatRegistrationCertificateUrls || [],
+      companyPrivateHireOperatorLicenseExpiry: currentProvider?.documents.companyPrivateHireOperatorLicenseExpiryDate || null,
+      personalIDorPassportExpiry: currentProvider?.documents.personalIDorPassportExpiryDate || null,
+      vatRegistrationCertificateExpiry: currentProvider?.documents.vatRegistrationCertificateExpiryDate || null,
     }),
     [currentProvider]
   );
 
-  const methods = useForm<UserDocumentsSchemaType>({
+  const methods = useForm<ProviderDocumentsSchemaType>({
     mode: 'onSubmit',
-    resolver: zodResolver(UserDocumentsSchema),
+    resolver: zodResolver(ProviderDocumentsSchema),
     defaultValues,
   });
 
   const {
     reset,
-    watch,
     handleSubmit,
     formState: { isSubmitting },
+    setValue,
+    watch,
   } = methods;
 
   const values = watch();
@@ -103,187 +98,82 @@ export function AccountDocuments({ currentProvider }: Props) {
     }
   }, [currentProvider, defaultValues, reset]);
 
+  const handleRemoveFile = (inputFile: File | string, fieldName: keyof ProviderDocumentsSchemaType) => {
+    const fieldValue = values[fieldName];
+    if (Array.isArray(fieldValue)) {
+      const filtered = fieldValue.filter((file) => file !== inputFile);
+      setValue(fieldName, filtered, { shouldValidate: true });
+    }
+  };
+
+  const handleRemoveAllFiles = (fieldName: keyof ProviderDocumentsSchemaType) => {
+    setValue(fieldName, [], { shouldValidate: true });
+  };
+
+  const handleDrop = useCallback(
+    (files: File[], fieldName: keyof ProviderDocumentsSchemaType) => {
+      const currentFiles = values[fieldName];
+      const updatedFiles = Array.isArray(currentFiles)
+        ? [...currentFiles, ...files]
+        : files[0];
+      setValue(fieldName, updatedFiles, { shouldValidate: true });
+    },
+    [setValue, values]
+  );
+
   const onSubmit = handleSubmit(async (data) => {
-    console.log('Form submitted');
-    console.log('Submitting data:', data);
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('Documents updated successfully!');
-      router.push(paths.dashboard.providers);
+      await updateProvider(currentProvider.id, transformToProviderData(data));
+      toast.success('Update success!');
+      router.push(paths.dashboard.settings);
       console.info('DATA', data);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error updating documents:', error);
       toast.error('Failed to update documents. Please try again.');
     }
   });
 
-  const handleDownload = (url: string) => {
-    console.log('Downloading file:', url);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = url.split('/').pop() || 'download';
-    link.click();
-  };
-
-  const getStatusLabel = (status: 'pending' | 'rejected' | 'approved') => {
-    const statusOption = FILE_STATUS_OPTIONS.find((option) => option.value === status);
-    const statusLabel = statusOption ? statusOption.label : 'Unknown status';
-    const statusColor = statusOption
-      ? (statusOption.color as 'default' | 'success' | 'warning' | 'error')
-      : 'default';
-    return (
-      <Label variant="filled" color={statusColor}>
-        {statusLabel}
-      </Label>
-    );
-  };
-
   return (
-    <>
+    <FormProvider {...methods}>
       <Form methods={methods} onSubmit={onSubmit}>
         <Card sx={{ p: 3 }}>
           <Stack spacing={3}>
             <Typography variant="h6">Upload Documents</Typography>
 
-            <Stack spacing={1.5}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="subtitle2">Company Private Hire Operator License</Typography>
-                {currentProvider?.companyPrivateHireOperatorLicenseStatus &&
-                  getStatusLabel(currentProvider.companyPrivateHireOperatorLicenseStatus)}
-              </Stack>
-              <Field.DatePicker
-                name="companyPrivateHireOperatorLicenseExpiry"
-                label="Expiry Date"
-                sx={{ width: '50%' }}
-              />
-              <Stack direction="row" spacing={1.5}>
-                {currentProvider?.companyPrivateHireOperatorLicenseUrls.map((url, index) => (
-                  <img
-                    key={url + index}
-                    src={url}
-                    alt="Private Hire Operator License"
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'cover',
-                      borderRadius: '50%',
-                    }}
-                  />
-                ))}
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-download-fill" />}
-                  onClick={() =>
-                    handleDownload(currentProvider?.companyPrivateHireOperatorLicenseUrls[0] || '')
-                  }
-                >
-                  Download
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-upload-fill" />}
-                  onClick={upload.onTrue}
-                >
-                  Upload
-                </Button>
-              </Stack>
-            </Stack>
+            <DocumentSection
+              title="Company Private Hire Operator License"
+              fieldName="companyPrivateHireOperatorLicenseFiles"
+              expiryField="companyPrivateHireOperatorLicenseExpiry"
+              onRemove={handleRemoveFile}
+              onRemoveAll={handleRemoveAllFiles}
+              onDrop={handleDrop}
+              currentStatus={currentProvider?.documents.companyPrivateHireOperatorLicenseStatus || 'pending'}
+            />
 
             <Divider sx={{ my: 3 }} />
 
-            <Stack spacing={1.5}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="subtitle2">Personal ID or Passport</Typography>
-                {currentProvider?.personalIDorPassportStatus &&
-                  getStatusLabel(currentProvider.personalIDorPassportStatus)}
-              </Stack>
-              <Field.DatePicker
-                name="personalIDorPassportExpiry"
-                label="Expiry Date"
-                sx={{ width: '50%' }}
-              />
-              <Stack direction="row" spacing={1.5}>
-                {currentProvider?.personalIDorPassportUrls.map((url, index) => (
-                  <img
-                    key={url + index}
-                    src={url}
-                    alt="Personal ID or Passport"
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'cover',
-                      borderRadius: '50%',
-                    }}
-                  />
-                ))}
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-download-fill" />}
-                  onClick={() => handleDownload(currentProvider?.personalIDorPassportUrls[0] || '')}
-                >
-                  Download
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-upload-fill" />}
-                  onClick={upload.onTrue}
-                >
-                  Upload
-                </Button>
-              </Stack>
-            </Stack>
+            <DocumentSection
+              title="Personal ID or Passport"
+              fieldName="personalIDorPassportFiles"
+              expiryField="personalIDorPassportExpiry"
+              onRemove={handleRemoveFile}
+              onRemoveAll={handleRemoveAllFiles}
+              onDrop={handleDrop}
+              currentStatus={currentProvider?.documents.personalIDorPassportStatus || 'pending'}
+            />
 
             <Divider sx={{ my: 3 }} />
 
-            <Stack spacing={1.5}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="subtitle2">VAT Registration Certificate</Typography>
-                {currentProvider?.vatRegistrationCertificateStatus &&
-                  getStatusLabel(currentProvider.vatRegistrationCertificateStatus)}
-              </Stack>
-              <Field.DatePicker
-                name="vatRegistrationCertificateExpiry"
-                label="Expiry Date"
-                sx={{ width: '50%' }}
-              />
-              <Stack direction="row" spacing={1.5}>
-                {currentProvider?.vatRegistrationCertificateUrls.map((url, index) => (
-                  <img
-                    key={url + index}
-                    src={url}
-                    alt="VAT Registration Certificate"
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'cover',
-                      borderRadius: '50%',
-                    }}
-                  />
-                ))}
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-download-fill" />}
-                  onClick={() =>
-                    handleDownload(currentProvider?.vatRegistrationCertificateUrls[0] || '')
-                  }
-                >
-                  Download
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Iconify icon="eva:cloud-upload-fill" />}
-                  onClick={upload.onTrue}
-                >
-                  Upload
-                </Button>
-              </Stack>
-            </Stack>
+            <DocumentSection
+              title="VAT Registration Certificate"
+              fieldName="vatRegistrationCertificateFiles"
+              expiryField="vatRegistrationCertificateExpiry"
+              onRemove={handleRemoveFile}
+              onRemoveAll={handleRemoveAllFiles}
+              onDrop={handleDrop}
+              currentStatus={currentProvider?.documents.vatRegistrationCertificateStatus || 'pending'}
+            />
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
@@ -293,8 +183,56 @@ export function AccountDocuments({ currentProvider }: Props) {
           </Stack>
         </Card>
       </Form>
+    </FormProvider>
+  );
+}
 
-      <AccountNewFolderDialog open={upload.value} onClose={upload.onFalse} />
-    </>
+type DocumentSectionProps = {
+  title: string;
+  fieldName: keyof ProviderDocumentsSchemaType;
+  expiryField: keyof ProviderDocumentsSchemaType;
+  onRemove: (file: File | string, fieldName: keyof ProviderDocumentsSchemaType) => void;
+  onRemoveAll: (fieldName: keyof ProviderDocumentsSchemaType) => void;
+  onDrop: (files: File[], fieldName: keyof ProviderDocumentsSchemaType) => void;
+  currentStatus?: 'pending' | 'approved' | 'rejected';
+};
+
+function DocumentSection({
+  title,
+  fieldName,
+  expiryField,
+  onRemove,
+  onRemoveAll,
+  onDrop,
+  currentStatus,
+}: DocumentSectionProps) {
+  const { watch } = useFormContext<ProviderDocumentsSchemaType>();
+  const fieldValue = watch(fieldName);
+
+  const getStatusLabel = (status: 'pending' | 'rejected' | 'approved') => {
+    const statusOption = FILE_STATUS_OPTIONS.find((option) => option.value === status);
+    return statusOption ? (
+      <Label variant="filled" color={statusOption.color as 'warning' | 'success' | 'error'}>
+        {statusOption.label}
+      </Label>
+    ) : null;
+  };
+
+  return (
+    <Stack spacing={1.5}>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="subtitle2">{title}</Typography>
+        {currentStatus && getStatusLabel(currentStatus)}
+      </Stack>
+      <Field.DatePicker name={expiryField} label="Expiry Date" sx={{ width: '50%' }} />
+      <Field.Upload
+        name={fieldName}
+        multiple
+        thumbnail
+        onRemove={(file) => onRemove(file, fieldName)}
+        onRemoveAll={() => onRemoveAll(fieldName)}
+        onDrop={(files) => onDrop(files, fieldName)}
+      />
+    </Stack>
   );
 }
