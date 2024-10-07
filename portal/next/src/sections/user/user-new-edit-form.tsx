@@ -22,13 +22,15 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { transformToChauffeurData } from 'src/utils/data-transformers';
 
+import { signUpChauffeur } from 'src/actions/chauffeur';
+
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { updateChauffeur, deleteChauffeur, signUpChauffeur } from 'src/auth/context/supabase';
+import { updateChauffeur, deleteChauffeur } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
@@ -109,18 +111,19 @@ export function UserNewEditForm({ currentUser }: Props) {
         await updateChauffeur(currentUser.id, transformToChauffeurData(data));
         toast.success('Update success!');
       } else {
-        const chauffeurData = transformToChauffeurData({
-          ...data,
-          providerId: userId,
-          onboarded: false,
-        });
-
-        await signUpChauffeur({
+        const chauffeurData = {
           email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          chauffeurData,
-        });
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone_number: data.phoneNumber,
+          country: data.country,
+          drivers_license: data.driversLicense,
+          private_hire_license: data.privateHireLicense,
+          license_plate: data.licensePlate,
+          provider_id: userId,
+        };
+
+        await signUpChauffeur(chauffeurData, user?.access_token);
 
         toast.success('Create success!');
       }

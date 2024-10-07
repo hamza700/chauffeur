@@ -171,21 +171,14 @@ export function OnboardingView() {
     }
 
     try {
-      await addUserRole(userId, 'chauffeur');
 
-      const metadataChauffeurData = user.user_metadata?.chauffeur_data;
-
-      const combinedChauffeurData = {
-        ...metadataChauffeurData,
-        id: userId,
+      const chauffeurData = {
         drivers_license_expiry_date: data.chauffeurDriversLicenseExpiryDate?.toString() ?? null,
         private_hire_license_expiry_date: data.chauffeurPrivateHireLicenseExpiryDate?.toString() ?? null,
       };
 
-      await insertChauffeur(combinedChauffeurData);
-      toast.success('Chauffeur details inserted successfully');
-
-      await updateUserMetadata();
+      await updateChauffeur(userId, chauffeurData);
+      toast.success('Chauffeur details updated successfully');
 
       const { data: chauffeur } = await getChauffeurById(userId);
 
