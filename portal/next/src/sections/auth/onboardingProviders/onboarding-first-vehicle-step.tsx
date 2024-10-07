@@ -53,6 +53,13 @@ export const NewVehicleSchema = zod.object({
   colour: zod.string().min(1, { message: 'Colour is required!' }),
   licensePlate: zod.string().min(1, { message: 'License plate is required!' }),
   serviceClass: zod.string().min(1, { message: 'Service class is required!' }),
+  status: zod.literal('pending'),
+  vehiclePicStatus: zod.literal('pending'),
+  privateHireLicenseStatus: zod.literal('pending'),
+  motTestCertificateStatus: zod.literal('pending'),
+  vehicleInsuranceStatus: zod.literal('pending'),
+  vehicleRegistrationStatus: zod.literal('pending'),
+  leasingContractStatus: zod.literal('pending'),
 });
 
 // ----------------------------------------------------------------------
@@ -70,6 +77,13 @@ export function FirstVehicleStep({ currentVehicle, onSubmit }: Props) {
       colour: currentVehicle?.colour || '',
       licensePlate: currentVehicle?.licensePlate || '',
       serviceClass: currentVehicle?.serviceClass || '',
+      status: currentVehicle?.status || 'pending',
+      vehiclePicStatus: currentVehicle?.vehiclePicStatus || 'pending',
+      privateHireLicenseStatus: currentVehicle?.privateHireLicenseStatus || 'pending',
+      motTestCertificateStatus: currentVehicle?.motTestCertificateStatus || 'pending',
+      vehicleInsuranceStatus: currentVehicle?.vehicleInsuranceStatus || 'pending',
+      vehicleRegistrationStatus: currentVehicle?.vehicleRegistrationStatus || 'pending',
+      leasingContractStatus: currentVehicle?.leasingContractStatus || 'pending',
     }),
     [currentVehicle]
   );

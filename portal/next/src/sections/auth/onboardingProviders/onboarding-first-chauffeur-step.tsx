@@ -31,6 +31,10 @@ export const UpdateChauffeurSchema = zod.object({
   country: schemaHelper.objectOrNull({
     message: { required_error: 'Country is required!' },
   }),
+  status: zod.literal('pending'),
+  profilePicStatus: zod.literal('pending'),
+  driversLicenseStatus: zod.literal('pending'),
+  privateHireLicenseStatus: zod.literal('pending'),
 });
 
 type Props = {
@@ -48,6 +52,10 @@ export function FirstChauffeurStep({ currentChauffeur, onSubmit }: Props) {
     privateHireLicense: currentChauffeur?.privateHireLicense || '',
     licensePlate: currentChauffeur?.licensePlate || '',
     country: currentChauffeur?.country || null,
+    status: currentChauffeur?.status || 'pending',
+    profilePicStatus: currentChauffeur?.profilePicStatus || 'pending',
+    driversLicenseStatus: currentChauffeur?.driversLicenseStatus || 'pending',
+    privateHireLicenseStatus: currentChauffeur?.privateHireLicenseStatus || 'pending',
   };
 
   const methods = useForm<UpdateChauffeurSchemaType>({

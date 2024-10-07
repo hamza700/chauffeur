@@ -34,6 +34,10 @@ export const UpdateProviderSchema = zod.object({
     .string()
     .min(1, { message: 'Company Registration Number is required!' }),
   vatNumber: zod.string().min(1, { message: 'VAT Number is required!' }),
+  status: zod.literal('pending'),
+  companyPrivateHireOperatorLicenseStatus: zod.literal('pending'),
+  personalIDorPassportStatus: zod.literal('pending'),
+  vatRegistrationCertificateStatus: zod.literal('pending'),
 });
 
 type Props = {
@@ -53,6 +57,10 @@ export function CompanyInfoStep({ currentProvider, onSubmit }: Props) {
     taxIdentificationNumber: currentProvider?.taxIdentificationNumber || '',
     companyRegistrationNumber: currentProvider?.companyRegistrationNumber || '',
     vatNumber: currentProvider?.vatNumber || '',
+    status: currentProvider?.status || 'pending',
+    companyPrivateHireOperatorLicenseStatus: currentProvider?.companyPrivateHireOperatorLicenseStatus || 'pending',
+    personalIDorPassportStatus: currentProvider?.personalIDorPassportStatus || 'pending',
+    vatRegistrationCertificateStatus: currentProvider?.vatRegistrationCertificateStatus || 'pending',
   };
 
   const methods = useForm<UpdateProviderSchemaType>({
