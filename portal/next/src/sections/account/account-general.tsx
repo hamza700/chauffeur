@@ -20,8 +20,6 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { transformToProviderData } from 'src/utils/data-transformers';
-
 import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
@@ -104,7 +102,19 @@ export function AccountGeneral({ currentProvider }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await updateProvider(currentProvider.id, transformToProviderData(data));
+      const updateData = {
+        company_name: data.companyName,
+        phone_number: data.phoneNumber,
+        country: data.country,
+        address: data.address,
+        state: data.state,
+        city: data.city,
+        post_code: data.postCode,
+        tax_identification_number: data.taxIdentificationNumber,
+        company_registration_number: data.companyRegistrationNumber,
+        vat_number: data.vatNumber,
+      };
+      await updateProvider(currentProvider.id, updateData);
       toast.success('Update success!');
       router.refresh();
       console.info('DATA', data);

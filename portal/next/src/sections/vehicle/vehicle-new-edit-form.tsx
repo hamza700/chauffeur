@@ -1,8 +1,8 @@
 'use client';
 
 import { z as zod } from 'zod';
-import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { useMemo, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
@@ -18,13 +18,15 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { uuidv4 } from 'src/utils/uuidv4';
+import { transformToVehicleData } from 'src/utils/data-transformers';
+
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+
 import { useAuthContext } from 'src/auth/hooks';
 import { deleteVehicle, insertVehicle, updateVehicle } from 'src/auth/context/supabase';
-import { transformToVehicleData } from 'src/utils/data-transformers';
-import { uuidv4 } from 'src/utils/uuidv4';
 
 // ----------------------------------------------------------------------
 
@@ -116,13 +118,21 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       if (currentVehicle) {
         // Update existing user
-        await updateVehicle(currentVehicle.id, transformToVehicleData(data));
+        const updateData = {
+          model: data.model,
+          production_year: data.productionYear,
+          colour: data.colour,
+          license_plate: data.licensePlate,
+          service_class: data.serviceClass,
+        };
+        await updateVehicle(currentVehicle.id, updateData);
         toast.success('Update success!');
       } else {
         const vehicleData = transformToVehicleData({
           ...data,
           providerId: userId,
           id: uuidv4(),
+          status: 'pending',
         });
 
         await insertVehicle(vehicleData);
@@ -233,7 +243,12 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
               </Field.Select>
             </Box>
 
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mt: 3 }}
+            >
               {currentVehicle && (
                 <Button variant="soft" color="error" onClick={confirm.onTrue}>
                   Delete vehicle

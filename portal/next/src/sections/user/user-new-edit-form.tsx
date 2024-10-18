@@ -20,8 +20,6 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { transformToChauffeurData } from 'src/utils/data-transformers';
-
 import { signUpChauffeur } from 'src/actions/chauffeur';
 
 import { Label } from 'src/components/label';
@@ -108,7 +106,17 @@ export function UserNewEditForm({ currentUser }: Props) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       if (currentUser) {
         // Update existing user
-        await updateChauffeur(currentUser.id, transformToChauffeurData(data));
+        const updateData = {
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone_number: data.phoneNumber,
+          country: data.country,
+          drivers_license: data.driversLicense,
+          private_hire_license: data.privateHireLicense,
+          license_plate: data.licensePlate,
+        };
+        await updateChauffeur(currentUser.id, updateData);
         toast.success('Update success!');
       } else {
         const chauffeurData = {
@@ -121,9 +129,11 @@ export function UserNewEditForm({ currentUser }: Props) {
           private_hire_license: data.privateHireLicense,
           license_plate: data.licensePlate,
           provider_id: userId,
+          status: 'pending',
         };
 
-        await signUpChauffeur(chauffeurData, user?.access_token);
+        const newChauffeur = await signUpChauffeur(chauffeurData, user?.access_token);
+        console.log('newChauffeur', newChauffeur);
 
         toast.success('Create success!');
       }

@@ -16,8 +16,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { transformToProviderData } from 'src/utils/data-transformers';
-
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
@@ -66,12 +64,16 @@ export function AccountDocuments({ currentProvider }: Props) {
 
   const defaultValues = useMemo(
     () => ({
-      companyPrivateHireOperatorLicenseFiles: currentProvider?.documents.companyPrivateHireOperatorLicenseUrls || [],
+      companyPrivateHireOperatorLicenseFiles:
+        currentProvider?.documents.companyPrivateHireOperatorLicenseUrls || [],
       personalIDorPassportFiles: currentProvider?.documents.personalIDorPassportUrls || [],
-      vatRegistrationCertificateFiles: currentProvider?.documents.vatRegistrationCertificateUrls || [],
-      companyPrivateHireOperatorLicenseExpiry: currentProvider?.documents.companyPrivateHireOperatorLicenseExpiryDate || null,
+      vatRegistrationCertificateFiles:
+        currentProvider?.documents.vatRegistrationCertificateUrls || [],
+      companyPrivateHireOperatorLicenseExpiry:
+        currentProvider?.documents.companyPrivateHireOperatorLicenseExpiryDate || null,
       personalIDorPassportExpiry: currentProvider?.documents.personalIDorPassportExpiryDate || null,
-      vatRegistrationCertificateExpiry: currentProvider?.documents.vatRegistrationCertificateExpiryDate || null,
+      vatRegistrationCertificateExpiry:
+        currentProvider?.documents.vatRegistrationCertificateExpiryDate || null,
     }),
     [currentProvider]
   );
@@ -98,7 +100,10 @@ export function AccountDocuments({ currentProvider }: Props) {
     }
   }, [currentProvider, defaultValues, reset]);
 
-  const handleRemoveFile = (inputFile: File | string, fieldName: keyof ProviderDocumentsSchemaType) => {
+  const handleRemoveFile = (
+    inputFile: File | string,
+    fieldName: keyof ProviderDocumentsSchemaType
+  ) => {
     const fieldValue = values[fieldName];
     if (Array.isArray(fieldValue)) {
       const filtered = fieldValue.filter((file) => file !== inputFile);
@@ -113,9 +118,7 @@ export function AccountDocuments({ currentProvider }: Props) {
   const handleDrop = useCallback(
     (files: File[], fieldName: keyof ProviderDocumentsSchemaType) => {
       const currentFiles = values[fieldName];
-      const updatedFiles = Array.isArray(currentFiles)
-        ? [...currentFiles, ...files]
-        : files[0];
+      const updatedFiles = Array.isArray(currentFiles) ? [...currentFiles, ...files] : files[0];
       setValue(fieldName, updatedFiles, { shouldValidate: true });
     },
     [setValue, values]
@@ -124,7 +127,13 @@ export function AccountDocuments({ currentProvider }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await updateProvider(currentProvider.id, transformToProviderData(data));
+      const updateData = {
+        company_private_hire_operator_license_expiry_date:
+          data.companyPrivateHireOperatorLicenseExpiry,
+        personal_id_or_passport_expiry_date: data.personalIDorPassportExpiry,
+        vat_registration_certificate_expiry_date: data.vatRegistrationCertificateExpiry,
+      };
+      await updateProvider(currentProvider.id, updateData);
       toast.success('Update success!');
       router.push(paths.dashboard.settings);
       console.info('DATA', data);
@@ -148,7 +157,9 @@ export function AccountDocuments({ currentProvider }: Props) {
               onRemove={handleRemoveFile}
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
-              currentStatus={currentProvider?.documents.companyPrivateHireOperatorLicenseStatus || 'pending'}
+              currentStatus={
+                currentProvider?.documents.companyPrivateHireOperatorLicenseStatus || 'pending'
+              }
             />
 
             <Divider sx={{ my: 3 }} />
@@ -172,7 +183,9 @@ export function AccountDocuments({ currentProvider }: Props) {
               onRemove={handleRemoveFile}
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
-              currentStatus={currentProvider?.documents.vatRegistrationCertificateStatus || 'pending'}
+              currentStatus={
+                currentProvider?.documents.vatRegistrationCertificateStatus || 'pending'
+              }
             />
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>

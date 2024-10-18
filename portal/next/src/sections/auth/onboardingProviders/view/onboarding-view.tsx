@@ -16,6 +16,8 @@ import {
   transformToChauffeurData,
 } from 'src/utils/data-transformers';
 
+import { signUpChauffeur } from 'src/actions/chauffeur';
+
 import { toast } from 'src/components/snackbar';
 
 import { useAuthContext } from 'src/auth/hooks';
@@ -287,21 +289,56 @@ export function OnboardingView() {
       await updateProvider(userId, { onboarded: true });
       toast.success('Provider onboarding status updated successfully');
 
-      // Add chauffeur role to the same user
-      await addUserRole(userId, 'chauffeur');
-      await updateRole();
-      toast.success('Chauffeur role added successfully');
+      let chauffeurId = userId; // Default to the same user ID
 
-      // Insert chauffeur details
-      const chauffeurData = transformToChauffeurData({
-        ...formData.firstChauffeur,
-        ...formData.chauffeurDocuments,
-        providerId: userId,
-        id: userId,
-        onboarded: false,
-      });
-      await insertChauffeur(chauffeurData);
-      toast.success('Chauffeur details added successfully');
+      // Check if chauffeur email is different from provider email
+      if (formData.firstChauffeur.email !== user?.email) {
+        // Sign up new chauffeur
+        const chauffeurData = {
+          email: formData.firstChauffeur.email,
+          first_name: formData.firstChauffeur.firstName,
+          last_name: formData.firstChauffeur.lastName,
+          phone_number: formData.firstChauffeur.phoneNumber,
+          country: formData.firstChauffeur.country,
+          drivers_license: formData.firstChauffeur.driversLicense,
+          private_hire_license: formData.firstChauffeur.privateHireLicense,
+          license_plate: formData.firstChauffeur.licensePlate,
+          provider_id: userId,
+          status: 'pending',
+        };
+
+        const newChauffeur = await signUpChauffeur(chauffeurData, user?.access_token);
+        chauffeurId = newChauffeur.id; // Assuming signUpChauffeur returns the new chauffeur's ID
+        toast.success('New chauffeur signed up successfully');
+
+        const chauffeurDocumentsData = {
+          profile_pic_status: 'pending',
+          drivers_license_expiry_date: formData.chauffeurDocuments.driversLicenseExpiryDate,
+          drivers_license_status: 'pending',
+          private_hire_license_expiry_date:
+            formData.chauffeurDocuments.privateHireLicenseExpiryDate,
+          private_hire_license_status: 'pending',
+        };
+
+        await updateChauffeur(chauffeurId, chauffeurDocumentsData);
+        toast.success('Chauffeur details updated successfully');
+      } else {
+        // Add chauffeur role to the same user
+        await addUserRole(userId, 'chauffeur');
+        await updateRole();
+        toast.success('Chauffeur role added successfully');
+
+        // Insert chauffeur details
+        const chauffeurData = transformToChauffeurData({
+          ...formData.firstChauffeur,
+          ...formData.chauffeurDocuments,
+          providerId: userId,
+          id: userId,
+          onboarded: false,
+        });
+        await insertChauffeur(chauffeurData);
+        toast.success('Chauffeur details added successfully');
+      }
 
       // Insert vehicle details
       const vehicleData = transformToVehicleData({
@@ -314,7 +351,7 @@ export function OnboardingView() {
       toast.success('Vehicle details inserted successfully');
 
       await updateOnboarding({ role: 'chauffeur', onboarded: true });
-      await updateChauffeur(userId, { onboarded: true });
+      await updateChauffeur(chauffeurId, { onboarded: true });
       toast.success('Chauffeur onboarding status updated successfully');
 
       await checkUserSession?.();

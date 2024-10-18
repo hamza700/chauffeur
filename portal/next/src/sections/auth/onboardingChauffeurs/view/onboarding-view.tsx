@@ -1,7 +1,7 @@
 'use client';
 
 import { z as zod } from 'zod';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
@@ -16,8 +16,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useRouter } from 'src/routes/hooks';
 
-import { transformToVehicleData, transformToChauffeurData } from 'src/utils/data-transformers';
-
 import { toast } from 'src/components/snackbar';
 import { Field, schemaHelper } from 'src/components/hook-form';
 
@@ -28,9 +26,6 @@ import {
   updateOnboarding,
   getChauffeurById,
   filterVehiclesByLicensePlate,
-  addUserRole,
-  insertChauffeur,
-  updateUserMetadata,
 } from 'src/auth/context/supabase';
 
 export type OnboardingDocumentsSchemaType = zod.infer<typeof OnboardingDocumentsSchema>;
@@ -171,10 +166,13 @@ export function OnboardingView() {
     }
 
     try {
-
       const chauffeurData = {
+        profile_pic_status: 'pending',
         drivers_license_expiry_date: data.chauffeurDriversLicenseExpiryDate?.toString() ?? null,
-        private_hire_license_expiry_date: data.chauffeurPrivateHireLicenseExpiryDate?.toString() ?? null,
+        drivers_license_status: 'pending',
+        private_hire_license_expiry_date:
+          data.chauffeurPrivateHireLicenseExpiryDate?.toString() ?? null,
+        private_hire_license_status: 'pending',
       };
 
       await updateChauffeur(userId, chauffeurData);
@@ -194,9 +192,17 @@ export function OnboardingView() {
 
       if (vehicle) {
         const vehicleData = {
-          private_hire_license_expiry_date: data.vehiclePrivateHireLicenseExpiryDate?.toString() ?? null,
-          mot_test_certificate_expiry_date: data.vehicleMotTestCertificateExpiryDate?.toString() ?? null,
+          private_hire_license_expiry_date:
+            data.vehiclePrivateHireLicenseExpiryDate?.toString() ?? null,
+          private_hire_license_status: 'pending',
+          mot_test_certificate_expiry_date:
+            data.vehicleMotTestCertificateExpiryDate?.toString() ?? null,
+          mot_test_certificate_status: 'pending',
           vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate?.toString() ?? null,
+          vehicle_insurance_status: 'pending',
+          leasing_contract_status: 'pending',
+          vehicle_registration_status: 'pending',
+          vehicle_pic_status: 'pending',
         };
         await updateVehicle(vehicle.id, vehicleData);
         toast.success('Vehicle details updated successfully');

@@ -17,8 +17,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { transformToProviderData } from 'src/utils/data-transformers';
-
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
 
@@ -92,7 +90,17 @@ export function AccountPaymentDetails({ currentProvider }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await updateProvider(currentProvider?.id, transformToProviderData(data));
+      const updateData = {
+        payment_method: data.paymentMethod,
+        paypal_email: data.paypalEmail,
+        bank_account_owner_name: data.bankAccountOwnerName,
+        bank_name: data.bankName,
+        bank_country: data.bankCountry,
+        bank_account_number: data.bankAccountNumber,
+        iban: data.iban,
+        swift_code: data.swiftCode,
+      };
+      await updateProvider(currentProvider?.id, updateData);
       toast.success('Payment details updated successfully!');
       router.push(paths.dashboard.settings);
     } catch (error) {

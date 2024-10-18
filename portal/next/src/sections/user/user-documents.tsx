@@ -16,8 +16,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { transformToChauffeurData } from 'src/utils/data-transformers';
-
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
@@ -121,7 +119,11 @@ export function UserDocuments({ currentUser }: Props) {
     try {
       // Implement your update logic here
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await updateChauffeur(currentUser.id, transformToChauffeurData(data));
+      const updateData = {  
+        drivers_license_expiry_date: data.driversLicenseExpiryDate,
+        private_hire_license_expiry_date: data.privateHireLicenseExpiryDate,
+      };
+      await updateChauffeur(currentUser.id, updateData);
       toast.success('Documents updated successfully!');
       router.push(paths.dashboard.chauffeurs.root);
       console.info('Updated data:', data);

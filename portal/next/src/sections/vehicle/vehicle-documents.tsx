@@ -1,6 +1,6 @@
 'use client';
 
-import type { IVehicleDocumentFields, IVehicleItem } from 'src/types/vehicle';
+import type { IVehicleItem } from 'src/types/vehicle';
 
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,8 +15,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-
-import { transformToVehicleData } from 'src/utils/data-transformers';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -108,7 +106,10 @@ export function VehicleDocuments({ currentVehicle }: Props) {
     }
   }, [currentVehicle, defaultValues, reset]);
 
-  const handleRemoveFile = (inputFile: File | string, fieldName: keyof VehicleDocumentsSchemaType) => {
+  const handleRemoveFile = (
+    inputFile: File | string,
+    fieldName: keyof VehicleDocumentsSchemaType
+  ) => {
     const fieldValue = values[fieldName];
     if (Array.isArray(fieldValue)) {
       const filtered = fieldValue.filter((file) => file !== inputFile);
@@ -134,7 +135,12 @@ export function VehicleDocuments({ currentVehicle }: Props) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await updateVehicle(currentVehicle.id, transformToVehicleData(data));
+      const updateData = {
+        private_hire_license_expiry_date: data.privateHireLicenseExpiryDate,
+        mot_test_certificate_expiry_date: data.motTestCertificateExpiryDate,
+        vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate,
+      };
+      await updateVehicle(currentVehicle.id, updateData);
       toast.success('Documents updated successfully!');
       router.push(paths.dashboard.vehicles.root);
       console.info('Updated data:', data);
