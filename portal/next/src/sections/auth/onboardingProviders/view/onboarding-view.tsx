@@ -50,7 +50,7 @@ const steps = [
   'Application Summary',
 ];
 
-export function OnboardingView() {
+export function OnboardingViewProviders() {
   const router = useRouter();
 
   const { checkUserSession, user } = useAuthContext();
@@ -308,7 +308,7 @@ export function OnboardingView() {
         };
 
         const newChauffeur = await signUpChauffeur(chauffeurData, user?.access_token);
-        chauffeurId = newChauffeur.id; // Assuming signUpChauffeur returns the new chauffeur's ID
+        chauffeurId = newChauffeur; // Assuming signUpChauffeur returns the new chauffeur's ID
         toast.success('New chauffeur signed up successfully');
 
         const chauffeurDocumentsData = {
@@ -350,7 +350,9 @@ export function OnboardingView() {
       await insertVehicle(vehicleData);
       toast.success('Vehicle details inserted successfully');
 
-      await updateOnboarding({ role: 'chauffeur', onboarded: true });
+      if (formData.firstChauffeur.email === user?.email) {
+        await updateOnboarding({ role: 'chauffeur', onboarded: true });
+      }
       await updateChauffeur(chauffeurId, { onboarded: true });
       toast.success('Chauffeur onboarding status updated successfully');
 

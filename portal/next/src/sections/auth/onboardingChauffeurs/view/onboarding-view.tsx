@@ -1,8 +1,8 @@
 'use client';
 
 import { z as zod } from 'zod';
-import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -93,7 +93,7 @@ export const OnboardingDocumentsSchema = zod.object({
   }),
 });
 
-export function OnboardingView() {
+export function OnboardingViewChauffeurs() {
   const router = useRouter();
 
   const { user, checkUserSession } = useAuthContext();
@@ -226,6 +226,26 @@ export function OnboardingView() {
   };
 
   const handleReset = () => reset();
+
+  useEffect(() => {
+    const checkChauffeurOnboarding = async () => {
+      if (user?.id) {
+        try {
+          const { data: chauffeur } = await getChauffeurById(user.id);
+          if (chauffeur && chauffeur.onboarded) {
+            await updateOnboarding({ role: 'chauffeur', onboarded: true });
+            toast.success('Chauffeur onboarding status updated');
+            router.push('/dashboard'); // Redirect to dashboard if already onboarded
+          }
+        } catch (error) {
+          console.error('Error checking chauffeur onboarding status:', error);
+          toast.error('Failed to check onboarding status');
+        }
+      }
+    };
+
+    checkChauffeurOnboarding();
+  }, [user, router]);
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>

@@ -188,46 +188,6 @@ export const signUp = async ({
 };
 
 /** **************************************
- * Chauffeur Sign up
- *************************************** */
-// export const signUpChauffeur = async ({
-//   email,
-//   firstName,
-//   lastName,
-//   chauffeurData,
-// }: ChauffeurSignUpParams): Promise<AuthResponse> => {
-//   const password = Math.random().toString(36).slice(-8);
-
-//   const { data, error } = await supabase.auth.signUp({
-//     email,
-//     password,
-//     options: {
-//       emailRedirectTo: `${window.location.origin}${paths.auth.supabase.resetPassword}`,
-//       data: {
-//         first_name: firstName,
-//         last_name: lastName,
-//         display_name: `${firstName} ${lastName}`,
-//         roles: 'chauffeur',
-//         chauffeur_onboarded: false,
-//         provider_onboarded: false,
-//         chauffeur_data: chauffeurData,
-//       },
-//     },
-//   });
-
-//   if (error) {
-//     console.error(error);
-//     throw error;
-//   }
-
-//   if (!data?.user?.identities?.length) {
-//     throw new Error('This user already exists');
-//   }
-
-//   return { data, error };
-// };
-
-/** **************************************
  * Sign out
  *************************************** */
 export const signOut = async (): Promise<{
@@ -314,22 +274,6 @@ export const updateRole = async (): Promise<UserResponse> => {
 
   return { data, error };
 };
-
-/** **************************************
- * Update user metadata
- *************************************** */
-// export const updateUserMetadata = async (): Promise<UserResponse> => {
-//   const { data, error } = await supabase.auth.updateUser({
-//     data: { chauffeur_data: null },
-//   });
-
-//   if (error) {
-//     console.error(error);
-//     throw error;
-//   }
-
-//   return { data, error };
-// };
 
 /** **************************************
  * Add a role
@@ -451,11 +395,16 @@ export const deleteProvider = async (userId: string): Promise<{ error: Postgrest
 /** **************************************
  * Get all chauffeurs
  *************************************** */
-export const getChauffeurs = async (providerId: string): Promise<{
+export const getChauffeurs = async (
+  providerId: string
+): Promise<{
   data: ChauffeurData[] | null;
   error: PostgrestError | null;
 }> => {
-  const { data, error } = await supabase.from('chauffeurs').select('*').eq('provider_id', providerId);
+  const { data, error } = await supabase
+    .from('chauffeurs')
+    .select('*')
+    .eq('provider_id', providerId);
 
   if (error) {
     console.error(error);
@@ -534,7 +483,9 @@ export const deleteChauffeur = async (
 /** **************************************
  * Get all vehicles
  *************************************** */
-export const getVehicles = async (providerId: string): Promise<{
+export const getVehicles = async (
+  providerId: string
+): Promise<{
   data: VehicleData[] | null;
   error: PostgrestError | null;
 }> => {

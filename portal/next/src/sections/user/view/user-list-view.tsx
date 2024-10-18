@@ -130,14 +130,35 @@ export function UserListView() {
     [dataInPage.length, table, tableData]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-    toast.success('Delete success!');
-    setTableData(deleteRows);
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Delete multiple chauffeurs from Supabase
+      const deletePromises = table.selected.map((id) => deleteChauffeur(id));
+      const results = await Promise.allSettled(deletePromises);
+
+      // Check for any errors
+      const errors = results.filter((result) => result.status === 'rejected');
+      if (errors.length > 0) {
+        toast.error(`Failed to delete ${errors.length} chauffeur(s)`);
+      }
+
+      // Update local state
+      const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+      setTableData(deleteRows);
+
+      // Update table state
+      table.onUpdatePageDeleteRows({
+        totalRowsInPage: dataInPage.length,
+        totalRowsFiltered: dataFiltered.length,
+      });
+
+      // Clear selection
+      table.onSelectAllRows(false, []);
+
+      toast.success(`Successfully deleted ${table.selected.length - errors.length} chauffeur(s)`);
+    } catch (error) {
+      toast.error('Error deleting chauffeurs');
+    }
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
   const handleEditRow = useCallback(

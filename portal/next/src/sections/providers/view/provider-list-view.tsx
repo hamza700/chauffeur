@@ -133,17 +133,35 @@ export function ProviderListView() {
     [dataInPage.length, table, tableData]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Delete multiple providers from Supabase
+      const deletePromises = table.selected.map((id) => deleteProvider(id));
+      const results = await Promise.allSettled(deletePromises);
 
-    toast.success('Delete success!');
+      // Check for any errors
+      const errors = results.filter((result) => result.status === 'rejected');
+      if (errors.length > 0) {
+        toast.error(`Failed to delete ${errors.length} provider(s)`);
+      }
 
-    setTableData(deleteRows);
+      // Update local state
+      const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+      setTableData(deleteRows);
 
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
+      // Update table state
+      table.onUpdatePageDeleteRows({
+        totalRowsInPage: dataInPage.length,
+        totalRowsFiltered: dataFiltered.length,
+      });
+
+      // Clear selection
+      table.onSelectAllRows(false, []);
+
+      toast.success(`Successfully deleted ${table.selected.length - errors.length} provider(s)`);
+    } catch (error) {
+      toast.error('Error deleting providers');
+    }
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
   const handleFilterStatus = useCallback(

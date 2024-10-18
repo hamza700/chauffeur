@@ -133,17 +133,35 @@ export function VehicleListView() {
     [dataInPage.length, table, tableData]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Delete multiple vehicles from Supabase
+      const deletePromises = table.selected.map((id) => deleteVehicle(id));
+      const results = await Promise.allSettled(deletePromises);
 
-    toast.success('Delete success!');
+      // Check for any errors
+      const errors = results.filter((result) => result.status === 'rejected');
+      if (errors.length > 0) {
+        toast.error(`Failed to delete ${errors.length} vehicle(s)`);
+      }
 
-    setTableData(deleteRows);
+      // Update local state
+      const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+      setTableData(deleteRows);
 
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
+      // Update table state
+      table.onUpdatePageDeleteRows({
+        totalRowsInPage: dataInPage.length,
+        totalRowsFiltered: dataFiltered.length,
+      });
+
+      // Clear selection
+      table.onSelectAllRows(false, []);
+
+      toast.success(`Successfully deleted ${table.selected.length - errors.length} vehicle(s)`);
+    } catch (error) {
+      toast.error('Error deleting vehicles');
+    }
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
   const handleEditRow = useCallback(

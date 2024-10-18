@@ -132,8 +132,7 @@ export function UserNewEditForm({ currentUser }: Props) {
           status: 'pending',
         };
 
-        const newChauffeur = await signUpChauffeur(chauffeurData, user?.access_token);
-        console.log('newChauffeur', newChauffeur);
+        await signUpChauffeur(chauffeurData, user?.access_token);
 
         toast.success('Create success!');
       }
