@@ -35,19 +35,57 @@ export type IOrderReview = {
   attachments?: string[];
 };
 
-export interface IOrderItem {
+export interface IAvailableJobsItem {
   id: string;
   orderNumber: string;
-  date: Date;
+  date: string;
+  time: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  serviceClass: string;
+  totalAmount: number;
+  specialRequests?: string;
+  distance: string;
+  estimatedDuration: string;
+  customerId: string;
+  passengers: number;
+  luggage: number;
+  flightNumber: string;
+  customerFirstName: string;
+  customerLastName: string;
+  customerEmail: string;
+  customerPhoneNumber: string;
+  bookingType: string;
+  driverAmount: number;
+  hours: string;
+}
+
+export interface IBookingItem {
+  id: string;
+  orderNumber: string;
+  date: string;
+  time: string;
   pickupLocation: string;
   dropoffLocation: string;
   serviceClass: string;
   totalAmount: number;
   status: string;
-  customer: IOrderCustomer;
   specialRequests?: string;
-  history: IOrderHistory;
-  driver?: IOrderDriver;
-  distance: number;
-  reviews?: IOrderReview[];
+  distance: string;
+  estimatedDuration: string;
+  customerId: string;
+  chauffeurId: string;
+  passengers: number;
+  luggage: number;
+  flightNumber: string;
+  customerFirstName: string;
+  customerLastName: string;
+  customerEmail: string;
+  customerPhoneNumber: string;
+  bookingType: string;
+  driverAmount: number;
+  hours: string;
+  createdAt: string;
+  providerId: string;
+  history?: IOrderHistory;
 }

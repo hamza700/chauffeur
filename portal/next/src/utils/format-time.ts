@@ -64,16 +64,18 @@ export function fDate(date: DatePickerFormat, format?: string) {
 
 // ----------------------------------------------------------------------
 
-/** output: 12:00 am
+/** output: 12:00 AM
  */
-export function fTime(date: DatePickerFormat, format?: string) {
-  if (!date) {
+export function fTime(time: string, format?: string) {
+  if (!time) {
     return null;
   }
 
-  const isValid = dayjs(date).isValid();
+  // Handle time string directly (HH:mm:ss format)
+  const timeOnly = dayjs(`2000-01-01 ${time}`);
+  const isValid = timeOnly.isValid();
 
-  return isValid ? dayjs(date).format(format ?? formatStr.time) : 'Invalid time value';
+  return isValid ? timeOnly.format(format ?? 'hh:mm A') : 'Invalid time value';
 }
 
 // ----------------------------------------------------------------------

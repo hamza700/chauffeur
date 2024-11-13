@@ -1,8 +1,8 @@
 'use client';
 
-import type { IOrderItem, IOrderTableFilters } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem, IOrderTableFilters } from 'src/types/order';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -17,6 +17,7 @@ import { useRouter } from 'src/routes/hooks';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { transformBookingData, transformAvailableJobsData } from 'src/utils/data-transformers';
 
 import { varAlpha } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -35,89 +36,15 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { getBookings, getAvailableJobs } from 'src/auth/context/supabase/action';
+
 import { OrderTableRow } from '../order-table-row';
 import { OrderTableToolbar } from '../order-table-toolbar';
 import { OrderTableFiltersResult } from '../order-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const mockOrders: IOrderItem[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-001',
-    date: new Date('2023-07-01').toISOString(),
-    pickupLocation: 'Location A',
-    dropoffLocation: 'Location B',
-    serviceClass: 'Economy',
-    totalAmount: 100,
-    status: 'offers',
-    customer: {
-      id: 'c1',
-      name: 'John Doe',
-    },
-    history: {
-      timeline: [
-        {
-          title: 'En route to the pickup location',
-          time: new Date('2023-07-01T07:42:00').toISOString(),
-        },
-        { title: 'Pickup location reached', time: new Date('2023-07-01T08:29:00').toISOString() },
-      ],
-    },
-    distance: 10,
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-002',
-    date: new Date('2023-07-05').toISOString(),
-    pickupLocation: 'Location C',
-    dropoffLocation: 'Location D',
-    serviceClass: 'Business',
-    totalAmount: 200,
-    status: 'upcoming',
-    customer: {
-      id: 'c2',
-      name: 'Jane Smith',
-    },
-    history: {
-      timeline: [
-        {
-          title: 'En route to the pickup location',
-          time: new Date('2023-07-05T07:42:00').toISOString(),
-        },
-        { title: 'Pickup location reached', time: new Date('2023-07-05T08:29:00').toISOString() },
-      ],
-    },
-    distance: 15,
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-003',
-    date: new Date('2023-07-10').toISOString(),
-    pickupLocation: 'Location E',
-    dropoffLocation: 'Location F',
-    serviceClass: 'First Class',
-    totalAmount: 300,
-    status: 'completed',
-    customer: {
-      id: 'c3',
-      name: 'Alice Johnson',
-    },
-    history: {
-      timeline: [
-        {
-          title: 'En route to the pickup location',
-          time: new Date('2023-07-10T07:42:00').toISOString(),
-        },
-        { title: 'Pickup location reached', time: new Date('2023-07-10T08:29:00').toISOString() },
-      ],
-    },
-    distance: 20,
-  },
-];
-
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'All' },
   { value: 'offers', label: 'Offers' },
   { value: 'upcoming', label: 'Upcoming' },
   { value: 'completed', label: 'Completed' },
@@ -126,11 +53,12 @@ const STATUS_OPTIONS = [
 const TABLE_HEAD = [
   { id: 'orderNumber', label: 'Order Number', width: 88 },
   { id: 'date', label: 'Date', width: 140 },
+  { id: 'bookingType', label: 'Booking Type', width: 140 },
   { id: 'pickupLocation', label: 'Pickup Location' },
   { id: 'dropoffLocation', label: 'Dropoff Location' },
   { id: 'serviceClass', label: 'Service Class' },
+  { id: 'hours', label: 'Hours', width: 110 },
   { id: 'totalAmount', label: 'Price', width: 140 },
-  { id: 'status', label: 'Status', width: 110 },
   { id: '', width: 88 },
 ];
 
@@ -141,14 +69,52 @@ export function OrderListView() {
 
   const router = useRouter();
 
-  const [tableData, setTableData] = useState<IOrderItem[]>(mockOrders);
+  const [tableData, setTableData] = useState<(IAvailableJobsItem | IBookingItem)[]>([]);
+  const [allData, setAllData] = useState<(IAvailableJobsItem | IBookingItem)[]>([]);
 
   const filters = useSetState<IOrderTableFilters>({
     name: '',
-    status: 'all',
+    status: 'offers',
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (filters.state.status === 'offers') {
+          const { data: availableJobs } = await getAvailableJobs();
+          if (availableJobs) {
+            const transformedData = availableJobs.map(transformAvailableJobsData);
+            setTableData(transformedData);
+          }
+        } else {
+          const { data: bookings } = await getBookings();
+          if (bookings) {
+            const filteredBookings = bookings.filter(
+              (booking) =>
+                booking.status === (filters.state.status === 'upcoming' ? 'confirmed' : 'completed')
+            );
+            const transformedData = filteredBookings.map(transformBookingData);
+            setTableData(transformedData);
+          }
+        }
+
+        const [{ data: availableJobs }, { data: bookings }] = await Promise.all([
+          getAvailableJobs(),
+          getBookings(),
+        ]);
+
+        const allAvailableJobs = availableJobs ? availableJobs.map(transformAvailableJobsData) : [];
+        const allBookings = bookings ? bookings.map(transformBookingData) : [];
+        setAllData([...allAvailableJobs, ...allBookings]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [filters.state.status]);
 
   const dateError = fIsAfter(filters.state.startDate, filters.state.endDate);
 
@@ -163,7 +129,7 @@ export function OrderListView() {
 
   const canReset =
     !!filters.state.name ||
-    filters.state.status !== 'all' ||
+    filters.state.status !== 'offers' ||
     (!!filters.state.startDate && !!filters.state.endDate);
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
@@ -213,10 +179,7 @@ export function OrderListView() {
               label={tab.label}
               icon={
                 <Label
-                  variant={
-                    ((tab.value === 'all' || tab.value === filters.state.status) && 'filled') ||
-                    'soft'
-                  }
+                  variant={tab.value === filters.state.status ? 'filled' : 'soft'}
                   color={
                     (tab.value === 'offers' && 'info') ||
                     (tab.value === 'upcoming' && 'warning') ||
@@ -224,9 +187,16 @@ export function OrderListView() {
                     'default'
                   }
                 >
-                  {['offers', 'upcoming', 'completed'].includes(tab.value)
-                    ? tableData.filter((user) => user.status === tab.value).length
-                    : tableData.length}
+                  {
+                    allData.filter((item) => {
+                      if (tab.value === 'offers') return !('status' in item);
+                      if (tab.value === 'upcoming')
+                        return 'status' in item && item.status === 'confirmed';
+                      if (tab.value === 'completed')
+                        return 'status' in item && item.status === 'completed';
+                      return false;
+                    }).length
+                  }
                 </Label>
               }
             />
@@ -299,7 +269,7 @@ export function OrderListView() {
 
 type ApplyFilterProps = {
   dateError: boolean;
-  inputData: IOrderItem[];
+  inputData: (IAvailableJobsItem | IBookingItem)[];
   filters: IOrderTableFilters;
   comparator: (a: any, b: any) => number;
 };
@@ -326,8 +296,13 @@ function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterP
     );
   }
 
-  if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
+  if (status !== 'offers') {
+    inputData = inputData.filter(
+      (order) =>
+        'status' in order && order.status === (status === 'upcoming' ? 'confirmed' : 'completed')
+    );
+  } else {
+    inputData = inputData.filter((order) => !('status' in order));
   }
 
   if (!dateError) {

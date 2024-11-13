@@ -1,4 +1,4 @@
-import type { IOrderItem } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
 
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
@@ -9,13 +9,12 @@ import ListItemText from '@mui/material/ListItemText';
 import { fCurrency } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
 
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  row: IOrderItem;
+  row: IBookingItem | IAvailableJobsItem;
   onViewRow: () => void;
 };
 
@@ -31,11 +30,13 @@ export function OrderTableRow({ row, onViewRow }: Props) {
       <TableCell>
         <ListItemText
           primary={fDate(row.date)}
-          secondary={fTime(row.date)}
+          secondary={fTime(row.time)}
           primaryTypographyProps={{ typography: 'body2', noWrap: true }}
           secondaryTypographyProps={{ mt: 0.5, component: 'span', typography: 'caption' }}
         />
       </TableCell>
+
+      <TableCell>{row.bookingType}</TableCell>
 
       <TableCell>{row.pickupLocation}</TableCell>
 
@@ -43,27 +44,15 @@ export function OrderTableRow({ row, onViewRow }: Props) {
 
       <TableCell>{row.serviceClass}</TableCell>
 
+      <TableCell>{row.hours}</TableCell>
+
       <TableCell>
         <ListItemText
-          primary={fCurrency(row.totalAmount)}
+          primary={fCurrency(row.driverAmount)}
           secondary={row.distance}
           primaryTypographyProps={{ typography: 'body2', noWrap: true }}
           secondaryTypographyProps={{ mt: 0.5, component: 'span', typography: 'caption' }}
         />
-      </TableCell>
-
-      <TableCell>
-        <Label
-          variant="soft"
-          color={
-            (row.status === 'completed' && 'success') ||
-            (row.status === 'upcoming' && 'warning') ||
-            (row.status === 'offers' && 'info') ||
-            'default'
-          }
-        >
-          {row.status}
-        </Label>
       </TableCell>
 
       <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>

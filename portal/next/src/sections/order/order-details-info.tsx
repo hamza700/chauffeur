@@ -1,7 +1,8 @@
+import type { IUserItem } from 'src/types/user';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import type { IOrderItem, IOrderDriver } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -15,33 +16,118 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 
 import { fCurrency } from 'src/utils/format-number';
+import {
+  transformVehicleData,
+  transformToBookingData,
+  transformChauffeurData,
+} from 'src/utils/data-transformers';
 
 import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { useAuthContext } from 'src/auth/hooks';
+import { getVehicles, getChauffeurs, insertBooking, deleteAvailableJob } from 'src/auth/context/supabase/action';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  order?: IOrderItem;
+  order?: IAvailableJobsItem | IBookingItem;
   onAcceptJob: () => void;
-  onAssignDriver: (driver: IOrderDriver) => void;
+  onAssignDriver: (driver: IUserItem) => void;
 };
 
 export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) {
+  const { user } = useAuthContext();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [assignDriverOpen, setAssignDriverOpen] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<IOrderDriver | string>(
-    order?.driver ? JSON.stringify(order.driver) : ''
-  );
+  const [selectedDriver, setSelectedDriver] = useState<string>('');
+  const [eligibleChauffeurs, setEligibleChauffeurs] = useState<IUserItem[]>([]);
 
-  const handleConfirmAcceptJob = () => {
-    onAcceptJob();
-    setConfirmOpen(false);
+  useEffect(() => {
+    const fetchChauffeurAndVehicles = async () => {
+      if (user?.id && order?.serviceClass) {
+        try {
+          // Get all chauffeurs for this provider
+          const { data: chauffeursData } = await getChauffeurs(user.id);
+          if (!chauffeursData) return;
+
+          // Get all vehicles for this provider
+          const { data: vehiclesData } = await getVehicles(user.id);
+          if (!vehiclesData) return;
+
+          // Transform the data
+          const chauffeurs = chauffeursData.map(transformChauffeurData);
+          const vehicles = vehiclesData.map(transformVehicleData);
+
+          // Filter chauffeurs based on multiple criteria
+          const eligible = chauffeurs.filter((chauffeur) => {
+            // Check chauffeur status
+            if (chauffeur.status !== 'approved' || !chauffeur.isOnboarded) {
+              return false;
+            }
+
+            // Find matching vehicle for this chauffeur
+            const chauffeurVehicle = vehicles.find(
+              (vehicle) => vehicle.licensePlate === chauffeur.licensePlate
+            );
+
+            // Check vehicle criteria
+            if (!chauffeurVehicle) return false;
+
+            return (
+              chauffeurVehicle.status === 'approved' &&
+              chauffeurVehicle.serviceClass === order.serviceClass
+            );
+          });
+
+          setEligibleChauffeurs(eligible);
+        } catch (error) {
+          console.error('Error fetching chauffeur and vehicle data:', error);
+        }
+      }
+    };
+
+    fetchChauffeurAndVehicles();
+  }, [user?.id, order?.serviceClass]);
+
+  const handleConfirmAcceptJob = async () => {
+    if (order) {
+      try {
+        // Just trigger the UI update without database insertion
+        onAcceptJob();
+        setConfirmOpen(false);
+      } catch (error) {
+        console.error('Error accepting job:', error);
+        // Add error handling/notification here
+      }
+    }
   };
 
-  const handleAssignDriver = () => {
-    if (selectedDriver && typeof selectedDriver === 'string') {
-      onAssignDriver(JSON.parse(selectedDriver));
-      setAssignDriverOpen(false);
+  const handleAssignDriver = async () => {
+    if (selectedDriver && order) {
+      try {
+        const chauffeurData = JSON.parse(selectedDriver) as IUserItem;
+
+        // Insert into bookings table
+        const bookingData = transformToBookingData({
+          ...order,
+          status: 'confirmed',
+          providerId: user?.id,
+          chauffeurId: chauffeurData.id,
+        });
+
+        await insertBooking(bookingData);
+        
+        // Delete from available_jobs table
+        if (isBooking) {
+          await deleteAvailableJob(order.id);
+        }
+        
+        onAssignDriver(chauffeurData);
+        setAssignDriverOpen(false);
+      } catch (error) {
+        console.error('Error assigning driver:', error);
+        // Add error handling/notification here
+      }
     }
   };
 
@@ -49,17 +135,19 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
     setSelectedDriver(event.target.value);
   };
 
+  const isBooking = 'status' in order;
+
   return (
     <Card>
       <CardHeader title="Details" />
       <Stack spacing={3} sx={{ p: 3 }}>
-        {(order?.status === 'upcoming' || order?.status === 'completed') && (
+        {isBooking && (
           <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
             <Typography variant="subtitle2" gutterBottom>
               Customer:
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {order?.customer.name}
+              {`${order.customerFirstName} ${order.customerLastName}`}
             </Typography>
           </Stack>
         )}
@@ -68,43 +156,48 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
             Payment:
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Total Amount: {fCurrency(order?.totalAmount)}
+            Total Amount: {fCurrency(order?.driverAmount || 0)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Service Class: {order?.serviceClass}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Distance: {order?.distance} km
+            Distance: {order?.distance}
           </Typography>
         </Stack>
-        {order?.driver && (
+
+        {isBooking && (order as IBookingItem).chauffeurId && (
           <Stack spacing={1.5}>
             <Typography variant="subtitle2" gutterBottom>
               Driver:
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Name: {order?.driver.name}
+              Name: {`${order.customerFirstName} ${order.customerLastName}`}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Car Registration: {order?.driver.carRegistration}
+              Car Registration: {(order as IBookingItem).chauffeurId}
             </Typography>
-            {order?.status === 'upcoming' && (
+            {(order as IBookingItem).status === 'confirmed' && (
               <Button variant="outlined" color="primary" onClick={() => setAssignDriverOpen(true)}>
                 Change Driver
               </Button>
             )}
           </Stack>
         )}
-        {order?.status === 'offers' && (
+
+        {!isBooking && (
           <Button variant="contained" color="primary" onClick={() => setConfirmOpen(true)}>
             Accept Job
           </Button>
         )}
-        {order?.status === 'upcoming' && !order?.driver && (
-          <Button variant="contained" color="primary" onClick={() => setAssignDriverOpen(true)}>
-            Assign Driver
-          </Button>
-        )}
+
+        {isBooking &&
+          (order as IBookingItem).status === 'confirmed' &&
+          !(order as IBookingItem).chauffeurId && (
+            <Button variant="contained" color="primary" onClick={() => setAssignDriverOpen(true)}>
+              Assign Driver
+            </Button>
+          )}
       </Stack>
 
       <ConfirmDialog
@@ -128,18 +221,22 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
             <FormControl fullWidth>
               <InputLabel>Driver</InputLabel>
               <Select value={selectedDriver} onChange={handleDriverChange} label="Driver">
-                <MenuItem value={JSON.stringify({ name: 'Driver 1', carRegistration: 'XYZ 123' })}>
-                  Driver 1 - XYZ 123
-                </MenuItem>
-                <MenuItem value={JSON.stringify({ name: 'Driver 2', carRegistration: 'ABC 456' })}>
-                  Driver 2 - ABC 456
-                </MenuItem>
+                {eligibleChauffeurs.map((chauffeur) => (
+                  <MenuItem key={chauffeur.id} value={JSON.stringify(chauffeur)}>
+                    {`${chauffeur.firstName} ${chauffeur.lastName} - ${chauffeur.licensePlate}`}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
         }
         action={
-          <Button variant="contained" color="primary" onClick={handleAssignDriver}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleAssignDriver}
+            disabled={!selectedDriver}
+          >
             Assign
           </Button>
         }

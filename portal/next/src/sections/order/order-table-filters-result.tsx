@@ -27,7 +27,7 @@ export function OrderTableFiltersResult({ filters, totalResults, onResetPage, sx
 
   const handleRemoveStatus = useCallback(() => {
     onResetPage();
-    filters.setState({ status: 'all' });
+    filters.setState({ status: 'offers' });
   }, [filters, onResetPage]);
 
   const handleRemoveDate = useCallback(() => {
@@ -42,7 +42,7 @@ export function OrderTableFiltersResult({ filters, totalResults, onResetPage, sx
 
   return (
     <FiltersResult totalResults={totalResults} onReset={handleReset} sx={sx}>
-      <FiltersBlock label="Status:" isShow={filters.state.status !== 'all'}>
+      <FiltersBlock label="Status:" isShow={filters.state.status !== 'offers'}>
         <Chip
           {...chipProps}
           label={filters.state.status}

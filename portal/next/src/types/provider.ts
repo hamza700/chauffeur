@@ -23,7 +23,7 @@ export type IProviderAccount = {
   state: string;
   address: string;
   postCode: string;
-  isVerified: boolean;
+  isOnboarded: boolean;
   status: string;
   formCompleted: boolean;
   phoneNumber: string;

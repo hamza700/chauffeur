@@ -49,7 +49,7 @@ export const UpdateProviderSchema = zod.object({
   vatNumber: zod.string().min(1, { message: 'VAT Number is required!' }),
   // Not required
   status: zod.string(),
-  isVerified: zod.boolean(),
+  isOnboarded: zod.boolean(),
 });
 
 // ----------------------------------------------------------------------
@@ -65,7 +65,7 @@ export function AccountGeneral({ currentProvider }: Props) {
   const defaultValues = useMemo(
     () => ({
       status: currentProvider?.status || 'pending',
-      isVerified: currentProvider?.isVerified || true,
+      isOnboarded: currentProvider?.isOnboarded || false,
       companyName: currentProvider?.companyName || '',
       phoneNumber: currentProvider?.phoneNumber || '',
       country: currentProvider?.country || '',

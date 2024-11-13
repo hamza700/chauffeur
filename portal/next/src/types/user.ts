@@ -27,7 +27,7 @@ export type IUserItem = {
   phoneNumber: string;
   status: string;
   country: string;
-  isVerified: boolean;
+  isOnboarded: boolean;
   driversLicense: string;
   privateHireLicense: string;
   licensePlate: string;

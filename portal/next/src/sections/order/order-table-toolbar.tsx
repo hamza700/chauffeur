@@ -21,11 +21,12 @@ const exportToExcel = (data: IOrderItem[], fileName: string) => {
   const columnWidths = [
     { wpx: 120 }, // Order Number
     { wpx: 120 }, // Date
+    { wpx: 120 }, // Booking Type
     { wpx: 200 }, // Pickup Location
     { wpx: 200 }, // Dropoff Location
     { wpx: 120 }, // Service Class
+    { wpx: 100 }, // Hours
     { wpx: 100 }, // Price
-    { wpx: 100 }, // Status
     { wpx: 80 }, // Empty for buttons
   ];
   worksheet['!cols'] = columnWidths;

@@ -50,7 +50,7 @@ export const NewUserSchema = zod.object({
   licensePlate: zod.string().min(1, { message: 'License plate is required!' }),
   // Not required
   status: zod.string(),
-  isVerified: zod.boolean(),
+  isOnboarded: zod.boolean(),
 });
 
 // ----------------------------------------------------------------------
@@ -69,7 +69,7 @@ export function UserNewEditForm({ currentUser }: Props) {
   const defaultValues = useMemo(
     () => ({
       status: currentUser?.status || 'pending',
-      isVerified: currentUser?.isVerified || true,
+      isOnboarded: currentUser?.isOnboarded || false,
       firstName: currentUser?.firstName || '',
       lastName: currentUser?.lastName || '',
       email: currentUser?.email || '',

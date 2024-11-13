@@ -1,4 +1,3 @@
-import type { IDateValue } from 'src/types/common';
 
 import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
@@ -16,7 +15,6 @@ type Props = {
   status?: string;
   backLink: string;
   orderNumber?: string;
-  createdAt?: IDateValue;
 };
 
 export function OrderDetailsToolbar({ status, backLink, orderNumber }: Props) {
@@ -36,7 +34,8 @@ export function OrderDetailsToolbar({ status, backLink, orderNumber }: Props) {
               variant="soft"
               color={
                 (status === 'completed' && 'success') ||
-                (status === 'pending' && 'warning') ||
+                (status === 'offers' && 'warning') ||
+                (status === 'upcoming' && 'info') ||
                 (status === 'cancelled' && 'error') ||
                 'default'
               }

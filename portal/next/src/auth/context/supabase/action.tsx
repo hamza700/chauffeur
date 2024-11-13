@@ -58,6 +58,61 @@ export type UpdateOnboardingParams = {
   onboarded: boolean;
 };
 
+export type AvailableJobsData = {
+  id: string;
+  order_number: string;
+  date: string;
+  time: string;
+  pickup_location: string;
+  dropoff_location: string;
+  service_class: string;
+  total_amount: number;
+  special_requests?: string;
+  distance: string;
+  estimated_duration: string;
+  customer_id: string;
+  passengers: number;
+  luggage: number;
+  flight_number: string;
+  customer_first_name: string;
+  customer_last_name: string;
+  customer_email: string;
+  customer_phone_number: string;
+  booking_type: string;
+  driver_amount: number;
+  hours: string;
+  created_at: string;
+};
+
+export type BookingData = {
+  id: string;
+  order_number: string;
+  date: string;
+  time: string;
+  pickup_location: string;
+  dropoff_location: string;
+  service_class: string;
+  total_amount: number;
+  status: string;
+  special_requests?: string;
+  distance: string;
+  estimated_duration: string;
+  customer_id: string;
+  chauffeur_id: string;
+  passengers: number;
+  luggage: number;
+  flight_number: string;
+  customer_first_name: string;
+  customer_last_name: string;
+  customer_email: string;
+  customer_phone_number: string;
+  booking_type: string;
+  driver_amount: number;
+  hours: string;
+  created_at: string;
+  provider_id: string;
+};
+
 export type ChauffeurData = {
   id: string;
   email: string;
@@ -355,6 +410,110 @@ export const getRolesByUserId = async (
     throw error;
   }
 
+  return { data, error };
+};
+
+/** **************************************
+ * Get all available jobs
+ *************************************** */
+export const getAvailableJobs = async (): Promise<{
+  data: AvailableJobsData[] | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase.from('available_jobs').select('*');
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Get a single available job by ID
+ *************************************** */
+export const getAvailableJobById = async (
+  userId: string
+): Promise<{
+  data: AvailableJobsData | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase
+    .from('available_jobs')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Delete a available job
+ *************************************** */
+export const deleteAvailableJob = async (
+  jobId: string
+): Promise<{ error: PostgrestError | null }> => {
+  const { error } = await supabase.from('available_jobs').delete().eq('id', jobId);
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+  return { error };
+};
+
+/** **************************************
+ * Get all bookings
+ *************************************** */
+export const getBookings = async (): Promise<{
+  data: BookingData[] | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase.from('bookings').select('*');
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Get a single booking by ID
+ *************************************** */
+export const getBookingById = async (
+  userId: string
+): Promise<{
+  data: BookingData | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase.from('bookings').select('*').eq('id', userId).single();
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Insert a new booking
+ *************************************** */
+export const insertBooking = async (
+  newBooking: Partial<BookingData>
+): Promise<{ data: BookingData[] | null; error: PostgrestError | null }> => {
+  const { data, error } = await supabase.from('bookings').insert([newBooking]).select();
+  if (error) {
+    console.error(error);
+    throw error;
+  }
   return { data, error };
 };
 

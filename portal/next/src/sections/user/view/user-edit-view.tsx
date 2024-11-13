@@ -15,6 +15,7 @@ import { transformChauffeurData } from 'src/utils/data-transformers';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
@@ -60,7 +61,7 @@ export function UserEditView({ userId }: Props) {
           setCurrentUser(transformedData || undefined);
         }
       } catch (err) {
-        toast.error(error.message);
+        toast.error('Failed to fetch user details');
       } finally {
         setLoading(false);
       }

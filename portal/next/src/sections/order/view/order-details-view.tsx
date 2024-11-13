@@ -1,10 +1,9 @@
 'use client';
 
-// This ensures the component is a client component
+import type { IUserItem } from 'src/types/user';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
 
-import type { IOrderItem, IOrderDriver } from 'src/types/order';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -12,7 +11,13 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { transformBookingData, transformAvailableJobsData } from 'src/utils/data-transformers';
+
 import { DashboardContent } from 'src/layouts/dashboard';
+
+import { toast } from 'src/components/snackbar';
+
+import { getBookingById, getAvailableJobById } from 'src/auth/context/supabase/action';
 
 import { OrderDetailsInfo } from '../order-details-info';
 import { OrderDetailsItems } from '../order-details-item';
@@ -22,51 +27,98 @@ import { OrderDetailsHistory } from '../order-details-history';
 // ----------------------------------------------------------------------
 
 type Props = {
-  order?: IOrderItem;
+  id: string;
 };
 
-export function OrderDetailsView({ order }: Props) {
+export function OrderDetailsView({ id }: Props) {
   const router = useRouter();
-  const [status, setStatus] = useState(order?.status);
+  const [currentOrder, setCurrentOrder] = useState<IAvailableJobsItem | IBookingItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      try {
+        // Try to fetch as available job first
+        const { data: availableJobData } = await getAvailableJobById(id);
+
+        if (availableJobData) {
+          setCurrentOrder(transformAvailableJobsData(availableJobData));
+          return;
+        }
+
+        // If not an available job, try to fetch as booking
+        const { data: bookingData } = await getBookingById(id);
+
+        if (bookingData) {
+          setCurrentOrder(transformBookingData(bookingData));
+        }
+      } catch (err) {
+        toast.error('Failed to fetch order details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchOrderDetails();
+    }
+  }, [id]);
+
+  const isBooking = currentOrder && 'status' in currentOrder;
 
   const handleAcceptJob = () => {
-    if (order) {
-      setStatus('upcoming');
+    if (currentOrder && !isBooking) {
+      // Update local state
+      setCurrentOrder({
+        ...currentOrder,
+        status: 'confirmed',
+      } as IBookingItem);
+    }
+  };
+
+  const handleAssignDriver = (driver: IUserItem) => {
+    if (currentOrder) {
+      // Update local state with driver information
+      setCurrentOrder({
+        ...currentOrder,
+        chauffeurId: driver.id,
+        status: 'confirmed',
+      } as IBookingItem);
+
+      // Redirect to bookings list
       router.push(paths.dashboard.bookings.root);
     }
   };
 
-  const handleAssignDriver = (driver: IOrderDriver) => {
-    if (order) {
-      order.driver = driver;
-      setStatus('upcoming');
-    }
-  };
-
-  if (!order) {
-    return <div>Order not found</div>;
+  if (!currentOrder) {
+    return null;
   }
 
   return (
     <DashboardContent>
       <OrderDetailsToolbar
         backLink={paths.dashboard.bookings.root}
-        orderNumber={order.orderNumber}
-        status={status}
-        createdAt={new Date(order.date)} // Convert string to Date
+        orderNumber={currentOrder.orderNumber}
+        status={isBooking ? (currentOrder as IBookingItem).status : 'offers'}
       />
 
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <Stack spacing={3} direction={{ xs: 'column-reverse', md: 'column' }}>
-            {order && <OrderDetailsItems order={order} />}
-            {order && <OrderDetailsHistory history={order.history} status={status} />}
+            <OrderDetailsItems order={currentOrder} />
+
+            {isBooking && (
+              <OrderDetailsHistory
+                history={(currentOrder as IBookingItem).history}
+                status={(currentOrder as IBookingItem).status}
+              />
+            )}
           </Stack>
         </Grid>
 
         <Grid xs={12} md={4}>
           <OrderDetailsInfo
-            order={order}
+            order={currentOrder}
             onAcceptJob={handleAcceptJob}
             onAssignDriver={handleAssignDriver}
           />

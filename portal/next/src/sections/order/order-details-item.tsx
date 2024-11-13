@@ -1,16 +1,16 @@
-import type { IOrderItem } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
-import { fDateTime } from 'src/utils/format-time';
+import { fDate, fTime } from 'src/utils/format-time';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  order: IOrderItem;
+  order: IAvailableJobsItem | IBookingItem;
 };
 
 export function OrderDetailsItems({ order }: Props) {
@@ -20,12 +20,33 @@ export function OrderDetailsItems({ order }: Props) {
       <Stack spacing={3} sx={{ p: 3 }}>
         <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
           <Typography variant="subtitle2" gutterBottom>
-            Date of Job:
+            Date & Time of Job:
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {fDateTime(order.date)}
+            Date: {fDate(order.date)}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Time: {fTime(order.time)}
           </Typography>
         </Stack>
+
+        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Service Details:
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Booking Type: {order.bookingType}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Service Class: {order.serviceClass}
+          </Typography>
+          {order.bookingType === 'hourly' && (
+            <Typography variant="body2" color="text.secondary">
+              Hours: {order.hours}
+            </Typography>
+          )}
+        </Stack>
+
         <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
             Pickup Location:
@@ -34,14 +55,35 @@ export function OrderDetailsItems({ order }: Props) {
             {order.pickupLocation}
           </Typography>
         </Stack>
+
+        {order.bookingType === 'chauffeur' && (
+          <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Dropoff Location:
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {order.dropoffLocation}
+            </Typography>
+          </Stack>
+        )}
+
         <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
           <Typography variant="subtitle2" gutterBottom>
-            Dropoff Location:
+            Journey Details:
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {order.dropoffLocation}
+            Passengers: {order.passengers}
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Luggage: {order.luggage}
+          </Typography>
+          {order.flightNumber && (
+            <Typography variant="body2" color="text.secondary">
+              Flight Number: {order.flightNumber}
+            </Typography>
+          )}
         </Stack>
+
         {order.specialRequests && (
           <Stack spacing={1.5}>
             <Typography variant="subtitle2" gutterBottom>
