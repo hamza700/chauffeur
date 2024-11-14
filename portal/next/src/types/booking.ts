@@ -2,37 +2,11 @@ import type { IDateValue, IDatePickerControl } from './common';
 
 // ----------------------------------------------------------------------
 
-export type IOrderHistory = {
-  timeline: { title: string; time: IDateValue }[];
-};
-
 export type IOrderTableFilters = {
   name: string;
   status: string;
   startDate: IDatePickerControl;
   endDate: IDatePickerControl;
-};
-
-export type IOrderCustomer = {
-  id: string;
-  name: string;
-};
-
-export type IOrderDriver = {
-  name: string;
-  carRegistration: string;
-};
-
-export type IOrderReview = {
-  id: string;
-  name: string;
-  rating: number;
-  comment: string;
-  helpful: number;
-  avatarUrl: string;
-  postedAt: IDateValue;
-  isPurchased: boolean;
-  attachments?: string[];
 };
 
 export interface IAvailableJobsItem {
@@ -58,7 +32,7 @@ export interface IAvailableJobsItem {
   bookingType: string;
   driverAmount: number;
   hours: string;
-  createdAt: string;
+  createdAt: IDateValue;
 }
 
 export interface IBookingItem {
@@ -86,7 +60,28 @@ export interface IBookingItem {
   bookingType: string;
   driverAmount: number;
   hours: string;
-  createdAt: string;
+  createdAt: IDateValue;
   providerId: string;
-  history?: IOrderHistory;
+  history?: IBookingHistoryItem;
+  review?: IBookingReview;
 }
+
+export interface IBookingHistoryItem {
+  id: string;
+  bookingId: string;
+  providerId: string;
+  chauffeurId: string;
+  startTime: IDateValue;
+  arrivedPickupTime: IDateValue;
+  customerOnboardedTime: IDateValue;
+  arrivedDestinationTime: IDateValue;
+}
+
+export type IBookingReview = {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  rating: number;
+  comment: string;
+  createdAt: IDateValue;
+};

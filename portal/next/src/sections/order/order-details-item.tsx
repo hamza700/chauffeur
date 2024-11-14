@@ -1,7 +1,8 @@
-import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/booking';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
@@ -18,9 +19,9 @@ export function OrderDetailsItems({ order }: Props) {
     <Card>
       <CardHeader title="Details" />
       <Stack spacing={3} sx={{ p: 3 }}>
-        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
-            Date & Time of Job:
+            Date & Time of Job
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Date: {fDate(order.date)}
@@ -30,9 +31,11 @@ export function OrderDetailsItems({ order }: Props) {
           </Typography>
         </Stack>
 
-        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+        <Divider />
+
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
-            Service Details:
+            Service Details
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Booking Type: {order.bookingType}
@@ -47,29 +50,36 @@ export function OrderDetailsItems({ order }: Props) {
           )}
         </Stack>
 
-        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+        <Divider />
+
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
-            Pickup Location:
+            Pickup Location
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {order.pickupLocation}
           </Typography>
         </Stack>
 
+        <Divider />
+
         {order.bookingType === 'chauffeur' && (
-          <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Dropoff Location:
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {order.dropoffLocation}
-            </Typography>
-          </Stack>
+          <>
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2" gutterBottom>
+                Dropoff Location
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {order.dropoffLocation}
+              </Typography>
+            </Stack>
+            <Divider />
+          </>
         )}
 
         <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
-            Journey Details:
+            Journey Details
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Passengers: {order.passengers}

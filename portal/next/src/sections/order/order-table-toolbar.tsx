@@ -1,6 +1,6 @@
 import type { IDatePickerControl } from 'src/types/common';
 import type { UseSetStateReturn } from 'src/hooks/use-set-state';
-import type { IOrderItem, IOrderTableFilters } from 'src/types/order';
+import type { IOrderItem, IOrderTableFilters } from 'src/types/booking';
 
 import * as XLSX from 'xlsx';
 import { useCallback } from 'react';

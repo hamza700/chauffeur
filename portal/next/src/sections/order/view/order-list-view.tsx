@@ -1,6 +1,6 @@
 'use client';
 
-import type { IBookingItem, IAvailableJobsItem, IOrderTableFilters } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem, IOrderTableFilters } from 'src/types/booking';
 
 import { useState, useEffect, useCallback } from 'react';
 

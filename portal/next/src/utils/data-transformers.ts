@@ -1,6 +1,6 @@
 import type { IUserItem, IUserDocumentFields } from 'src/types/user';
-import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
 import type { IVehicleItem, IVehicleDocumentFields } from 'src/types/vehicle';
+import type { IBookingItem, IBookingReview, IAvailableJobsItem, IBookingHistoryItem } from 'src/types/booking';
 import type {
   PaymentDetails,
   IDocumentFields,
@@ -295,4 +295,24 @@ export const transformToAvailableJobsData = (availableJobs: any): AvailableJobsD
   driver_amount: availableJobs.driverAmount,
   hours: availableJobs.hours,
   created_at: availableJobs.createdAt,
+});
+
+export const transformBookingHistoryData = (bookingHistory: any): IBookingHistoryItem => ({
+  id: bookingHistory.id,
+  bookingId: bookingHistory.booking_id,
+  providerId: bookingHistory.provider_id,
+  chauffeurId: bookingHistory.chauffeur_id,
+  startTime: bookingHistory.start_time,
+  arrivedPickupTime: bookingHistory.arrived_pickup_time,
+  customerOnboardedTime: bookingHistory.customer_onboard_time,
+  arrivedDestinationTime: bookingHistory.arrived_destination_time,
+});
+
+export const transformBookingReviewData = (bookingReview: any): IBookingReview => ({
+  id: bookingReview.id,
+  bookingId: bookingReview.booking_id,
+  customerId: bookingReview.customer_id,
+  rating: bookingReview.rating,
+  comment: bookingReview.comment,
+  createdAt: bookingReview.created_at,
 });

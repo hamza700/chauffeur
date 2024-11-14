@@ -113,6 +113,26 @@ export type BookingData = {
   provider_id: string;
 };
 
+export type BookingHistoryData = {
+  id: string;
+  booking_id: string;
+  provider_id: string;
+  chauffeur_id: string;
+  start_time: string;
+  arrived_pickup_time: string;
+  customer_onboard_time: string;
+  arrived_destination_time: string;
+};
+
+export type BookingReviewData = {
+  id: string;
+  booking_id: string;
+  customer_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+};
+
 export type ChauffeurData = {
   id: string;
   email: string;
@@ -562,6 +582,52 @@ export const deleteBooking = async (
     throw error;
   }
   return { error };
+};
+
+/** **************************************
+ * Get a single booking history by ID
+ *************************************** */
+export const getBookingHistoryById = async (
+  bookingId: string
+): Promise<{
+  data: BookingHistoryData | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase
+    .from('bookings_history')
+    .select('*')
+    .eq('booking_id', bookingId)
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
+ * Get a single booking review by ID
+ *************************************** */
+export const getBookingReviewById = async (
+  bookingId: string
+): Promise<{
+  data: BookingReviewData | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase
+    .from('bookings_review')
+    .select('*')
+    .eq('booking_id', bookingId)
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
 };
 
 /** **************************************

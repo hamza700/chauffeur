@@ -1,4 +1,4 @@
-import type { IOrderTableFilters } from 'src/types/order';
+import type { IOrderTableFilters } from 'src/types/booking';
 import type { Theme, SxProps } from '@mui/material/styles';
 import type { UseSetStateReturn } from 'src/hooks/use-set-state';
 

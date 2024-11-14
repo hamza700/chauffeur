@@ -1,4 +1,4 @@
-import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/booking';
 
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';

@@ -1,8 +1,7 @@
-import type { IOrderHistory } from 'src/types/order';
+import type { IBookingHistoryItem } from 'src/types/booking';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Timeline from '@mui/lab/Timeline';
 import TimelineDot from '@mui/lab/TimelineDot';
@@ -18,78 +17,85 @@ import { fDateTime } from 'src/utils/format-time';
 // ----------------------------------------------------------------------
 
 type Props = {
-  history?: IOrderHistory;
-  status?: string;
+  bookingHistory: IBookingHistoryItem | null;
+  status: string;
 };
 
-export function OrderDetailsHistory({ history, status }: Props) {
-  if (status === 'offers') {
+export function OrderDetailsHistory({ bookingHistory, status }: Props) {
+  if (!bookingHistory) {
     return null;
   }
 
-  const renderSummary = (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 2.5,
-        gap: 2,
-        minWidth: 260,
-        flexShrink: 0,
-        borderRadius: 2,
-        display: 'flex',
-        typography: 'body2',
-        borderStyle: 'dashed',
-        flexDirection: 'column',
-      }}
-    >
-      {history?.timeline.map((item, index) => (
-        <Stack key={index} spacing={0.5}>
-          <Box sx={{ color: 'text.disabled' }}>{fDateTime(item.time)}</Box>
-          <Box>{item.title}</Box>
-        </Stack>
-      ))}
-    </Paper>
-  );
-
-  const renderTimeline = (
-    <Timeline
-      sx={{ p: 0, m: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}
-    >
-      {history?.timeline.map((item, index) => {
-        const firstTimeline = index === 0;
-
-        const lastTimeline = index === history.timeline.length - 1;
-
-        return (
-          <TimelineItem key={item.title}>
-            <TimelineSeparator>
-              <TimelineDot color={(firstTimeline && 'primary') || 'grey'} />
-              {lastTimeline ? null : <TimelineConnector />}
-            </TimelineSeparator>
-
-            <TimelineContent>
-              <Typography variant="subtitle2">{item.title}</Typography>
-
-              <Box sx={{ color: 'text.disabled', typography: 'caption', mt: 0.5 }}>
-                {fDateTime(item.time)}
-              </Box>
-            </TimelineContent>
-          </TimelineItem>
-        );
-      })}
-    </Timeline>
-  );
-
   return (
     <Card>
-      <CardHeader title="History" />
-      <Stack
-        spacing={3}
-        alignItems={{ md: 'flex-start' }}
-        direction={{ xs: 'column-reverse', md: 'row' }}
-        sx={{ p: 3 }}
-      >
-        {status === 'completed' ? renderSummary : renderTimeline}
+      <CardHeader title="Timeline" />
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <Timeline
+          sx={{
+            p: 0,
+            m: 0,
+            [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 },
+          }}
+        >
+          {bookingHistory.startTime && (
+            <TimelineItem>
+              <TimelineSeparator>
+                <TimelineDot color="primary" />
+                <TimelineConnector />
+              </TimelineSeparator>
+              <TimelineContent>
+                <Typography variant="subtitle2">Journey Started</Typography>
+                <Box sx={{ color: 'text.disabled', typography: 'caption', mt: 0.5 }}>
+                  {fDateTime(bookingHistory.startTime)}
+                </Box>
+              </TimelineContent>
+            </TimelineItem>
+          )}
+
+          {bookingHistory.arrivedPickupTime && (
+            <TimelineItem>
+              <TimelineSeparator>
+                <TimelineDot color="primary" />
+                <TimelineConnector />
+              </TimelineSeparator>
+              <TimelineContent>
+                <Typography variant="subtitle2">Arrived at Pickup Location</Typography>
+                <Box sx={{ color: 'text.disabled', typography: 'caption', mt: 0.5 }}>
+                  {fDateTime(bookingHistory.arrivedPickupTime)}
+                </Box>
+              </TimelineContent>
+            </TimelineItem>
+          )}
+
+          {bookingHistory.customerOnboardedTime && (
+            <TimelineItem>
+              <TimelineSeparator>
+                <TimelineDot color="primary" />
+                <TimelineConnector />
+              </TimelineSeparator>
+              <TimelineContent>
+                <Typography variant="subtitle2">Customer Onboarded</Typography>
+                <Box sx={{ color: 'text.disabled', typography: 'caption', mt: 0.5 }}>
+                  {fDateTime(bookingHistory.customerOnboardedTime)}
+                </Box>
+              </TimelineContent>
+            </TimelineItem>
+          )}
+
+          {bookingHistory.arrivedDestinationTime && (
+            <TimelineItem>
+              <TimelineSeparator>
+                <TimelineDot color="success" />
+              </TimelineSeparator>
+              <TimelineContent>
+                <Typography variant="subtitle2">Arrived at Destination</Typography>
+                <Box sx={{ color: 'text.disabled', typography: 'caption', mt: 0.5 }}>
+                  {fDateTime(bookingHistory.arrivedDestinationTime)}
+                </Box>
+              </TimelineContent>
+            </TimelineItem>
+          )}
+        </Timeline>
       </Stack>
     </Card>
   );

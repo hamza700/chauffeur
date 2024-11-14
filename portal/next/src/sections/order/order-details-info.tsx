@@ -1,6 +1,6 @@
 import type { IUserItem } from 'src/types/user';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import type { IBookingItem, IAvailableJobsItem } from 'src/types/order';
+import type { IBookingItem, IAvailableJobsItem } from 'src/types/booking';
 
 import { useState, useEffect } from 'react';
 
@@ -9,6 +9,7 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
+import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
@@ -40,7 +41,7 @@ import {
 // ----------------------------------------------------------------------
 
 type Props = {
-  order?: IAvailableJobsItem | IBookingItem;
+  order: IAvailableJobsItem | IBookingItem;
   onAcceptJob: () => void;
   onAssignDriver: (driver: IUserItem) => void;
   onCancelJob?: () => void;
@@ -201,18 +202,27 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver, onCancelJ
       <CardHeader title="Price Details" />
       <Stack spacing={3} sx={{ p: 3 }}>
         {isBooking && (
-          <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+          <Stack spacing={1.5}>
             <Typography variant="subtitle2" gutterBottom>
-              Customer:
+              Customer
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {`${order.customerFirstName} ${order.customerLastName}`}
+              Name:{`${order.customerFirstName} ${order.customerLastName}`}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Email: {order.customerEmail}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Phone Number: {order.customerPhoneNumber}
             </Typography>
           </Stack>
         )}
-        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+
+        <Divider />
+
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
-            Payment:
+            Payment
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Total Amount: {fCurrency(order?.driverAmount || 0)}
@@ -225,10 +235,12 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver, onCancelJ
           </Typography>
         </Stack>
 
+        <Divider />
+
         {isBooking && (order as IBookingItem).chauffeurId && (
           <Stack spacing={1.5}>
             <Typography variant="subtitle2" gutterBottom>
-              Driver:
+              Driver
             </Typography>
             {eligibleChauffeurs.map(
               (chauffeur) =>
@@ -243,24 +255,26 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver, onCancelJ
                   </Box>
                 )
             )}
-            <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                color="primary"
-                onClick={() => setAssignDriverOpen(true)}
-              >
-                Change Driver
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                color="error"
-                onClick={() => setCancelJobOpen(true)}
-              >
-                Cancel Job
-              </Button>
-            </Stack>
+            {(order as IBookingItem).status !== 'completed' && (
+              <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setAssignDriverOpen(true)}
+                >
+                  Change Driver
+                </Button>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="error"
+                  onClick={() => setCancelJobOpen(true)}
+                >
+                  Cancel Job
+                </Button>
+              </Stack>
+            )}
           </Stack>
         )}
 
