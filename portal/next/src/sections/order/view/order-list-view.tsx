@@ -135,8 +135,11 @@ export function OrderListView() {
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleViewRow = useCallback(
-    (id: string) => {
-      router.push(paths.dashboard.bookings.details(id));
+    (id: string, isBooking: boolean) => {
+      const path = isBooking
+        ? paths.dashboard.bookings.details(id)
+        : paths.dashboard.bookings.availableJob(id);
+      router.push(path);
     },
     [router]
   );
@@ -237,7 +240,11 @@ export function OrderListView() {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <OrderTableRow key={row.id} row={row} onViewRow={() => handleViewRow(row.id)} />
+                    <OrderTableRow
+                      key={row.id}
+                      row={row}
+                      onViewRow={() => handleViewRow(row.id, 'status' in row)}
+                    />
                   ))}
 
                 <TableEmptyRows

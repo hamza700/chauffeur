@@ -268,6 +268,7 @@ export const transformAvailableJobsData = (availableJobs: any): IAvailableJobsIt
   bookingType: availableJobs.booking_type,
   driverAmount: availableJobs.driver_amount,
   hours: availableJobs.hours,
+  createdAt: availableJobs.created_at,
 });
 
 export const transformToAvailableJobsData = (availableJobs: any): AvailableJobsData => ({

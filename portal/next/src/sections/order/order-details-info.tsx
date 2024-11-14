@@ -20,12 +20,22 @@ import {
   transformVehicleData,
   transformToBookingData,
   transformChauffeurData,
+  transformToAvailableJobsData,
 } from 'src/utils/data-transformers';
 
+import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { getVehicles, getChauffeurs, insertBooking, deleteAvailableJob } from 'src/auth/context/supabase/action';
+import {
+  getVehicles,
+  getChauffeurs,
+  insertBooking,
+  updateBooking,
+  deleteBooking,
+  deleteAvailableJob,
+  insertAvailableJob,
+} from 'src/auth/context/supabase/action';
 
 // ----------------------------------------------------------------------
 
@@ -33,14 +43,16 @@ type Props = {
   order?: IAvailableJobsItem | IBookingItem;
   onAcceptJob: () => void;
   onAssignDriver: (driver: IUserItem) => void;
+  onCancelJob?: () => void;
 };
 
-export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) {
+export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver, onCancelJob }: Props) {
   const { user } = useAuthContext();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [assignDriverOpen, setAssignDriverOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<string>('');
   const [eligibleChauffeurs, setEligibleChauffeurs] = useState<IUserItem[]>([]);
+  const [cancelJobOpen, setCancelJobOpen] = useState(false);
 
   useEffect(() => {
     const fetchChauffeurAndVehicles = async () => {
@@ -82,6 +94,7 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
           setEligibleChauffeurs(eligible);
         } catch (error) {
           console.error('Error fetching chauffeur and vehicle data:', error);
+          toast.error('Error fetching chauffeur and vehicle data');
         }
       }
     };
@@ -92,12 +105,12 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
   const handleConfirmAcceptJob = async () => {
     if (order) {
       try {
-        // Just trigger the UI update without database insertion
+        // Just update UI state, no database operation yet
         onAcceptJob();
         setConfirmOpen(false);
       } catch (error) {
         console.error('Error accepting job:', error);
-        // Add error handling/notification here
+        toast.error('Error accepting job');
       }
     }
   };
@@ -107,26 +120,35 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
       try {
         const chauffeurData = JSON.parse(selectedDriver) as IUserItem;
 
-        // Insert into bookings table
-        const bookingData = transformToBookingData({
-          ...order,
-          status: 'confirmed',
-          providerId: user?.id,
-          chauffeurId: chauffeurData.id,
-        });
+        if (isBooking && (order as IBookingItem).chauffeurId) {
+          // Case 1: Changing driver for existing booking
+          await updateBooking(order.id, {
+            chauffeur_id: chauffeurData.id,
+            status: 'confirmed',
+          });
+        } else {
+          // Case 2: First time assigning driver (creates booking)
+          const bookingData = transformToBookingData({
+            ...order,
+            status: 'confirmed',
+            providerId: user?.id,
+            chauffeurId: chauffeurData.id,
+            createdAt: new Date().toISOString(),
+          });
 
-        await insertBooking(bookingData);
-        
-        // Delete from available_jobs table
-        if (isBooking) {
-          await deleteAvailableJob(order.id);
+          const { data: newBooking } = await insertBooking(bookingData);
+
+          // Delete from available_jobs if this was a new job
+          if (newBooking) {
+            await deleteAvailableJob(order.id);
+          }
         }
-        
+
         onAssignDriver(chauffeurData);
         setAssignDriverOpen(false);
       } catch (error) {
         console.error('Error assigning driver:', error);
-        // Add error handling/notification here
+        toast.error('Error assigning driver');
       }
     }
   };
@@ -135,11 +157,48 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
     setSelectedDriver(event.target.value);
   };
 
+  const handleCancelJob = async () => {
+    if (order) {
+      try {
+        // Transform booking back to available job format
+        const availableJobData = transformToAvailableJobsData({
+          ...order,
+          createdAt: new Date().toISOString(),
+          // Remove booking-specific fields
+          status: undefined,
+          chauffeurId: undefined,
+          providerId: undefined,
+        });
+
+        // Insert into available_jobs table first
+        const { data: newAvailableJob } = await insertAvailableJob(availableJobData);
+
+        if (newAvailableJob) {
+          // Only delete from bookings if insert was successful
+          await deleteBooking(order.id);
+
+          // Close dialog and update UI
+          setCancelJobOpen(false);
+
+          // Call the callback to update parent component
+          if (onCancelJob) {
+            onCancelJob();
+          }
+        } else {
+          throw new Error('Failed to create available job');
+        }
+      } catch (error) {
+        console.error('Error in handleCancelJob:', error);
+        toast.error('Failed to cancel job. Please try again.');
+      }
+    }
+  };
+
   const isBooking = 'status' in order;
 
   return (
     <Card>
-      <CardHeader title="Details" />
+      <CardHeader title="Price Details" />
       <Stack spacing={3} sx={{ p: 3 }}>
         {isBooking && (
           <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
@@ -171,17 +230,37 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
             <Typography variant="subtitle2" gutterBottom>
               Driver:
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Name: {`${order.customerFirstName} ${order.customerLastName}`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Car Registration: {(order as IBookingItem).chauffeurId}
-            </Typography>
-            {(order as IBookingItem).status === 'confirmed' && (
-              <Button variant="outlined" color="primary" onClick={() => setAssignDriverOpen(true)}>
+            {eligibleChauffeurs.map(
+              (chauffeur) =>
+                chauffeur.id === (order as IBookingItem).chauffeurId && (
+                  <Box key={chauffeur.id}>
+                    <Typography variant="body2" color="text.secondary">
+                      Name: {`${chauffeur.firstName} ${chauffeur.lastName}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Car Registration: {chauffeur.licensePlate}
+                    </Typography>
+                  </Box>
+                )
+            )}
+            <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="primary"
+                onClick={() => setAssignDriverOpen(true)}
+              >
                 Change Driver
               </Button>
-            )}
+              <Button
+                fullWidth
+                variant="contained"
+                color="error"
+                onClick={() => setCancelJobOpen(true)}
+              >
+                Cancel Job
+              </Button>
+            </Stack>
           </Stack>
         )}
 
@@ -238,6 +317,18 @@ export function OrderDetailsInfo({ order, onAcceptJob, onAssignDriver }: Props) 
             disabled={!selectedDriver}
           >
             Assign
+          </Button>
+        }
+      />
+
+      <ConfirmDialog
+        open={cancelJobOpen}
+        onClose={() => setCancelJobOpen(false)}
+        title="Cancel Job"
+        content="Are you sure you want to cancel this job? This action cannot be undone."
+        action={
+          <Button variant="contained" color="error" onClick={handleCancelJob}>
+            Cancel Job
           </Button>
         }
       />

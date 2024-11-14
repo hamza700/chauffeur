@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 
 import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
+import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { transformBookingData, transformAvailableJobsData } from 'src/utils/data-transformers';
 
@@ -32,25 +32,26 @@ type Props = {
 
 export function OrderDetailsView({ id }: Props) {
   const router = useRouter();
+  const pathname = usePathname(); // Use this instead of router.pathname
+
   const [currentOrder, setCurrentOrder] = useState<IAvailableJobsItem | IBookingItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        // Try to fetch as available job first
-        const { data: availableJobData } = await getAvailableJobById(id);
+        const isAvailableJob = pathname?.includes('available-job');
 
-        if (availableJobData) {
-          setCurrentOrder(transformAvailableJobsData(availableJobData));
-          return;
-        }
-
-        // If not an available job, try to fetch as booking
-        const { data: bookingData } = await getBookingById(id);
-
-        if (bookingData) {
-          setCurrentOrder(transformBookingData(bookingData));
+        if (isAvailableJob) {
+          const { data: availableJobData } = await getAvailableJobById(id);
+          if (availableJobData) {
+            setCurrentOrder(transformAvailableJobsData(availableJobData));
+          }
+        } else {
+          const { data: bookingData } = await getBookingById(id);
+          if (bookingData) {
+            setCurrentOrder(transformBookingData(bookingData));
+          }
         }
       } catch (err) {
         toast.error('Failed to fetch order details');
@@ -62,7 +63,7 @@ export function OrderDetailsView({ id }: Props) {
     if (id) {
       fetchOrderDetails();
     }
-  }, [id]);
+  }, [id, pathname]);
 
   const isBooking = currentOrder && 'status' in currentOrder;
 
@@ -107,7 +108,7 @@ export function OrderDetailsView({ id }: Props) {
           <Stack spacing={3} direction={{ xs: 'column-reverse', md: 'column' }}>
             <OrderDetailsItems order={currentOrder} />
 
-            {isBooking && (
+            {isBooking && (currentOrder as IBookingItem).history && (
               <OrderDetailsHistory
                 history={(currentOrder as IBookingItem).history}
                 status={(currentOrder as IBookingItem).status}
@@ -121,6 +122,9 @@ export function OrderDetailsView({ id }: Props) {
             order={currentOrder}
             onAcceptJob={handleAcceptJob}
             onAssignDriver={handleAssignDriver}
+            onCancelJob={() => {
+              router.push(paths.dashboard.bookings.root);
+            }}
           />
         </Grid>
       </Grid>

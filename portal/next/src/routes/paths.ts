@@ -106,6 +106,7 @@ export const paths = {
     bookings: {
       root: `${ROOTS.DASHBOARD}/bookings`,
       details: (id: string) => `${ROOTS.DASHBOARD}/bookings/${id}`,
+      availableJob: (id: string) => `${ROOTS.DASHBOARD}/bookings/available-job/${id}`,
     },
     chauffeurs: {
       root: `${ROOTS.DASHBOARD}/chauffeurs`,

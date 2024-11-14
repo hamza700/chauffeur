@@ -454,6 +454,20 @@ export const getAvailableJobById = async (
 };
 
 /** **************************************
+ * Insert a new available job
+ *************************************** */
+export const insertAvailableJob = async (
+  newAvailableJob: Partial<AvailableJobsData>
+): Promise<{ data: AvailableJobsData[] | null; error: PostgrestError | null }> => {
+  const { data, error } = await supabase.from('available_jobs').insert([newAvailableJob]).select();
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+  return { data, error };
+};
+
+/** **************************************
  * Delete a available job
  *************************************** */
 export const deleteAvailableJob = async (
@@ -515,6 +529,39 @@ export const insertBooking = async (
     throw error;
   }
   return { data, error };
+};
+
+/** **************************************
+ * Update an existing booking
+ *************************************** */
+export const updateBooking = async (
+  bookingId: string,
+  updatedFields: Partial<BookingData>
+): Promise<{ data: BookingData[] | null; error: PostgrestError | null }> => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updatedFields)
+    .eq('id', bookingId)
+    .select();
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+  return { data, error };
+};
+
+/** **************************************
+ * Delete a booking
+ *************************************** */
+export const deleteBooking = async (
+  bookingId: string
+): Promise<{ error: PostgrestError | null }> => {
+  const { error } = await supabase.from('bookings').delete().eq('id', bookingId);
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+  return { error };
 };
 
 /** **************************************

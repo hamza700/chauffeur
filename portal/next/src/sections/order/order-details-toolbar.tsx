@@ -29,14 +29,13 @@ export function OrderDetailsToolbar({ status, backLink, orderNumber }: Props) {
 
         <Stack spacing={0.5}>
           <Stack spacing={1} direction="row" alignItems="center">
-            <Typography variant="h4"> Order {orderNumber} </Typography>
+            <Typography variant="h4"> Booking {orderNumber} </Typography>
             <Label
               variant="soft"
               color={
                 (status === 'completed' && 'success') ||
                 (status === 'offers' && 'warning') ||
                 (status === 'upcoming' && 'info') ||
-                (status === 'cancelled' && 'error') ||
                 'default'
               }
             >

@@ -47,7 +47,7 @@ export function OrderDetailsItems({ order }: Props) {
           )}
         </Stack>
 
-        <Stack spacing={1.5}>
+        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
           <Typography variant="subtitle2" gutterBottom>
             Pickup Location:
           </Typography>
@@ -67,7 +67,7 @@ export function OrderDetailsItems({ order }: Props) {
           </Stack>
         )}
 
-        <Stack spacing={1.5} sx={{ borderBottom: '1px dashed', pb: 1.5 }}>
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" gutterBottom>
             Journey Details:
           </Typography>
@@ -77,23 +77,16 @@ export function OrderDetailsItems({ order }: Props) {
           <Typography variant="body2" color="text.secondary">
             Luggage: {order.luggage}
           </Typography>
-          {order.flightNumber && (
+          <Typography variant="body2" color="text.secondary">
+            Flight Number: {order.flightNumber}
+          </Typography>
+
+          {order.specialRequests && (
             <Typography variant="body2" color="text.secondary">
-              Flight Number: {order.flightNumber}
+              Special Requests: {order.specialRequests}
             </Typography>
           )}
         </Stack>
-
-        {order.specialRequests && (
-          <Stack spacing={1.5}>
-            <Typography variant="subtitle2" gutterBottom>
-              Special Requests:
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {order.specialRequests}
-            </Typography>
-          </Stack>
-        )}
       </Stack>
     </Card>
   );

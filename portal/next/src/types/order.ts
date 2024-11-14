@@ -58,6 +58,7 @@ export interface IAvailableJobsItem {
   bookingType: string;
   driverAmount: number;
   hours: string;
+  createdAt: string;
 }
 
 export interface IBookingItem {

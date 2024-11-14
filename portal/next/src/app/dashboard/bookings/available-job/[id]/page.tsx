@@ -3,7 +3,7 @@ import { _orders } from 'src/_mock/_order';
 
 import { OrderDetailsView } from 'src/sections/order/view'; // Ensure this points to the correct mock data
 
-export const metadata = { title: `Booking details | Dashboard - ${CONFIG.site.name}` };
+export const metadata = { title: `Available Jobs details | Dashboard - ${CONFIG.site.name}` };
 
 type Props = {
   params: { id: string };
