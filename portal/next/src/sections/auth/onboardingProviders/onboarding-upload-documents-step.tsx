@@ -1,7 +1,3 @@
-import type { IUserDocumentFields } from 'src/types/user';
-import type { IDocumentFields } from 'src/types/provider';
-import type { IVehicleDocumentFields } from 'src/types/vehicle';
-
 import { z as zod } from 'zod';
 import { useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -114,49 +110,105 @@ export const OnboardingDocumentsSchema = zod.object({
 });
 
 type Props = {
-  currentProvider?: IDocumentFields;
-  currentChauffeur?: IUserDocumentFields;
-  currentVehicle?: IVehicleDocumentFields;
-  onSubmit: (data: OnboardingDocumentsSchemaType) => void;
+  onSubmit: (data: {
+    providerDocuments: {
+      companyPrivateHireOperatorLicenseExpiryDate: Date | null;
+      companyPrivateHireOperatorLicenseStatus: string;
+      personalIDorPassportExpiryDate: Date | null;
+      personalIDorPassportStatus: string;
+      vatRegistrationCertificateExpiryDate: Date | null;
+      vatRegistrationCertificateStatus: string;
+    };
+    chauffeurDocuments: {
+      profilePicStatus: string;
+      driversLicenseExpiryDate: Date | null;
+      driversLicenseStatus: string;
+      privateHireLicenseExpiryDate: Date | null;
+      privateHireLicenseStatus: string;
+    };
+    vehicleDocuments: {
+      vehiclePicStatus: string;
+      privateHireLicenseExpiryDate: Date | null;
+      privateHireLicenseStatus: string;
+      motTestCertificateExpiryDate: Date | null;
+      motTestCertificateStatus: string;
+      vehicleInsuranceExpiryDate: Date | null;
+      vehicleInsuranceStatus: string;
+      vehicleRegistrationStatus: string;
+      leasingContractStatus: string | undefined;
+    };
+    pendingUploads: {
+      provider: {
+        companyPrivateHireOperatorLicense?: { files: File[]; expiryDate: Date | null };
+        personalIDorPassport?: { files: File[]; expiryDate: Date | null };
+        vatRegistrationCertificate?: { files: File[]; expiryDate: Date | null };
+      };
+      chauffeur: {
+        profilePic?: File;
+        driversLicense?: { files: File[]; expiryDate: Date | null };
+        privateHireLicense?: { files: File[]; expiryDate: Date | null };
+      };
+      vehicle: {
+        vehiclePic?: File;
+        privateHireLicense?: { files: File[]; expiryDate: Date | null };
+        motTestCertificate?: { files: File[]; expiryDate: Date | null };
+        vehicleInsurance?: { files: File[]; expiryDate: Date | null };
+        vehicleRegistration?: { files: File[] };
+        leasingContract?: { files: File[] };
+      };
+    };
+  }) => void;
+  currentProvider?: any;
+  currentChauffeur?: any;
+  currentVehicle?: any;
 };
 
 export function UploadDocumentsStep({
+  onSubmit,
   currentProvider,
   currentChauffeur,
   currentVehicle,
-  onSubmit,
 }: Props) {
   const defaultValues = useMemo(
     () => ({
-      companyPrivateHireOperatorLicenseUrls:
-        currentProvider?.companyPrivateHireOperatorLicenseUrls || [],
-      personalIDorPassportUrls: currentProvider?.personalIDorPassportUrls || [],
-      vatRegistrationCertificateUrls: currentProvider?.vatRegistrationCertificateUrls || [],
-      companyPrivateHireOperatorLicenseExpiryDate:
-        currentProvider?.companyPrivateHireOperatorLicenseExpiryDate || null,
-      personalIDorPassportExpiryDate: currentProvider?.personalIDorPassportExpiryDate || null,
-      vatRegistrationCertificateExpiryDate:
-        currentProvider?.vatRegistrationCertificateExpiryDate || null,
+      companyPrivateHireOperatorLicenseUrls: [],
+      companyPrivateHireOperatorLicenseStatus: 'pending',
+      personalIDorPassportUrls: [],
+      personalIDorPassportStatus: 'pending',
+      vatRegistrationCertificateUrls: [],
+      vatRegistrationCertificateStatus: 'pending',
+      companyPrivateHireOperatorLicenseExpiryDate: null,
+      personalIDorPassportExpiryDate: null,
+      vatRegistrationCertificateExpiryDate: null,
 
       // Chauffeur documents
-      profilePicUrl: currentChauffeur?.profilePicUrl || null,
-      chauffeurDriversLicenseUrls: currentChauffeur?.driversLicenseUrls || [],
-      chauffeurPrivateHireLicenseUrls: currentChauffeur?.privateHireLicenseUrls || [],
-      chauffeurDriversLicenseExpiryDate: currentChauffeur?.driversLicenseExpiryDate || null,
-      chauffeurPrivateHireLicenseExpiryDate: currentChauffeur?.privateHireLicenseExpiryDate || null,
+      profilePicUrl: null,
+      profilePicStatus: 'pending',
+      chauffeurDriversLicenseUrls: [],
+      chauffeurDriversLicenseStatus: 'pending',
+      chauffeurPrivateHireLicenseUrls: [],
+      chauffeurPrivateHireLicenseStatus: 'pending',
+      chauffeurDriversLicenseExpiryDate: null,
+      chauffeurPrivateHireLicenseExpiryDate: null,
 
       // Vehicle documents
-      vehiclePicUrl: currentVehicle?.vehiclePicUrl || null,
-      vehiclePrivateHireLicenseUrls: currentVehicle?.privateHireLicenseUrls || [],
-      vehiclePrivateHireLicenseExpiryDate: currentVehicle?.privateHireLicenseExpiryDate || null,
-      vehicleMotTestCertificateUrls: currentVehicle?.motTestCertificateUrls || [],
-      vehicleMotTestCertificateExpiryDate: currentVehicle?.motTestCertificateExpiryDate || null,
-      vehicleInsuranceUrls: currentVehicle?.vehicleInsuranceUrls || [],
-      vehicleInsuranceExpiryDate: currentVehicle?.vehicleInsuranceExpiryDate || null,
-      vehicleRegistrationUrls: currentVehicle?.vehicleRegistrationUrls || [],
-      vehicleLeasingContractUrls: currentVehicle?.leasingContractUrls || [],
+      vehiclePicUrl: null,
+      vehiclePicStatus: 'pending',
+      vehiclePrivateHireLicenseUrls: [],
+      vehiclePrivateHireLicenseStatus: 'pending',
+      vehiclePrivateHireLicenseExpiryDate: null,
+      vehicleMotTestCertificateUrls: [],
+      vehicleMotTestCertificateStatus: 'pending',
+      vehicleMotTestCertificateExpiryDate: null,
+      vehicleInsuranceUrls: [],
+      vehicleInsuranceStatus: 'pending',
+      vehicleInsuranceExpiryDate: null,
+      vehicleRegistrationUrls: [],
+      vehicleRegistrationStatus: 'pending',
+      vehicleLeasingContractUrls: [],
+      leasingContractStatus: 'pending',
     }),
-    [currentProvider, currentChauffeur, currentVehicle]
+    []
   );
 
   const methods = useForm<OnboardingDocumentsSchemaType>({
@@ -203,33 +255,82 @@ export function UploadDocumentsStep({
   const onSubmitHandler = (data: OnboardingDocumentsSchemaType) => {
     const updatedData = {
       providerDocuments: {
-        companyPrivateHireOperatorLicenseUrls: data.companyPrivateHireOperatorLicenseUrls,
         companyPrivateHireOperatorLicenseExpiryDate:
           data.companyPrivateHireOperatorLicenseExpiryDate,
-        personalIDorPassportUrls: data.personalIDorPassportUrls,
+        companyPrivateHireOperatorLicenseStatus: 'pending',
         personalIDorPassportExpiryDate: data.personalIDorPassportExpiryDate,
-        vatRegistrationCertificateUrls: data.vatRegistrationCertificateUrls,
+        personalIDorPassportStatus: 'pending',
         vatRegistrationCertificateExpiryDate: data.vatRegistrationCertificateExpiryDate,
+        vatRegistrationCertificateStatus: 'pending',
       },
       chauffeurDocuments: {
-        profilePicUrl: data.profilePicUrl,
-        driversLicenseUrls: data.chauffeurDriversLicenseUrls,
+        profilePicStatus: 'pending',
         driversLicenseExpiryDate: data.chauffeurDriversLicenseExpiryDate,
-        privateHireLicenseUrls: data.chauffeurPrivateHireLicenseUrls,
+        driversLicenseStatus: 'pending',
         privateHireLicenseExpiryDate: data.chauffeurPrivateHireLicenseExpiryDate,
+        privateHireLicenseStatus: 'pending',
       },
       vehicleDocuments: {
-        vehiclePicUrl: data.vehiclePicUrl,
-        privateHireLicenseUrls: data.vehiclePrivateHireLicenseUrls,
+        vehiclePicStatus: 'pending',
         privateHireLicenseExpiryDate: data.vehiclePrivateHireLicenseExpiryDate,
-        motTestCertificateUrls: data.vehicleMotTestCertificateUrls,
+        privateHireLicenseStatus: 'pending',
         motTestCertificateExpiryDate: data.vehicleMotTestCertificateExpiryDate,
-        vehicleInsuranceUrls: data.vehicleInsuranceUrls,
+        motTestCertificateStatus: 'pending',
         vehicleInsuranceExpiryDate: data.vehicleInsuranceExpiryDate,
-        vehicleRegistrationUrls: data.vehicleRegistrationUrls,
-        leasingContractUrls: data.vehicleLeasingContractUrls,
+        vehicleInsuranceStatus: 'pending',
+        vehicleRegistrationStatus: 'pending',
+        leasingContractStatus: data.vehicleLeasingContractUrls?.length ? 'pending' : undefined,
+      },
+      pendingUploads: {
+        provider: {
+          companyPrivateHireOperatorLicense: {
+            files: data.companyPrivateHireOperatorLicenseUrls,
+            expiryDate: data.companyPrivateHireOperatorLicenseExpiryDate,
+          },
+          personalIDorPassport: {
+            files: data.personalIDorPassportUrls,
+            expiryDate: data.personalIDorPassportExpiryDate,
+          },
+          vatRegistrationCertificate: {
+            files: data.vatRegistrationCertificateUrls,
+            expiryDate: data.vatRegistrationCertificateExpiryDate,
+          },
+        },
+        chauffeur: {
+          profilePic: data.profilePicUrl,
+          driversLicense: {
+            files: data.chauffeurDriversLicenseUrls,
+            expiryDate: data.chauffeurDriversLicenseExpiryDate,
+          },
+          privateHireLicense: {
+            files: data.chauffeurPrivateHireLicenseUrls,
+            expiryDate: data.chauffeurPrivateHireLicenseExpiryDate,
+          },
+        },
+        vehicle: {
+          vehiclePic: data.vehiclePicUrl,
+          privateHireLicense: {
+            files: data.vehiclePrivateHireLicenseUrls,
+            expiryDate: data.vehiclePrivateHireLicenseExpiryDate,
+          },
+          motTestCertificate: {
+            files: data.vehicleMotTestCertificateUrls,
+            expiryDate: data.vehicleMotTestCertificateExpiryDate,
+          },
+          vehicleInsurance: {
+            files: data.vehicleInsuranceUrls,
+            expiryDate: data.vehicleInsuranceExpiryDate,
+          },
+          vehicleRegistration: {
+            files: data.vehicleRegistrationUrls,
+          },
+          leasingContract: {
+            files: data.vehicleLeasingContractUrls,
+          },
+        },
       },
     };
+
     onSubmit(updatedData);
   };
 

@@ -8,20 +8,14 @@ export type IVehicleTableFilters = {
 };
 
 export type IVehicleDocumentFields = {
-  privateHireLicenseUrls: string[];
   privateHireLicenseExpiryDate: IDateValue;
   privateHireLicenseStatus: 'pending' | 'rejected' | 'approved';
-  motTestCertificateUrls: string[];
   motTestCertificateExpiryDate: IDateValue;
   motTestCertificateStatus: 'pending' | 'rejected' | 'approved';
-  vehiclePicUrl: string;
   vehiclePicStatus: 'pending' | 'rejected' | 'approved';
-  vehicleInsuranceUrls: string[];
   vehicleInsuranceExpiryDate: IDateValue;
   vehicleInsuranceStatus: 'pending' | 'rejected' | 'approved';
-  vehicleRegistrationUrls: string[];
   vehicleRegistrationStatus: 'pending' | 'rejected' | 'approved';
-  leasingContractUrls?: string[];
   leasingContractStatus?: 'pending' | 'rejected' | 'approved';
 };
 

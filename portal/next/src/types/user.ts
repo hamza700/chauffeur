@@ -8,12 +8,9 @@ export type IUserTableFilters = {
 };
 
 export type IUserDocumentFields = {
-  profilePicUrl: string;
   profilePicStatus: 'pending' | 'rejected' | 'approved';
-  driversLicenseUrls: string[];
   driversLicenseExpiryDate: IDateValue;
   driversLicenseStatus: 'pending' | 'rejected' | 'approved';
-  privateHireLicenseUrls: string[];
   privateHireLicenseExpiryDate: IDateValue;
   privateHireLicenseStatus: 'pending' | 'rejected' | 'approved';
 };

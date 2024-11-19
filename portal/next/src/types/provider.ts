@@ -6,13 +6,10 @@ export type IProvidersTableFilters = {
 };
 
 export type IDocumentFields = {
-  companyPrivateHireOperatorLicenseUrls: string[];
   companyPrivateHireOperatorLicenseExpiryDate: IDateValue;
   companyPrivateHireOperatorLicenseStatus: 'pending' | 'rejected' | 'approved';
-  personalIDorPassportUrls: string[];
   personalIDorPassportExpiryDate: IDateValue;
   personalIDorPassportStatus: 'pending' | 'rejected' | 'approved';
-  vatRegistrationCertificateUrls: string[];
   vatRegistrationCertificateExpiryDate: IDateValue;
   vatRegistrationCertificateStatus: 'pending' | 'rejected' | 'approved';
 };

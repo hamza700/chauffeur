@@ -133,6 +133,7 @@ export function VehicleNewEditForm({ currentVehicle }: Props) {
           providerId: userId,
           id: uuidv4(),
           status: 'pending',
+          createdAt: new Date().toISOString(),
         });
 
         await insertVehicle(vehicleData);

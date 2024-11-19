@@ -1,12 +1,17 @@
 import type { IUserItem, IUserDocumentFields } from 'src/types/user';
 import type { IVehicleItem, IVehicleDocumentFields } from 'src/types/vehicle';
-import type { IBookingItem, IBookingReview, IAvailableJobsItem, IBookingHistoryItem } from 'src/types/booking';
 import type {
   PaymentDetails,
   IDocumentFields,
   IProviderAccount,
   PartnerAgreement,
 } from 'src/types/provider';
+import type {
+  IBookingItem,
+  IBookingReview,
+  IAvailableJobsItem,
+  IBookingHistoryItem,
+} from 'src/types/booking';
 import type {
   VehicleData,
   BookingData,
@@ -29,12 +34,9 @@ export const transformChauffeurData = (user: any): IUserItem => ({
   privateHireLicense: user.private_hire_license,
   licensePlate: user.license_plate,
   documents: {
-    profilePicUrl: '',
     profilePicStatus: user.profile_pic_status,
-    driversLicenseUrls: [],
     driversLicenseExpiryDate: user.drivers_license_expiry_date,
     driversLicenseStatus: user.drivers_license_status,
-    privateHireLicenseUrls: [],
     privateHireLicenseExpiryDate: user.private_hire_license_expiry_date,
     privateHireLicenseStatus: user.private_hire_license_status,
   } as IUserDocumentFields,
@@ -58,6 +60,7 @@ export const transformToChauffeurData = (user: any): ChauffeurData => ({
   private_hire_license_expiry_date: user.privateHireLicenseExpiryDate,
   provider_id: user.providerId,
   onboarded: user.onboarded,
+  created_at: user.createdAt,
 });
 
 export const transformVehicleData = (vehicle: any): IVehicleItem => ({
@@ -70,20 +73,14 @@ export const transformVehicleData = (vehicle: any): IVehicleItem => ({
   serviceClass: vehicle.service_class,
   status: vehicle.status,
   documents: {
-    privateHireLicenseUrls: [],
     privateHireLicenseExpiryDate: vehicle.private_hire_license_expiry_date,
     privateHireLicenseStatus: vehicle.private_hire_license_status,
-    motTestCertificateUrls: [],
     motTestCertificateExpiryDate: vehicle.mot_test_certificate_expiry_date,
     motTestCertificateStatus: vehicle.mot_test_certificate_status,
-    vehiclePicUrl: '',
     vehiclePicStatus: vehicle.vehicle_pic_status,
-    vehicleInsuranceUrls: [],
     vehicleInsuranceExpiryDate: vehicle.vehicle_insurance_expiry_date,
     vehicleInsuranceStatus: vehicle.vehicle_insurance_status,
-    vehicleRegistrationUrls: [],
     vehicleRegistrationStatus: vehicle.vehicle_registration_status,
-    leasingContractUrls: [],
     leasingContractStatus: vehicle.leasing_contract_status,
   } as IVehicleDocumentFields,
 });
@@ -106,6 +103,7 @@ export const transformToVehicleData = (vehicle: any): VehicleData => ({
   vehicle_insurance_status: vehicle.vehicleInsuranceStatus,
   vehicle_registration_status: vehicle.vehicleRegistrationStatus,
   leasing_contract_status: vehicle.leasingContractStatus,
+  created_at: vehicle.createdAt,
 });
 
 export const transformProviderData = (provider: any): IProviderAccount => ({
@@ -124,14 +122,11 @@ export const transformProviderData = (provider: any): IProviderAccount => ({
   taxIdentificationNumber: provider.tax_identification_number,
   vatNumber: provider.vat_number,
   documents: {
-    companyPrivateHireOperatorLicenseUrls: [],
     companyPrivateHireOperatorLicenseExpiryDate:
       provider.company_private_hire_operator_license_expiry_date,
     companyPrivateHireOperatorLicenseStatus: provider.company_private_hire_operator_license_status,
-    personalIDorPassportUrls: [],
     personalIDorPassportExpiryDate: provider.personal_id_or_passport_expiry_date,
     personalIDorPassportStatus: provider.personal_id_or_passport_status,
-    vatRegistrationCertificateUrls: [],
     vatRegistrationCertificateExpiryDate: provider.vat_registration_certificate_expiry_date,
     vatRegistrationCertificateStatus: provider.vat_registration_certificate_status,
   } as IDocumentFields,
@@ -185,6 +180,7 @@ export const transformToProviderData = (provider: any): ProviderData => ({
   iban: provider.iban || null,
   swift_code: provider.swiftCode || null,
   onboarded: provider.onboarded,
+  created_at: provider.createdAt,
 });
 
 export const transformBookingData = (booking: any): IBookingItem => ({

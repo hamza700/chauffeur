@@ -112,63 +112,72 @@ export function ApplicationSummaryStep({ formData }: Props) {
         {/* Documents */}
         <Card sx={{ p: 2 }}>
           <Typography variant="h6">Documents</Typography>
+
+          {/* Provider Documents */}
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+            Provider Documents
+          </Typography>
           <Typography variant="body2" color="textSecondary">
-            Private Hire License:{' '}
-            {formData.providerDocuments?.companyPrivateHireOperatorLicenseUrls?.length > 0
+            Company Private Hire License:{' '}
+            {formData.providerDocuments?.companyPrivateHireOperatorLicenseStatus
               ? 'Uploaded'
               : 'Not Uploaded'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Passport or ID:{' '}
-            {formData.providerDocuments?.personalIDorPassportUrls?.length > 0
+            Personal ID or Passport:{' '}
+            {formData.providerDocuments?.personalIDorPassportStatus ? 'Uploaded' : 'Not Uploaded'}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            VAT Registration Certificate:{' '}
+            {formData.providerDocuments?.vatRegistrationCertificateStatus
               ? 'Uploaded'
               : 'Not Uploaded'}
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            VAT Registration:{' '}
-            {formData.providerDocuments?.vatRegistrationCertificateUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Company Registration:{' '}
-            {formData.providerDocuments?.companyRegistrationCertificateUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+
+          {/* Chauffeur Documents */}
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+            Chauffeur Documents
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Profile Picture:{' '}
-            {formData.chauffeurDocuments?.profilePicUrl ? 'Uploaded' : 'Not Uploaded'}
+            {formData.chauffeurDocuments?.profilePicStatus ? 'Uploaded' : 'Not Uploaded'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Passport or ID:{' '}
-            {formData.chauffeurDocuments?.passportOrIDUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+            Driver&apos;s License:{' '}
+            {formData.chauffeurDocuments?.driversLicenseStatus ? 'Uploaded' : 'Not Uploaded'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Private Hire License:{' '}
-            {formData.chauffeurDocuments?.privateHireLicenseUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+            {formData.chauffeurDocuments?.privateHireLicenseStatus ? 'Uploaded' : 'Not Uploaded'}
+          </Typography>
+
+          {/* Vehicle Documents */}
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+            Vehicle Documents
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Drivers License:{' '}
-            {formData.chauffeurDocuments?.driversLicenseUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+            Vehicle Picture:{' '}
+            {formData.vehicleDocuments?.vehiclePicStatus ? 'Uploaded' : 'Not Uploaded'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Vehicle Registration:{' '}
-            {formData.vehicleDocuments?.vehicleRegistrationUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+            Private Hire License:{' '}
+            {formData.vehicleDocuments?.privateHireLicenseStatus ? 'Uploaded' : 'Not Uploaded'}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            MOT Test Certificate:{' '}
+            {formData.vehicleDocuments?.motTestCertificateStatus ? 'Uploaded' : 'Not Uploaded'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Vehicle Insurance:{' '}
-            {formData.vehicleDocuments?.vehicleInsuranceUrls?.length > 0
-              ? 'Uploaded'
-              : 'Not Uploaded'}
+            {formData.vehicleDocuments?.vehicleInsuranceStatus ? 'Uploaded' : 'Not Uploaded'}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Vehicle Registration:{' '}
+            {formData.vehicleDocuments?.vehicleRegistrationStatus ? 'Uploaded' : 'Not Uploaded'}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Leasing Contract:{' '}
+            {formData.vehicleDocuments?.leasingContractStatus ? 'Uploaded' : 'Not Uploaded'}
           </Typography>
         </Card>
 

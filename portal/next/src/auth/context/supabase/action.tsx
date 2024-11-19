@@ -151,6 +151,7 @@ export type ChauffeurData = {
   private_hire_license_expiry_date: string | null;
   provider_id: string;
   onboarded?: boolean;
+  created_at: string;
 };
 
 export type ProviderData = {
@@ -186,6 +187,7 @@ export type ProviderData = {
   iban: string | null;
   swift_code: string | null;
   onboarded?: boolean;
+  created_at: string;
 };
 
 export type VehicleData = {
@@ -206,6 +208,7 @@ export type VehicleData = {
   vehicle_registration_status: string | null;
   leasing_contract_status: string | null;
   provider_id: string;
+  created_at: string;
 };
 
 export type VerifyOtpParams = {

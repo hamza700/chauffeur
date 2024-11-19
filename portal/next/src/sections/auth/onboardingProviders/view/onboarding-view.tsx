@@ -17,6 +17,7 @@ import {
 } from 'src/utils/data-transformers';
 
 import { signUpChauffeur } from 'src/actions/chauffeur';
+import { uploadDocument, uploadDocuments } from 'src/actions/documents';
 
 import { toast } from 'src/components/snackbar';
 
@@ -143,6 +144,13 @@ export function OnboardingViewProviders() {
     },
   });
 
+  // Add new state for pending uploads
+  const [pendingUploads, setPendingUploads] = useState<{
+    provider?: any;
+    chauffeur?: any;
+    vehicle?: any;
+  }>({});
+
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
@@ -242,34 +250,41 @@ export function OnboardingViewProviders() {
   };
 
   const handleStepSubmit = (stepName: string, data: any) => {
-    setFormData((prevData) => {
-      if (stepName === 'uploadDocuments') {
-        return {
-          ...prevData,
-          ...data, // This is for merging the document-related sections
-        };
-      }
-      return {
+    if (stepName === 'uploadDocuments') {
+      // Store the pending uploads separately
+      setPendingUploads({
+        provider: data.pendingUploads.provider,
+        chauffeur: data.pendingUploads.chauffeur,
+        vehicle: data.pendingUploads.vehicle,
+      });
+
+      // Store only the document status and expiry dates in formData
+      setFormData((prevData) => ({
+        ...prevData,
+        providerDocuments: data.providerDocuments,
+        chauffeurDocuments: data.chauffeurDocuments,
+        vehicleDocuments: data.vehicleDocuments,
+      }));
+    } else {
+      setFormData((prevData) => ({
         ...prevData,
         [stepName]: data,
-      };
-    });
+      }));
+    }
     handleNext();
   };
 
   const handleSubmitOnboarding = async () => {
     try {
       const userId = user?.id;
-
       if (!userId) {
         toast.error('User not authenticated');
         return;
       }
 
+      // 1. Add provider role and insert provider details (existing code)
       await addUserRole(userId, 'provider');
-      toast.success('Provider role added successfully');
 
-      // Insert provider details
       const providerData = transformToProviderData({
         ...formData.companyInfo,
         ...formData.providerDocuments,
@@ -279,21 +294,46 @@ export function OnboardingViewProviders() {
         firstName: user?.user_metadata?.first_name,
         lastName: user?.user_metadata?.last_name,
         id: userId,
-        onboarded: false, // Initially set to false
+        onboarded: false,
+        createdAt: new Date().toISOString(),
       });
       await insertProvider(providerData);
       toast.success('Provider details added successfully');
 
-      // Update provider onboarding status
+      // Add document uploads after provider creation
+      if (pendingUploads.provider) {
+        await Promise.all([
+          pendingUploads.provider.companyPrivateHireOperatorLicense?.files?.length &&
+            uploadDocuments(
+              pendingUploads.provider.companyPrivateHireOperatorLicense.files,
+              userId,
+              'company_private_hire_license',
+              user.access_token
+            ),
+          pendingUploads.provider.personalIDorPassport?.files?.length &&
+            uploadDocuments(
+              pendingUploads.provider.personalIDorPassport.files,
+              userId,
+              'proof_of_id',
+              user.access_token
+            ),
+          pendingUploads.provider.vatRegistrationCertificate?.files?.length &&
+            uploadDocuments(
+              pendingUploads.provider.vatRegistrationCertificate.files,
+              userId,
+              'vat_registration',
+              user.access_token
+            ),
+        ]);
+      }
+      toast.success('Provider documents added successfully');
       await updateOnboarding({ role: 'provider', onboarded: true });
       await updateProvider(userId, { onboarded: true });
-      toast.success('Provider onboarding status updated successfully');
 
-      let chauffeurId = userId; // Default to the same user ID
+      let chauffeurId = userId;
 
-      // Check if chauffeur email is different from provider email
+      // 2. Handle chauffeur creation (existing code)
       if (formData.firstChauffeur.email !== user?.email) {
-        // Sign up new chauffeur
         const chauffeurData = {
           email: formData.firstChauffeur.email,
           first_name: formData.firstChauffeur.firstName,
@@ -308,7 +348,7 @@ export function OnboardingViewProviders() {
         };
 
         const newChauffeur = await signUpChauffeur(chauffeurData, user?.access_token);
-        chauffeurId = newChauffeur; // Assuming signUpChauffeur returns the new chauffeur's ID
+        chauffeurId = newChauffeur;
         toast.success('New chauffeur signed up successfully');
 
         const chauffeurDocumentsData = {
@@ -318,43 +358,147 @@ export function OnboardingViewProviders() {
           private_hire_license_expiry_date:
             formData.chauffeurDocuments.privateHireLicenseExpiryDate,
           private_hire_license_status: 'pending',
+          created_at: new Date().toISOString(),
         };
 
         await updateChauffeur(chauffeurId, chauffeurDocumentsData);
         toast.success('Chauffeur details updated successfully');
       } else {
-        // Add chauffeur role to the same user
         await addUserRole(userId, 'chauffeur');
         await updateRole();
         toast.success('Chauffeur role added successfully');
 
-        // Insert chauffeur details
         const chauffeurData = transformToChauffeurData({
           ...formData.firstChauffeur,
           ...formData.chauffeurDocuments,
           providerId: userId,
           id: userId,
           onboarded: false,
+          createdAt: new Date().toISOString(),
         });
         await insertChauffeur(chauffeurData);
         toast.success('Chauffeur details added successfully');
       }
 
-      // Insert vehicle details
+      // Add chauffeur document uploads after chauffeur creation
+      if (pendingUploads.chauffeur && chauffeurId) {
+        await Promise.all([
+          pendingUploads.chauffeur.profilePic &&
+            uploadDocument(
+              {
+                file: pendingUploads.chauffeur.profilePic,
+                providerId: userId,
+                documentType: 'profile_pic',
+                index: 0,
+                entityType: 'chauffeurs',
+                entityId: chauffeurId,
+              },
+              user.access_token
+            ),
+          pendingUploads.chauffeur.driversLicense?.files?.length &&
+            uploadDocuments(
+              pendingUploads.chauffeur.driversLicense.files,
+              userId,
+              'drivers_license',
+              user.access_token,
+              'chauffeurs',
+              chauffeurId
+            ),
+          pendingUploads.chauffeur.privateHireLicense?.files?.length &&
+            uploadDocuments(
+              pendingUploads.chauffeur.privateHireLicense.files,
+              userId,
+              'private_hire_license',
+              user.access_token,
+              'chauffeurs',
+              chauffeurId
+            ),
+        ]);
+      }
+      toast.success('Chauffeur documents added successfully');
+
+      // 3. Create vehicle (existing code)
+      const vehicleId = uuidv4();
       const vehicleData = transformToVehicleData({
         ...formData.firstVehicle,
         ...formData.vehicleDocuments,
         providerId: userId,
-        id: uuidv4(),
+        id: vehicleId,
+        createdAt: new Date().toISOString(),
       });
       await insertVehicle(vehicleData);
-      toast.success('Vehicle details inserted successfully');
+      toast.success('Vehicle details added successfully');
+
+      // Add vehicle document uploads after vehicle creation
+      if (pendingUploads.vehicle && vehicleId) {
+        await Promise.all([
+          pendingUploads.vehicle.vehiclePic &&
+            uploadDocument(
+              {
+                file: pendingUploads.vehicle.vehiclePic,
+                providerId: userId,
+                documentType: 'vehicle_pic',
+                index: 0,
+                entityType: 'vehicles',
+                entityId: vehicleId,
+              },
+              user.access_token
+            ),
+          pendingUploads.vehicle.privateHireLicense?.files?.length &&
+            uploadDocuments(
+              pendingUploads.vehicle.privateHireLicense.files,
+              userId,
+              'private_hire_license',
+              user.access_token,
+              'vehicles',
+              vehicleId
+            ),
+          // Add other vehicle documents
+          pendingUploads.vehicle.motTestCertificate?.files?.length &&
+            uploadDocuments(
+              pendingUploads.vehicle.motTestCertificate.files,
+              userId,
+              'mot_certificate',
+              user.access_token,
+              'vehicles',
+              vehicleId
+            ),
+          pendingUploads.vehicle.vehicleInsurance?.files?.length &&
+            uploadDocuments(
+              pendingUploads.vehicle.vehicleInsurance.files,
+              userId,
+              'insurance',
+              user.access_token,
+              'vehicles',
+              vehicleId
+            ),
+          pendingUploads.vehicle.vehicleRegistration?.files?.length &&
+            uploadDocuments(
+              pendingUploads.vehicle.vehicleRegistration.files,
+              userId,
+              'registration',
+              user.access_token,
+              'vehicles',
+              vehicleId
+            ),
+          pendingUploads.vehicle.leasingContract?.files?.length &&
+            uploadDocuments(
+              pendingUploads.vehicle.leasingContract.files,
+              userId,
+              'leasing_contract',
+              user.access_token,
+              'vehicles',
+              vehicleId
+            ),
+        ]);
+      }
+      toast.success('Vehicle documents added successfully');
+      // 4. Update onboarding status (existing code)
 
       if (formData.firstChauffeur.email === user?.email) {
         await updateOnboarding({ role: 'chauffeur', onboarded: true });
       }
       await updateChauffeur(chauffeurId, { onboarded: true });
-      toast.success('Chauffeur onboarding status updated successfully');
 
       await checkUserSession?.();
       router.refresh();

@@ -16,6 +16,8 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useRouter } from 'src/routes/hooks';
 
+import { uploadDocument, uploadDocuments } from 'src/actions/documents';
+
 import { toast } from 'src/components/snackbar';
 import { Field, schemaHelper } from 'src/components/hook-form';
 
@@ -93,6 +95,10 @@ export const OnboardingDocumentsSchema = zod.object({
   }),
 });
 
+// Helper function to filter out strings and keep only Files
+const filterFiles = (files: (string | File)[]): File[] =>
+  files.filter((file): file is File => file instanceof File);
+
 export function OnboardingViewChauffeurs() {
   const router = useRouter();
 
@@ -166,6 +172,12 @@ export function OnboardingViewChauffeurs() {
     }
 
     try {
+      const { data: chauffeur } = await getChauffeurById(userId);
+      if (!chauffeur?.license_plate) {
+        toast.error('License plate not found in chauffeur details');
+        return;
+      }
+
       const chauffeurData = {
         profile_pic_status: 'pending',
         drivers_license_expiry_date: data.chauffeurDriversLicenseExpiryDate?.toString() ?? null,
@@ -178,40 +190,127 @@ export function OnboardingViewChauffeurs() {
       await updateChauffeur(userId, chauffeurData);
       toast.success('Chauffeur details updated successfully');
 
-      const { data: chauffeur } = await getChauffeurById(userId);
+      // Upload chauffeur documents with filtered files
+      await Promise.all([
+        data.profilePicUrl instanceof File &&
+          uploadDocument(
+            {
+              file: data.profilePicUrl,
+              providerId: chauffeur.provider_id,
+              documentType: 'profile_pic',
+              index: 0,
+              entityType: 'chauffeurs',
+              entityId: userId,
+            },
+            user.access_token
+          ),
+        data.chauffeurDriversLicenseUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.chauffeurDriversLicenseUrls),
+            chauffeur.provider_id,
+            'drivers_license',
+            user.access_token,
+            'chauffeurs',
+            userId
+          ),
+        data.chauffeurPrivateHireLicenseUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.chauffeurPrivateHireLicenseUrls),
+            chauffeur.provider_id,
+            'private_hire_license',
+            user.access_token,
+            'chauffeurs',
+            userId
+          ),
+      ]);
+      toast.success('Chauffeur documents uploaded successfully');
 
-      const licensePlate = chauffeur?.license_plate;
-      if (!licensePlate) {
-        toast.error('License plate not found in chauffeur details');
-        return;
-      }
-
-      const { data: vehicle } = await filterVehiclesByLicensePlate(licensePlate);
-
-      console.log(vehicle);
-
-      if (vehicle) {
-        const vehicleData = {
-          private_hire_license_expiry_date:
-            data.vehiclePrivateHireLicenseExpiryDate?.toString() ?? null,
-          private_hire_license_status: 'pending',
-          mot_test_certificate_expiry_date:
-            data.vehicleMotTestCertificateExpiryDate?.toString() ?? null,
-          mot_test_certificate_status: 'pending',
-          vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate?.toString() ?? null,
-          vehicle_insurance_status: 'pending',
-          leasing_contract_status: 'pending',
-          vehicle_registration_status: 'pending',
-          vehicle_pic_status: 'pending',
-        };
-        await updateVehicle(vehicle.id, vehicleData);
-        toast.success('Vehicle details updated successfully');
-      } else {
+      const { data: vehicle } = await filterVehiclesByLicensePlate(chauffeur.license_plate);
+      if (!vehicle) {
         toast.error(
           "Your provider still hasn't added your vehicle. Tell them to add it and then come back to complete your onboarding."
         );
         return;
       }
+
+      const vehicleData = {
+        private_hire_license_expiry_date:
+          data.vehiclePrivateHireLicenseExpiryDate?.toString() ?? null,
+        private_hire_license_status: 'pending',
+        mot_test_certificate_expiry_date:
+          data.vehicleMotTestCertificateExpiryDate?.toString() ?? null,
+        mot_test_certificate_status: 'pending',
+        vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate?.toString() ?? null,
+        vehicle_insurance_status: 'pending',
+        leasing_contract_status: 'pending',
+        vehicle_registration_status: 'pending',
+        vehicle_pic_status: 'pending',
+      };
+
+      await updateVehicle(vehicle.id, vehicleData);
+      toast.success('Vehicle details updated successfully');
+
+      // Upload vehicle documents with filtered files
+      await Promise.all([
+        data.vehiclePicUrl instanceof File &&
+          uploadDocument(
+            {
+              file: data.vehiclePicUrl,
+              providerId: chauffeur.provider_id,
+              documentType: 'vehicle_pic',
+              index: 0,
+              entityType: 'vehicles',
+              entityId: vehicle.id,
+            },
+            user.access_token
+          ),
+        data.vehiclePrivateHireLicenseUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehiclePrivateHireLicenseUrls),
+            chauffeur.provider_id,
+            'private_hire_license',
+            user.access_token,
+            'vehicles',
+            vehicle.id
+          ),
+        data.vehicleMotTestCertificateUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehicleMotTestCertificateUrls),
+            chauffeur.provider_id,
+            'mot_certificate',
+            user.access_token,
+            'vehicles',
+            vehicle.id
+          ),
+        data.vehicleInsuranceUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehicleInsuranceUrls),
+            chauffeur.provider_id,
+            'insurance',
+            user.access_token,
+            'vehicles',
+            vehicle.id
+          ),
+        data.vehicleRegistrationUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehicleRegistrationUrls),
+            chauffeur.provider_id,
+            'registration',
+            user.access_token,
+            'vehicles',
+            vehicle.id
+          ),
+        data.vehicleLeasingContractUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehicleLeasingContractUrls),
+            chauffeur.provider_id,
+            'leasing_contract',
+            user.access_token,
+            'vehicles',
+            vehicle.id
+          ),
+      ]);
+      toast.success('Vehicle documents uploaded successfully');
 
       await updateChauffeur(userId, { onboarded: true });
       await updateOnboarding({ role: 'chauffeur', onboarded: true });
