@@ -13,12 +13,14 @@ import { useTabs } from 'src/hooks/use-tabs';
 
 import { transformChauffeurData } from 'src/utils/data-transformers';
 
+import { getDocument } from 'src/actions/documents';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
+import { useAuthContext } from 'src/auth/hooks';
 import { getChauffeurById } from 'src/auth/context/supabase';
 
 import { UserDocuments } from '../user-documents';
@@ -46,19 +48,75 @@ type Props = {
 };
 
 export function UserEditView({ userId }: Props) {
+  const { user } = useAuthContext();
   const [currentUser, setCurrentUser] = useState<IUserItem | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<{
+    profilePicUrl?: string;
+    driversLicenseUrls: string[];
+    privateHireLicenseUrls: string[];
+  }>({
+    profilePicUrl: '',
+    driversLicenseUrls: [],
+    privateHireLicenseUrls: [],
+  });
+  
   const tabs = useTabs('personal');
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndDocuments = async () => {
       try {
+        setLoading(true);
+
+        // Fetch user data
         const { data, error } = await getChauffeurById(userId);
         if (error) {
           toast.error(error.message);
-        } else {
-          const transformedData = transformChauffeurData(data);
-          setCurrentUser(transformedData || undefined);
+          return;
+        }
+
+        const transformedData = transformChauffeurData(data);
+        setCurrentUser(transformedData || undefined);
+
+        // Fetch documents if we have user data
+        if (data) {
+          try {
+            const [profilePics, driversLicenses, privateHireLicenses] = await Promise.all([
+              getDocument(
+                data.provider_id,
+                'profile_pic',
+                0,
+                user?.access_token || '',
+                'chauffeurs',
+                userId
+              ),
+              getDocument(
+                data.provider_id,
+                'drivers_license',
+                0,
+                user?.access_token || '',
+                'chauffeurs',
+                userId
+              ),
+              getDocument(
+                data.provider_id,
+                'private_hire_license',
+                0,
+                user?.access_token || '',
+                'chauffeurs',
+                userId
+              ),
+            ]);
+
+            setDocuments({
+              profilePicUrl: profilePics?.[0] || '',
+              driversLicenseUrls: driversLicenses || [],
+              privateHireLicenseUrls: privateHireLicenses || [],
+            });
+          } catch (docError) {
+            console.error('Error fetching documents:', docError);
+            toast.error('Failed to fetch documents');
+          }
         }
       } catch (err) {
         toast.error('Failed to fetch user details');
@@ -67,8 +125,8 @@ export function UserEditView({ userId }: Props) {
       }
     };
 
-    fetchUser();
-  }, [userId]);
+    fetchUserAndDocuments();
+  }, [userId, user]);
 
   return (
     <DashboardContent>
@@ -89,7 +147,12 @@ export function UserEditView({ userId }: Props) {
       </Tabs>
 
       {tabs.value === 'personal' && <UserNewEditForm currentUser={currentUser} />}
-      {tabs.value === 'documents' && <UserDocuments currentUser={currentUser} />}
+      {tabs.value === 'documents' && (
+        <UserDocuments 
+          currentUser={currentUser} 
+          existingDocuments={documents}
+        />
+      )}
     </DashboardContent>
   );
 }

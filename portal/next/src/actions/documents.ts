@@ -1,5 +1,7 @@
 import axios from 'src/utils/axios';
 
+import { supabase } from 'src/lib/supabase';
+
 const STORAGE_URL = 'https://sqfdmsikxjdvssdlxcrc.supabase.co/storage/v1/object/documents';
 
 type UploadDocumentParams = {
@@ -25,18 +27,40 @@ const constructDocumentUrl = (
   return `${STORAGE_URL}/providers/${providerId}/${documentType}/${index}`;
 };
 
+// Helper function to check if file exists
+async function checkFileExists(url: string, token: string) {
+  try {
+    await axios.head(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return true; // File exists
+  } catch (error) {
+    return false; // File doesn't exist
+  }
+}
+
 // Upload a document
 export async function uploadDocument(params: UploadDocumentParams, token: string) {
   const { file, providerId, documentType, index, entityType, entityId } = params;
   const url = constructDocumentUrl(providerId, documentType, index, entityType, entityId);
 
   const headers = {
-    'Content-Type': 'application/octet-stream',
+    'Content-Type': file.type || 'image/*',
     Authorization: `Bearer ${token}`,
   };
 
   try {
-    const response = await axios.post(url, file, { headers });
+    // Check if file already exists
+    const fileExists = await checkFileExists(url, token);
+
+    // Use PUT if file exists, POST if it doesn't
+    const method = fileExists ? 'put' : 'post';
+    const response = await axios({
+      method,
+      url,
+      data: file,
+      headers,
+    });
     return response.data;
   } catch (error) {
     console.error('Error uploading document:', error);
@@ -45,7 +69,7 @@ export async function uploadDocument(params: UploadDocumentParams, token: string
 }
 
 // Get a document URL
-export async function getDocumentUrl(
+export async function getDocument(
   providerId: string,
   documentType: string,
   index: number,
@@ -53,18 +77,35 @@ export async function getDocumentUrl(
   entityType?: 'chauffeurs' | 'vehicles',
   entityId?: string
 ) {
-  const url = constructDocumentUrl(providerId, documentType, index, entityType, entityId);
-
-  const headers = {
-    Authorization: `Bearer ${token}`,
-  };
+  const path =
+    entityType && entityId
+      ? `providers/${providerId}/${entityType}/${entityId}/${documentType}`
+      : `providers/${providerId}/${documentType}`;
 
   try {
-    const response = await axios.get(url, { headers });
-    return url; // Return the constructed URL if successful
+    // List all files in the directory
+    const { data: files, error: listError } = await supabase.storage.from('documents').list(path);
+
+    if (listError) throw listError;
+
+    // Get signed URLs for all files
+    const signedUrls = await Promise.all(
+      files.map(async (file, idx) => {
+        const {
+          data: { signedUrl },
+          error,
+        } = await supabase.storage.from('documents').createSignedUrl(`${path}/${file.name}`, 3600);
+
+        if (error) return null;
+        return signedUrl;
+      })
+    );
+
+    // Filter out any null values and return all valid URLs
+    return signedUrls.filter(Boolean);
   } catch (error) {
-    console.error('Error getting document:', error);
-    throw error;
+    console.error('Error getting documents:', error);
+    return null;
   }
 }
 
