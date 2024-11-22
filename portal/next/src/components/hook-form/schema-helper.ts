@@ -88,11 +88,16 @@ export const schemaHelper = {
    * file
    * defaultValue === '' || null
    */
-  file: (props?: InputProps) =>
+  file: (props?: InputProps & { optional?: boolean }) =>
     zod.custom<File | string | null>().transform((data, ctx) => {
+      // If data is null/empty and optional is true, return null without error
+      if ((!data || data === '') && props?.optional) {
+        return null;
+      }
+
       const hasFile = data instanceof File || (typeof data === 'string' && !!data.length);
 
-      if (!hasFile) {
+      if (!hasFile && !props?.optional) {
         ctx.addIssue({
           code: zod.ZodIssueCode.custom,
           message: props?.message?.required_error ?? 'File is required!',
@@ -106,16 +111,21 @@ export const schemaHelper = {
    * files
    * defaultValue === []
    */
-  files: (props?: InputProps) =>
+  files: (props?: InputProps & { optional?: boolean }) =>
     zod.array(zod.custom<File | string>()).transform((data, ctx) => {
+      // If array is empty and optional is true, return empty array without error
+      if (!data.length && props?.optional) {
+        return data;
+      }
+
       const minFiles = props?.minFiles ?? 2;
 
-      if (!data.length) {
+      if (!data.length && !props?.optional) {
         ctx.addIssue({
           code: zod.ZodIssueCode.custom,
           message: props?.message?.required_error ?? 'Files is required!',
         });
-      } else if (data.length < minFiles) {
+      } else if (!props?.optional && data.length < minFiles) {
         ctx.addIssue({
           code: zod.ZodIssueCode.custom,
           message: `Must have at least ${minFiles} items!`,

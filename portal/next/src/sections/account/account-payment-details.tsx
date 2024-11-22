@@ -102,7 +102,7 @@ export function AccountPaymentDetails({ currentProvider }: Props) {
       };
       await updateProvider(currentProvider?.id, updateData);
       toast.success('Payment details updated successfully!');
-      router.push(paths.dashboard.settings);
+      router.refresh();
     } catch (error) {
       console.error('Error updating payment details:', error);
       toast.error('Failed to update payment details. Please try again.');

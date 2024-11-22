@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useEffect, useCallback } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
@@ -16,10 +17,13 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { uploadDocument, uploadDocuments } from 'src/actions/documents';
+
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
+import { useAuthContext } from 'src/auth/hooks';
 import { updateVehicle } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
@@ -27,22 +31,12 @@ import { updateVehicle } from 'src/auth/context/supabase';
 export type VehicleDocumentsSchemaType = zod.infer<typeof VehicleDocumentsSchema>;
 
 export const VehicleDocumentsSchema = zod.object({
-  vehiclePicUrl: schemaHelper.file({
-    message: { required_error: 'Vehicle picture is required!' },
-  }),
-  privateHireLicenseUrls: schemaHelper.files({
-    message: { required_error: 'Private hire license is required!', minFiles: 1 },
-  }),
-  motTestCertificateUrls: schemaHelper.files({
-    message: { required_error: 'MOT test certificate is required!', minFiles: 1 },
-  }),
-  vehicleInsuranceUrls: schemaHelper.files({
-    message: { required_error: 'Vehicle insurance is required!', minFiles: 1 },
-  }),
-  vehicleRegistrationUrls: schemaHelper.files({
-    message: { required_error: 'Vehicle registration is required!', minFiles: 1 },
-  }),
-  leasingContractUrls: schemaHelper.files().optional(),
+  vehiclePicUrl: schemaHelper.file({ optional: true }),
+  privateHireLicenseUrls: schemaHelper.files({ optional: true }),
+  motTestCertificateUrls: schemaHelper.files({ optional: true }),
+  vehicleInsuranceUrls: schemaHelper.files({ optional: true }),
+  vehicleRegistrationUrls: schemaHelper.files({ optional: true }),
+  leasingContractUrls: schemaHelper.files({ optional: true }),
   privateHireLicenseExpiryDate: schemaHelper.date({
     message: { required_error: 'Private hire license expiry date is required!' },
   }),
@@ -58,6 +52,14 @@ export const VehicleDocumentsSchema = zod.object({
 
 type Props = {
   currentVehicle?: IVehicleItem;
+  existingDocuments: {
+    vehiclePicUrl?: string;
+    privateHireLicenseUrls: string[];
+    motTestCertificateUrls: string[];
+    vehicleInsuranceUrls: string[];
+    vehicleRegistrationUrls: string[];
+    leasingContractUrls: string[];
+  };
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -66,17 +68,18 @@ const FILE_STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected', color: 'error' },
 ];
 
-export function VehicleDocuments({ currentVehicle }: Props) {
+export function VehicleDocuments({ currentVehicle, existingDocuments }: Props) {
   const router = useRouter();
+  const { user } = useAuthContext();
 
   const defaultValues = useMemo(
     () => ({
-      vehiclePicUrl: currentVehicle?.documents?.vehiclePicUrl || '',
-      privateHireLicenseUrls: currentVehicle?.documents?.privateHireLicenseUrls || [],
-      motTestCertificateUrls: currentVehicle?.documents?.motTestCertificateUrls || [],
-      vehicleInsuranceUrls: currentVehicle?.documents?.vehicleInsuranceUrls || [],
-      vehicleRegistrationUrls: currentVehicle?.documents?.vehicleRegistrationUrls || [],
-      leasingContractUrls: currentVehicle?.documents?.leasingContractUrls || [],
+      vehiclePicUrl: null,
+      privateHireLicenseUrls: [],
+      motTestCertificateUrls: [],
+      vehicleInsuranceUrls: [],
+      vehicleRegistrationUrls: [],
+      leasingContractUrls: [],
       privateHireLicenseExpiryDate: currentVehicle?.documents?.privateHireLicenseExpiryDate || null,
       motTestCertificateExpiryDate: currentVehicle?.documents?.motTestCertificateExpiryDate || null,
       vehicleInsuranceExpiryDate: currentVehicle?.documents?.vehicleInsuranceExpiryDate || null,
@@ -134,16 +137,90 @@ export function VehicleDocuments({ currentVehicle }: Props) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const updateData = {
-        private_hire_license_expiry_date: data.privateHireLicenseExpiryDate,
-        mot_test_certificate_expiry_date: data.motTestCertificateExpiryDate,
-        vehicle_insurance_expiry_date: data.vehicleInsuranceExpiryDate,
+      if (!user?.access_token || !currentVehicle?.id) {
+        throw new Error('User not authenticated or vehicle ID missing');
+      }
+
+      // Upload new documents only if they were changed
+      const uploadPromises = [];
+
+      if (data.vehiclePicUrl instanceof File) {
+        uploadPromises.push(
+          uploadDocument(
+            {
+              file: data.vehiclePicUrl,
+              providerId: currentVehicle.providerId,
+              documentType: 'vehicle_pic',
+              index: 0,
+              entityType: 'vehicles',
+              entityId: currentVehicle.id,
+            },
+            user.access_token
+          )
+        );
+      }
+
+      // Helper function to handle document uploads
+      const handleDocumentUpload = (
+        files: (File | string)[] | null | undefined,
+        documentType: string
+      ) => {
+        if (files?.length) {
+          const newFiles = files.filter((file): file is File => file instanceof File);
+          if (newFiles.length) {
+            uploadPromises.push(
+              uploadDocuments(
+                newFiles,
+                currentVehicle.providerId,
+                documentType,
+                user.access_token,
+                'vehicles',
+                currentVehicle.id
+              )
+            );
+          }
+        }
       };
-      await updateVehicle(currentVehicle.id, updateData);
+
+      handleDocumentUpload(data.privateHireLicenseUrls, 'private_hire_license');
+      handleDocumentUpload(data.motTestCertificateUrls, 'mot_test_certificate');
+      handleDocumentUpload(data.vehicleInsuranceUrls, 'vehicle_insurance');
+      handleDocumentUpload(data.vehicleRegistrationUrls, 'vehicle_registration');
+      handleDocumentUpload(data.leasingContractUrls, 'leasing_contract');
+
+      if (uploadPromises.length) {
+        await Promise.all(uploadPromises);
+      }
+
+      // Update vehicle data only for changed dates
+      const updateData: Record<string, any> = {};
+
+      if (
+        data.privateHireLicenseExpiryDate !==
+        currentVehicle?.documents?.privateHireLicenseExpiryDate
+      ) {
+        updateData.private_hire_license_expiry_date = data.privateHireLicenseExpiryDate;
+      }
+
+      if (
+        data.motTestCertificateExpiryDate !==
+        currentVehicle?.documents?.motTestCertificateExpiryDate
+      ) {
+        updateData.mot_test_certificate_expiry_date = data.motTestCertificateExpiryDate;
+      }
+
+      if (
+        data.vehicleInsuranceExpiryDate !== currentVehicle?.documents?.vehicleInsuranceExpiryDate
+      ) {
+        updateData.vehicle_insurance_expiry_date = data.vehicleInsuranceExpiryDate;
+      }
+
+      if (Object.keys(updateData).length) {
+        await updateVehicle(currentVehicle.id, updateData);
+      }
+
       toast.success('Documents updated successfully!');
       router.push(paths.dashboard.vehicles.root);
-      console.info('Updated data:', data);
     } catch (error) {
       console.error('Error updating documents:', error);
       toast.error('Failed to update documents. Please try again.');
@@ -164,6 +241,9 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.vehiclePicStatus || 'pending'}
+              existingFiles={
+                existingDocuments.vehiclePicUrl ? [existingDocuments.vehiclePicUrl] : []
+              }
             />
 
             <Divider sx={{ my: 3 }} />
@@ -176,6 +256,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.privateHireLicenseStatus || 'pending'}
+              existingFiles={existingDocuments.privateHireLicenseUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -188,6 +269,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.motTestCertificateStatus || 'pending'}
+              existingFiles={existingDocuments.motTestCertificateUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -200,6 +282,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.vehicleInsuranceStatus || 'pending'}
+              existingFiles={existingDocuments.vehicleInsuranceUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -211,6 +294,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.vehicleRegistrationStatus || 'pending'}
+              existingFiles={existingDocuments.vehicleRegistrationUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -222,6 +306,7 @@ export function VehicleDocuments({ currentVehicle }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.leasingContractStatus || 'pending'}
+              existingFiles={existingDocuments.leasingContractUrls}
             />
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
@@ -244,6 +329,7 @@ type DocumentSectionProps = {
   onRemoveAll: (fieldName: keyof VehicleDocumentsSchemaType) => void;
   onDrop: (files: File[], fieldName: keyof VehicleDocumentsSchemaType) => void;
   currentStatus?: 'pending' | 'approved' | 'rejected';
+  existingFiles?: string[];
 };
 
 function DocumentSection({
@@ -254,9 +340,9 @@ function DocumentSection({
   onRemoveAll,
   onDrop,
   currentStatus,
+  existingFiles = [],
 }: DocumentSectionProps) {
   const { watch } = useFormContext<VehicleDocumentsSchemaType>();
-  const fieldValue = watch(fieldName);
 
   const getStatusLabel = (status: 'pending' | 'rejected' | 'approved') => {
     const statusOption = FILE_STATUS_OPTIONS.find((option) => option.value === status);
@@ -273,9 +359,67 @@ function DocumentSection({
         <Typography variant="subtitle2">{title}</Typography>
         {currentStatus && getStatusLabel(currentStatus)}
       </Stack>
+
       {expiryField && (
         <Field.DatePicker name={expiryField} label="Expiry Date" sx={{ width: '50%' }} />
       )}
+
+      {existingFiles.length > 0 && (
+        <Stack
+          direction="row"
+          spacing={2}
+          flexWrap="wrap"
+          sx={{
+            gap: 2,
+            my: 2,
+          }}
+        >
+          {existingFiles.map((url, index) => (
+            <Box
+              key={`existing-${url}-${index}`}
+              sx={{
+                position: 'relative',
+                borderRadius: 1,
+                overflow: 'hidden',
+                width: 200,
+                height: 200,
+                boxShadow: (theme) => theme.customShadows.z8,
+                '&:hover .overlay': {
+                  opacity: 1,
+                },
+              }}
+            >
+              <img
+                src={url}
+                alt={`${title} ${index + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+              <Box
+                className="overlay"
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  bgcolor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  p: 1,
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  textAlign: 'center',
+                }}
+              >
+                {`File ${index + 1} of ${existingFiles.length}`}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+      )}
+
       <Field.Upload
         name={fieldName}
         multiple={fieldName !== 'vehiclePicUrl'}

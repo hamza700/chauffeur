@@ -13,6 +13,7 @@ import { useTabs } from 'src/hooks/use-tabs';
 
 import { transformProviderData } from 'src/utils/data-transformers';
 
+import { getDocument } from 'src/actions/documents';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { toast } from 'src/components/snackbar';
@@ -44,27 +45,80 @@ export function AccountView() {
   const providerId = user?.id;
   const [currentProvider, setCurrentProvider] = useState<IProviderAccount | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<{
+    companyPrivateHireOperatorLicenseFiles: string[];
+    personalIDorPassportFiles: string[];
+    vatRegistrationCertificateFiles: string[];
+  }>({
+    companyPrivateHireOperatorLicenseFiles: [],
+    personalIDorPassportFiles: [],
+    vatRegistrationCertificateFiles: [],
+  });
+
   const tabs = useTabs('general');
 
   useEffect(() => {
-    const fetchProvider = async () => {
+    const fetchProviderAndDocuments = async () => {
       try {
+        setLoading(true);
+
+        // Fetch provider data
         const { data, error } = await getProviderById(providerId);
         if (error) {
           toast.error(error.message);
-        } else {
-          const transformedData = transformProviderData(data);
-          setCurrentProvider(transformedData || undefined);
+          return;
+        }
+
+        const transformedData = transformProviderData(data);
+        setCurrentProvider(transformedData || undefined);
+
+        // Fetch documents if we have provider data
+        if (data) {
+          try {
+            const [
+              operatorLicense,
+              personalID,
+              vatCertificate,
+            ] = await Promise.all([
+              getDocument(
+                data.id,
+                'company_private_hire_license',
+                0,
+                user?.access_token || ''
+              ),
+              getDocument(
+                data.id,
+                'proof_of_id',
+                0,
+                user?.access_token || ''
+              ),
+              getDocument(
+                data.id,
+                'vat_registration',
+                0,
+                user?.access_token || ''
+              ),
+            ]);
+
+            setDocuments({
+              companyPrivateHireOperatorLicenseFiles: operatorLicense || [],
+              personalIDorPassportFiles: personalID || [],
+              vatRegistrationCertificateFiles: vatCertificate || [],
+            });
+          } catch (docError) {
+            console.error('Error fetching documents:', docError);
+            toast.error('Failed to fetch documents');
+          }
         }
       } catch (err) {
-        toast.error(err.message);
+        toast.error('Failed to fetch provider details');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProvider();
-  }, [providerId]);
+    fetchProviderAndDocuments();
+  }, [providerId, user]);
 
   return (
     <DashboardContent>
@@ -86,7 +140,12 @@ export function AccountView() {
 
       {tabs.value === 'general' && <AccountGeneral currentProvider={currentProvider} />}
 
-      {tabs.value === 'documents' && <AccountDocuments currentProvider={currentProvider} />}
+      {tabs.value === 'documents' && (
+        <AccountDocuments 
+          currentProvider={currentProvider} 
+          existingDocuments={documents}
+        />
+      )}
 
       {tabs.value === 'payment' && <AccountPaymentDetails currentProvider={currentProvider} />}
     </DashboardContent>

@@ -4,7 +4,7 @@ import type { IUserItem } from 'src/types/user';
 
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -31,15 +31,9 @@ import { updateChauffeur } from 'src/auth/context/supabase';
 export type UserDocumentsSchemaType = zod.infer<typeof UserDocumentsSchema>;
 
 export const UserDocumentsSchema = zod.object({
-  profilePicUrl: schemaHelper.file({
-    message: { required_error: 'Profile picture is required!' },
-  }),
-  driversLicenseUrls: schemaHelper.files({
-    message: { required_error: "Driver's license is required!", minFiles: 1 },
-  }),
-  privateHireLicenseUrls: schemaHelper.files({
-    message: { required_error: 'Private hire license is required!', minFiles: 1 },
-  }),
+  profilePicUrl: schemaHelper.file({ optional: true }),
+  driversLicenseUrls: schemaHelper.files({ optional: true }),
+  privateHireLicenseUrls: schemaHelper.files({ optional: true }),
   driversLicenseExpiryDate: schemaHelper.date({
     message: { required_error: "Driver's license expiry date is required!" },
   }),
@@ -68,10 +62,6 @@ const FILE_STATUS_OPTIONS = [
 export function UserDocuments({ currentUser, existingDocuments }: Props) {
   const router = useRouter();
   const { user } = useAuthContext();
-
-  const [existingDocs, setExistingDocs] = useState(existingDocuments);
-
-  console.log('existingDocs', existingDocs);
 
   const defaultValues = useMemo(
     () => ({
@@ -135,9 +125,11 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
         throw new Error('User not authenticated');
       }
 
-      // Upload new documents if they are Files (not URLs)
-      await Promise.all([
-        data.profilePicUrl instanceof File &&
+      // Upload new documents only if they were changed
+      const uploadPromises = [];
+
+      if (data.profilePicUrl instanceof File) {
+        uploadPromises.push(
           uploadDocument(
             {
               file: data.profilePicUrl,
@@ -148,33 +140,66 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
               entityId: currentUser.id,
             },
             user.access_token
-          ),
-        data.driversLicenseUrls?.length &&
-          uploadDocuments(
-            data.driversLicenseUrls.filter((file): file is File => file instanceof File),
-            currentUser.providerId,
-            'drivers_license',
-            user.access_token,
-            'chauffeurs',
-            currentUser.id
-          ),
-        data.privateHireLicenseUrls?.length &&
-          uploadDocuments(
-            data.privateHireLicenseUrls.filter((file): file is File => file instanceof File),
-            currentUser.providerId,
-            'private_hire_license',
-            user.access_token,
-            'chauffeurs',
-            currentUser.id
-          ),
-      ]);
+          )
+        );
+      }
 
-      // Update chauffeur data
-      const updateData = {
-        drivers_license_expiry_date: data.driversLicenseExpiryDate,
-        private_hire_license_expiry_date: data.privateHireLicenseExpiryDate,
-      };
-      await updateChauffeur(currentUser.id, updateData);
+      if (data.driversLicenseUrls?.length) {
+        const newFiles = data.driversLicenseUrls.filter(
+          (file): file is File => file instanceof File
+        );
+        if (newFiles.length) {
+          uploadPromises.push(
+            uploadDocuments(
+              newFiles,
+              currentUser.providerId,
+              'drivers_license',
+              user.access_token,
+              'chauffeurs',
+              currentUser.id
+            )
+          );
+        }
+      }
+
+      if (data.privateHireLicenseUrls?.length) {
+        const newFiles = data.privateHireLicenseUrls.filter(
+          (file): file is File => file instanceof File
+        );
+        if (newFiles.length) {
+          uploadPromises.push(
+            uploadDocuments(
+              newFiles,
+              currentUser.providerId,
+              'private_hire_license',
+              user.access_token,
+              'chauffeurs',
+              currentUser.id
+            )
+          );
+        }
+      }
+
+      if (uploadPromises.length) {
+        await Promise.all(uploadPromises);
+      }
+
+      // Update chauffeur data only for changed dates
+      const updateData: Record<string, any> = {};
+
+      if (data.driversLicenseExpiryDate !== currentUser?.documents?.driversLicenseExpiryDate) {
+        updateData.drivers_license_expiry_date = data.driversLicenseExpiryDate;
+      }
+
+      if (
+        data.privateHireLicenseExpiryDate !== currentUser?.documents?.privateHireLicenseExpiryDate
+      ) {
+        updateData.private_hire_license_expiry_date = data.privateHireLicenseExpiryDate;
+      }
+
+      if (Object.keys(updateData).length) {
+        await updateChauffeur(currentUser.id, updateData);
+      }
 
       toast.success('Documents updated successfully!');
       router.push(paths.dashboard.chauffeurs.root);
@@ -198,7 +223,9 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentUser?.documents?.profilePicStatus || 'pending'}
-              existingFiles={existingDocs.profilePicUrl ? [existingDocs.profilePicUrl] : []}
+              existingFiles={
+                existingDocuments.profilePicUrl ? [existingDocuments.profilePicUrl] : []
+              }
             />
 
             <Divider sx={{ my: 3 }} />
@@ -211,7 +238,7 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentUser?.documents?.driversLicenseStatus || 'pending'}
-              existingFiles={existingDocs.driversLicenseUrls}
+              existingFiles={existingDocuments.driversLicenseUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -224,7 +251,7 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentUser?.documents?.privateHireLicenseStatus || 'pending'}
-              existingFiles={existingDocs.privateHireLicenseUrls}
+              existingFiles={existingDocuments.privateHireLicenseUrls}
             />
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>

@@ -7,19 +7,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useEffect, useCallback } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 
-import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
+
+import { uploadDocuments } from 'src/actions/documents';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
+import { useAuthContext } from 'src/auth/hooks';
 import { updateProvider } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
@@ -27,15 +30,9 @@ import { updateProvider } from 'src/auth/context/supabase';
 export type ProviderDocumentsSchemaType = zod.infer<typeof ProviderDocumentsSchema>;
 
 export const ProviderDocumentsSchema = zod.object({
-  companyPrivateHireOperatorLicenseFiles: schemaHelper.files({
-    message: { required_error: 'Private hire operator license is required!', minFiles: 1 },
-  }),
-  personalIDorPassportFiles: schemaHelper.files({
-    message: { required_error: 'Personal ID or passport is required!', minFiles: 1 },
-  }),
-  vatRegistrationCertificateFiles: schemaHelper.files({
-    message: { required_error: 'VAT registration certificate is required!', minFiles: 1 },
-  }),
+  companyPrivateHireOperatorLicenseFiles: schemaHelper.files({ optional: true }),
+  personalIDorPassportFiles: schemaHelper.files({ optional: true }),
+  vatRegistrationCertificateFiles: schemaHelper.files({ optional: true }),
   companyPrivateHireOperatorLicenseExpiry: schemaHelper.date({
     message: { required_error: 'Private hire operator license expiry date is required!' },
   }),
@@ -51,6 +48,11 @@ export const ProviderDocumentsSchema = zod.object({
 
 type Props = {
   currentProvider?: IProviderAccount;
+  existingDocuments: {
+    companyPrivateHireOperatorLicenseFiles: string[];
+    personalIDorPassportFiles: string[];
+    vatRegistrationCertificateFiles: string[];
+  };
 };
 
 const FILE_STATUS_OPTIONS = [
@@ -59,16 +61,15 @@ const FILE_STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected', color: 'error' },
 ];
 
-export function AccountDocuments({ currentProvider }: Props) {
+export function AccountDocuments({ currentProvider, existingDocuments }: Props) {
   const router = useRouter();
+  const { user } = useAuthContext();
 
   const defaultValues = useMemo(
     () => ({
-      companyPrivateHireOperatorLicenseFiles:
-        currentProvider?.documents.companyPrivateHireOperatorLicenseUrls || [],
-      personalIDorPassportFiles: currentProvider?.documents.personalIDorPassportUrls || [],
-      vatRegistrationCertificateFiles:
-        currentProvider?.documents.vatRegistrationCertificateUrls || [],
+      companyPrivateHireOperatorLicenseFiles: [],
+      personalIDorPassportFiles: [],
+      vatRegistrationCertificateFiles: [],
       companyPrivateHireOperatorLicenseExpiry:
         currentProvider?.documents.companyPrivateHireOperatorLicenseExpiryDate || null,
       personalIDorPassportExpiry: currentProvider?.documents.personalIDorPassportExpiryDate || null,
@@ -126,17 +127,70 @@ export function AccountDocuments({ currentProvider }: Props) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const updateData = {
-        company_private_hire_operator_license_expiry_date:
-          data.companyPrivateHireOperatorLicenseExpiry,
-        personal_id_or_passport_expiry_date: data.personalIDorPassportExpiry,
-        vat_registration_certificate_expiry_date: data.vatRegistrationCertificateExpiry,
+      if (!user?.access_token || !currentProvider?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Upload new documents only if they were changed
+      const uploadPromises = [];
+
+      // Helper function to handle document uploads
+      const handleDocumentUpload = (
+        files: (File | string)[] | null | undefined,
+        documentType: string
+      ) => {
+        if (files?.length) {
+          const newFiles = files.filter((file): file is File => file instanceof File);
+          if (newFiles.length) {
+            uploadPromises.push(
+              uploadDocuments(newFiles, currentProvider.id, documentType, user.access_token)
+            );
+          }
+        }
       };
-      await updateProvider(currentProvider.id, updateData);
-      toast.success('Update success!');
-      router.push(paths.dashboard.settings);
-      console.info('DATA', data);
+
+      handleDocumentUpload(
+        data.companyPrivateHireOperatorLicenseFiles,
+        'company_private_hire_license'
+      );
+      handleDocumentUpload(data.personalIDorPassportFiles, 'proof_of_id');
+      handleDocumentUpload(data.vatRegistrationCertificateFiles, 'vat_registration');
+
+      if (uploadPromises.length) {
+        await Promise.all(uploadPromises);
+      }
+
+      // Update provider data only for changed dates
+      const updateData: Record<string, any> = {};
+
+      if (
+        data.companyPrivateHireOperatorLicenseExpiry !==
+        currentProvider?.documents.companyPrivateHireOperatorLicenseExpiryDate
+      ) {
+        updateData.company_private_hire_operator_license_expiry_date =
+          data.companyPrivateHireOperatorLicenseExpiry;
+      }
+
+      if (
+        data.personalIDorPassportExpiry !==
+        currentProvider?.documents.personalIDorPassportExpiryDate
+      ) {
+        updateData.personal_id_or_passport_expiry_date = data.personalIDorPassportExpiry;
+      }
+
+      if (
+        data.vatRegistrationCertificateExpiry !==
+        currentProvider?.documents.vatRegistrationCertificateExpiryDate
+      ) {
+        updateData.vat_registration_certificate_expiry_date = data.vatRegistrationCertificateExpiry;
+      }
+
+      if (Object.keys(updateData).length) {
+        await updateProvider(currentProvider.id, updateData);
+      }
+
+      toast.success('Documents updated successfully!');
+      router.refresh();
     } catch (error) {
       console.error('Error updating documents:', error);
       toast.error('Failed to update documents. Please try again.');
@@ -160,6 +214,7 @@ export function AccountDocuments({ currentProvider }: Props) {
               currentStatus={
                 currentProvider?.documents.companyPrivateHireOperatorLicenseStatus || 'pending'
               }
+              existingFiles={existingDocuments.companyPrivateHireOperatorLicenseFiles}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -172,6 +227,7 @@ export function AccountDocuments({ currentProvider }: Props) {
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentProvider?.documents.personalIDorPassportStatus || 'pending'}
+              existingFiles={existingDocuments.personalIDorPassportFiles}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -186,6 +242,7 @@ export function AccountDocuments({ currentProvider }: Props) {
               currentStatus={
                 currentProvider?.documents.vatRegistrationCertificateStatus || 'pending'
               }
+              existingFiles={existingDocuments.vatRegistrationCertificateFiles}
             />
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
@@ -203,11 +260,12 @@ export function AccountDocuments({ currentProvider }: Props) {
 type DocumentSectionProps = {
   title: string;
   fieldName: keyof ProviderDocumentsSchemaType;
-  expiryField: keyof ProviderDocumentsSchemaType;
+  expiryField?: keyof ProviderDocumentsSchemaType;
   onRemove: (file: File | string, fieldName: keyof ProviderDocumentsSchemaType) => void;
   onRemoveAll: (fieldName: keyof ProviderDocumentsSchemaType) => void;
   onDrop: (files: File[], fieldName: keyof ProviderDocumentsSchemaType) => void;
   currentStatus?: 'pending' | 'approved' | 'rejected';
+  existingFiles?: string[];
 };
 
 function DocumentSection({
@@ -218,9 +276,9 @@ function DocumentSection({
   onRemoveAll,
   onDrop,
   currentStatus,
+  existingFiles = [],
 }: DocumentSectionProps) {
   const { watch } = useFormContext<ProviderDocumentsSchemaType>();
-  const fieldValue = watch(fieldName);
 
   const getStatusLabel = (status: 'pending' | 'rejected' | 'approved') => {
     const statusOption = FILE_STATUS_OPTIONS.find((option) => option.value === status);
@@ -237,7 +295,68 @@ function DocumentSection({
         <Typography variant="subtitle2">{title}</Typography>
         {currentStatus && getStatusLabel(currentStatus)}
       </Stack>
-      <Field.DatePicker name={expiryField} label="Expiry Date" sx={{ width: '50%' }} />
+
+      {expiryField && (
+        <Field.DatePicker name={expiryField} label="Expiry Date" sx={{ width: '50%' }} />
+      )}
+
+      {existingFiles.length > 0 && (
+        <Stack
+          direction="row"
+          spacing={2}
+          flexWrap="wrap"
+          sx={{
+            gap: 2,
+            my: 2,
+          }}
+        >
+          {existingFiles.map((url, index) => (
+            <Box
+              key={`existing-${url}-${index}`}
+              sx={{
+                position: 'relative',
+                borderRadius: 1,
+                overflow: 'hidden',
+                width: 200, // Fixed width
+                height: 200, // Fixed height
+                boxShadow: (theme) => theme.customShadows.z8,
+                '&:hover .overlay': {
+                  opacity: 1,
+                },
+              }}
+            >
+              <img
+                src={url}
+                alt={`${title} ${index + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover', // This will maintain aspect ratio
+                }}
+              />
+              {/* Optional overlay with file number */}
+              <Box
+                className="overlay"
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  bgcolor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  p: 1,
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  textAlign: 'center',
+                }}
+              >
+                {`File ${index + 1} of ${existingFiles.length}`}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+      )}
+
       <Field.Upload
         name={fieldName}
         multiple
