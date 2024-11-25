@@ -715,6 +715,23 @@ export const deleteProvider = async (userId: string): Promise<{ error: Postgrest
 };
 
 /** **************************************
+ * Get all chauffeurs (Admin)
+ *************************************** */
+export const getAllChauffeurs = async (): Promise<{
+  data: ChauffeurData[] | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase.from('chauffeurs').select('*');
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
+};
+
+/** **************************************
  * Get all chauffeurs
  *************************************** */
 export const getChauffeurs = async (
@@ -800,6 +817,23 @@ export const deleteChauffeur = async (
     throw error;
   }
   return { error };
+};
+
+/** **************************************
+ * Get all vehicles (Admin)
+ *************************************** */
+export const getAllVehicles = async (): Promise<{
+  data: VehicleData[] | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase.from('vehicles').select('*');
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return { data, error };
 };
 
 /** **************************************

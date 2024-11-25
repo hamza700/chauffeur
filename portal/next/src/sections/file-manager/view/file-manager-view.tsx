@@ -2,7 +2,7 @@
 
 import type { IFile, IFileFilters } from 'src/types/file';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -13,7 +13,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
-import { _allFiles } from 'src/_mock';
+import { supabase } from 'src/lib/supabase';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { toast } from 'src/components/snackbar';
@@ -30,6 +30,15 @@ import { FileManagerFiltersResult } from '../file-manager-filters-result';
 
 // ----------------------------------------------------------------------
 
+interface IStorageFile extends IFile {
+  providerId: string;
+  chauffeurId?: string;
+  vehicleId?: string;
+  documentType: string;
+  documentCategory: 'chauffeur' | 'vehicle' | 'provider';
+  path: string;
+}
+
 export function FileManagerView() {
   const { user } = useMockedUser();
 
@@ -41,7 +50,9 @@ export function FileManagerView() {
 
   const upload = useBoolean();
 
-  const [tableData, setTableData] = useState<IFile[]>(_allFiles);
+  const [loading, setLoading] = useState(false);
+
+  const [tableData, setTableData] = useState<IStorageFile[]>([]);
 
   const filters = useSetState<IFileFilters>({
     name: '',
@@ -120,6 +131,222 @@ export function FileManagerView() {
     />
   );
 
+  useEffect(() => {
+    const fetchAllDocuments = async () => {
+      if (user?.user_metadata?.roles !== 'admin') {
+        console.log('🚫 User is not admin, skipping fetch');
+        return;
+      }
+
+      try {
+        console.log('🚀 Starting document fetch process...');
+        setLoading(true);
+        const documents: IStorageFile[] = [];
+
+        // Get all providers
+        console.log('📂 Fetching providers list...');
+        const { data: providers } = await supabase.storage.from('documents').list('providers');
+
+        if (!providers) {
+          console.log('❌ No providers found');
+          return;
+        }
+        console.log(`✅ Found ${providers.length} providers`);
+
+        // Fetch all data in parallel
+        const providerDocuments = await Promise.all(
+          providers.map(async (provider) => {
+            const providerId = provider.name;
+            console.log(`\n📍 Processing provider: ${providerId}`);
+            const providerDocs: IStorageFile[] = [];
+
+            // First, get provider-level documents
+            console.log(`  📑 Fetching provider-level documents...`);
+            const { data: providerFiles } = await supabase.storage
+              .from('documents')
+              .list(`providers/${providerId}`);
+
+            if (providerFiles) {
+              // Get files from each non-folder item
+              const providerLevelDocs = await Promise.all(
+                providerFiles
+                  .filter((doc) => !['chauffeurs', 'vehicles'].includes(doc.name))
+                  .map(async (doc) => {
+                    // Get the actual files in this directory
+                    const { data: files } = await supabase.storage
+                      .from('documents')
+                      .list(`providers/${providerId}/${doc.name}`);
+
+                    // Get provider details
+                    const { data: providerDetails } = await supabase
+                      .from('providers')
+                      .select('company_name')
+                      .eq('id', providerId)
+                      .single();
+
+                    return (
+                      files?.map((file) => ({
+                        id: `${providerId}-${doc.name}-${file.name}`,
+                        name: `${providerDetails?.company_name || 'Unknown Provider'} (${providerId}) - ${file.name}`,
+                        size: file.metadata?.size || 0,
+                        type: file.metadata?.mimetype || 'application/octet-stream',
+                        createdAt: new Date(file.created_at),
+                        modifiedAt: new Date(file.updated_at),
+                        path: `providers/${providerId}/${doc.name}/${file.name}`,
+                        documentType: doc.name,
+                        documentCategory: 'provider' as const,
+                        providerId,
+                        status: 'approved',
+                      })) || []
+                    );
+                  })
+              );
+
+              console.log(`  ✅ Found ${providerLevelDocs.flat().length} provider-level documents`);
+              providerDocs.push(...providerLevelDocs.flat());
+            }
+
+            // Get chauffeur folders
+            console.log(`  👥 Fetching chauffeur folders...`);
+            const { data: chauffeurFolders } = await supabase.storage
+              .from('documents')
+              .list(`providers/${providerId}/chauffeurs`);
+
+            if (chauffeurFolders) {
+              console.log(`  ✅ Found ${chauffeurFolders.length} chauffeurs`);
+
+              // Fetch all chauffeur documents in parallel
+              const chauffeurPromises = chauffeurFolders.map(async (folder) => {
+                const chauffeurId = folder.name;
+                console.log(`    🔍 Processing chauffeur: ${chauffeurId}`);
+
+                // Get chauffeur details and document folders in parallel
+                const [chauffeurDetails, chauffeurFoldersResponse] = await Promise.all([
+                  supabase
+                    .from('chauffeurs')
+                    .select('first_name, last_name')
+                    .eq('id', chauffeurId)
+                    .single(),
+                  supabase.storage
+                    .from('documents')
+                    .list(`providers/${providerId}/chauffeurs/${chauffeurId}`),
+                ]);
+
+                // Get files from each folder
+                const chauffeurDocs = await Promise.all(
+                  (chauffeurFoldersResponse.data || []).map(async (docFolder) => {
+                    const { data: files } = await supabase.storage
+                      .from('documents')
+                      .list(`providers/${providerId}/chauffeurs/${chauffeurId}/${docFolder.name}`);
+
+                    return (
+                      files?.map((file) => ({
+                        id: `${providerId}-${chauffeurId}-${docFolder.name}-${file.name}`,
+                        name: chauffeurDetails.data
+                          ? `${chauffeurDetails.data.first_name} ${chauffeurDetails.data.last_name} (${chauffeurId}) - ${file.name}`
+                          : `Chauffeur (${chauffeurId}) - ${file.name}`,
+                        size: file.metadata?.size || 0,
+                        type: file.metadata?.mimetype || 'application/octet-stream',
+                        createdAt: new Date(file.created_at),
+                        modifiedAt: new Date(file.updated_at),
+                        path: `providers/${providerId}/chauffeurs/${chauffeurId}/${docFolder.name}/${file.name}`,
+                        documentType: docFolder.name,
+                        documentCategory: 'chauffeur' as const,
+                        providerId,
+                        chauffeurId,
+                        status: 'approved',
+                      })) || []
+                    );
+                  })
+                );
+
+                return chauffeurDocs.flat();
+              });
+
+              const chauffeurDocuments = await Promise.all(chauffeurPromises);
+              providerDocs.push(...chauffeurDocuments.flat());
+              console.log(`  ✅ Completed processing chauffeur documents`);
+            }
+
+            // Get vehicle folders
+            console.log(`  🚗 Fetching vehicle folders...`);
+            const { data: vehicleFolders } = await supabase.storage
+              .from('documents')
+              .list(`providers/${providerId}/vehicles`);
+
+            if (vehicleFolders) {
+              console.log(`  ✅ Found ${vehicleFolders.length} vehicles`);
+
+              // Fetch all vehicle documents in parallel
+              const vehiclePromises = vehicleFolders.map(async (folder) => {
+                const vehicleId = folder.name;
+                console.log(`    🔍 Processing vehicle: ${vehicleId}`);
+
+                // Get vehicle details and document folders in parallel
+                const [vehicleDetails, vehicleFoldersResponse] = await Promise.all([
+                  supabase.from('vehicles').select('license_plate').eq('id', vehicleId).single(),
+                  supabase.storage
+                    .from('documents')
+                    .list(`providers/${providerId}/vehicles/${vehicleId}`),
+                ]);
+
+                // Get files from each folder
+                const vehicleDocs = await Promise.all(
+                  (vehicleFoldersResponse.data || []).map(async (docFolder) => {
+                    const { data: files } = await supabase.storage
+                      .from('documents')
+                      .list(`providers/${providerId}/vehicles/${vehicleId}/${docFolder.name}`);
+
+                    return (
+                      files?.map((file) => ({
+                        id: `${providerId}-${vehicleId}-${docFolder.name}-${file.name}`,
+                        name: vehicleDetails.data?.license_plate
+                          ? `${vehicleDetails.data.license_plate} (${vehicleId}) - ${file.name}`
+                          : `Vehicle (${vehicleId}) - ${file.name}`,
+                        size: file.metadata?.size || 0,
+                        type: file.metadata?.mimetype || 'application/octet-stream',
+                        createdAt: new Date(file.created_at),
+                        modifiedAt: new Date(file.updated_at),
+                        path: `providers/${providerId}/vehicles/${vehicleId}/${docFolder.name}/${file.name}`,
+                        documentType: docFolder.name,
+                        documentCategory: 'vehicle' as const,
+                        providerId,
+                        vehicleId,
+                        status: 'approved',
+                      })) || []
+                    );
+                  })
+                );
+
+                return vehicleDocs.flat();
+              });
+
+              const vehicleDocuments = await Promise.all(vehiclePromises);
+              providerDocs.push(...vehicleDocuments.flat());
+              console.log(`  ✅ Completed processing vehicle documents`);
+            }
+
+            console.log(`✅ Completed processing provider: ${providerId}`);
+            return providerDocs;
+          })
+        );
+
+        // Flatten all documents into a single array
+        const allDocuments = providerDocuments.flat();
+        console.log(`\n🎉 Fetch complete! Total documents found: ${allDocuments.length}`);
+        setTableData(allDocuments);
+      } catch (error) {
+        console.error('❌ Error fetching documents:', error);
+        toast.error('Failed to fetch documents');
+      } finally {
+        setLoading(false);
+        console.log('🏁 Document fetch process finished');
+      }
+    };
+
+    fetchAllDocuments();
+  }, [user?.user_metadata?.roles]);
+
   return (
     <>
       <DashboardContent>
@@ -183,7 +410,7 @@ export function FileManagerView() {
 
 type ApplyFilterProps = {
   dateError: boolean;
-  inputData: IFile[];
+  inputData: IStorageFile[];
   filters: IFileFilters;
   comparator: (a: any, b: any) => number;
 };

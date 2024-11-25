@@ -60,8 +60,24 @@ export function AuthProvider({ children }: Props) {
 
   useEffect(() => {
     checkUserSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        const accessToken = session?.access_token;
+        setState({ user: { ...session, ...session?.user }, loading: false });
+        axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+      } else {
+        setState({ user: null, loading: false });
+        delete axios.defaults.headers.common.Authorization;
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [checkUserSession, setState]);
 
   // ----------------------------------------------------------------------
 

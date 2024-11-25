@@ -1,6 +1,6 @@
 import type { IDatePickerControl } from 'src/types/common';
 import type { UseSetStateReturn } from 'src/hooks/use-set-state';
-import type { IOrderItem, IOrderTableFilters } from 'src/types/booking';
+import type { IBookingItem, IOrderTableFilters } from 'src/types/booking';
 
 import * as XLSX from 'xlsx';
 import { useCallback } from 'react';
@@ -14,7 +14,7 @@ import { formHelperTextClasses } from '@mui/material/FormHelperText';
 
 import { Iconify } from 'src/components/iconify';
 
-const exportToExcel = (data: IOrderItem[], fileName: string) => {
+const exportToExcel = (data: IBookingItem[], fileName: string) => {
   const worksheet = XLSX.utils.json_to_sheet(data);
 
   // Set column widths
@@ -76,7 +76,7 @@ type Props = {
   dateError: boolean;
   onResetPage: () => void;
   filters: UseSetStateReturn<IOrderTableFilters>;
-  tableData: IOrderItem[];
+  tableData: IBookingItem[];
 };
 
 export function OrderTableToolbar({ filters, onResetPage, dateError, tableData }: Props) {

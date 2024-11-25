@@ -9,21 +9,25 @@ export type IFileFilters = {
   endDate: IDatePickerControl;
 };
 
-export type IFolderManager = {
-  id: string;
-  name: string;
-  totalFiles?: number;
-};
-
-export type IFileManager = {
+export interface IStorageFile {
   id: string;
   name: string;
   size: number;
   type: string;
-  url: string;
-  status: 'pending' | 'rejected' | 'approved';
-  createdAt: IDateValue;
-  modifiedAt: IDateValue;
-};
+  path: string;
+  status: 'pending' | 'approved' | 'rejected';
+  modifiedAt: Date;
+  documentType: string;
+  documentCategory: 'chauffeur' | 'vehicle' | 'provider';
+  providerId: string;
+  chauffeurId?: string;
+  vehicleId?: string;
+}
 
-export type IFile = IFileManager | IFolderManager;
+export interface IStorageFolder {
+  id: string;
+  name: string;
+  type: 'folder';
+  path: string;
+}
+

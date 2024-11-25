@@ -1,4 +1,4 @@
-import type { IFileManager } from 'src/types/file';
+import type { IStorageFile } from 'src/types/file';
 
 import { useCallback } from 'react';
 
@@ -24,6 +24,7 @@ import { fDate, fTime } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -35,7 +36,7 @@ import { FileManagerFileDetails } from './file-manager-file-details';
 // ----------------------------------------------------------------------
 
 type Props = {
-  row: IFileManager;
+  row: IStorageFile;
   selected: boolean;
   onSelectRow: () => void;
   onDeleteRow: () => void;
@@ -79,6 +80,30 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
     },
   };
 
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'chauffeur':
+        return 'Chauffeur Document';
+      case 'vehicle':
+        return 'Vehicle Document';
+      case 'provider':
+        return 'Provider Document';
+      default:
+        return category;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'error';
+      default:
+        return 'warning';
+    }
+  };
+
   return (
     <>
       <TableRow
@@ -110,17 +135,26 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
           <Stack direction="row" alignItems="center" spacing={2}>
             <FileThumbnail file={row.type} />
 
-            <Typography
-              noWrap
-              variant="inherit"
-              sx={{
-                maxWidth: 360,
-                cursor: 'pointer',
-                ...(details.value && { fontWeight: 'fontWeightBold' }),
-              }}
-            >
-              {row.name}
-            </Typography>
+            <Stack spacing={0.5}>
+              <Typography
+                noWrap
+                variant="inherit"
+                sx={{
+                  maxWidth: 360,
+                  cursor: 'pointer',
+                  ...(details.value && { fontWeight: 'fontWeightBold' }),
+                }}
+              >
+                {row.name}
+              </Typography>
+              {(row.chauffeurId || row.vehicleId) && (
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {row.chauffeurId
+                    ? `Chauffeur ID: ${row.chauffeurId}`
+                    : `Vehicle ID: ${row.vehicleId}`}
+                </Typography>
+              )}
+            </Stack>
           </Stack>
         </TableCell>
 
@@ -129,7 +163,11 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         </TableCell>
 
         <TableCell onClick={handleClick} sx={{ whiteSpace: 'nowrap' }}>
-          {row.type}
+          {row.documentType}
+        </TableCell>
+
+        <TableCell onClick={handleClick} sx={{ whiteSpace: 'nowrap' }}>
+          {getCategoryLabel(row.documentCategory)}
         </TableCell>
 
         <TableCell onClick={handleClick} sx={{ whiteSpace: 'nowrap' }}>
@@ -142,7 +180,9 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         </TableCell>
 
         <TableCell onClick={handleClick} sx={{ whiteSpace: 'nowrap' }}>
-          {row.status}
+          <Label variant="soft" color={getStatusColor(row.status)}>
+            {row.status}
+          </Label>
         </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
@@ -159,6 +199,16 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         slotProps={{ arrow: { placement: 'right-top' } }}
       >
         <MenuList>
+          <MenuItem
+            onClick={() => {
+              details.onTrue();
+              popover.onClose();
+            }}
+          >
+            <Iconify icon="solar:eye-bold" />
+            View Details
+          </MenuItem>
+
           <MenuItem
             onClick={() => {
               popover.onClose();
