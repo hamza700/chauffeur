@@ -1,6 +1,6 @@
 import type { IStorageFile } from 'src/types/file';
 
-import { useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -23,6 +23,7 @@ import { fData } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
+import { supabase } from 'src/lib/supabase';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -30,6 +31,12 @@ import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { FileThumbnail } from 'src/components/file-thumbnail';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+
+import {
+  getVehicleById,
+  getProviderById,
+  getChauffeurById,
+} from 'src/auth/context/supabase/action';
 
 import { FileManagerFileDetails } from './file-manager-file-details';
 
@@ -40,9 +47,16 @@ type Props = {
   selected: boolean;
   onSelectRow: () => void;
   onDeleteRow: () => void;
+  onRefreshData: () => void;
 };
 
-export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }: Props) {
+export function FileManagerTableRow({
+  row,
+  selected,
+  onSelectRow,
+  onDeleteRow,
+  onRefreshData,
+}: Props) {
   const theme = useTheme();
 
   const { copy } = useCopyToClipboard();
@@ -53,17 +67,138 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
 
   const popover = usePopover();
 
+  const [documentStatus, setDocumentStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDocumentStatus = async () => {
+      try {
+        const pathParts = row.path.split('/');
+        let id;
+
+        if (row.documentCategory === 'provider') {
+          id = pathParts[1];
+        } else if (row.documentCategory === 'chauffeur' || row.documentCategory === 'vehicle') {
+          id = pathParts[3];
+        }
+
+        if (!id) return;
+
+        switch (row.documentCategory) {
+          case 'provider': {
+            const { data } = await getProviderById(id);
+            if (data) {
+              switch (row.documentType) {
+                case 'company_private_hire_license':
+                  setDocumentStatus(data.company_private_hire_operator_license_status);
+                  break;
+                case 'proof_of_id':
+                  setDocumentStatus(data.personal_id_or_passport_status);
+                  break;
+                case 'vat_registration':
+                  setDocumentStatus(data.vat_registration_certificate_status);
+                  break;
+                default:
+                  console.warn(`Unknown provider document type: ${row.documentType}`);
+                  setDocumentStatus('pending');
+              }
+            }
+            break;
+          }
+
+          case 'chauffeur': {
+            const { data } = await getChauffeurById(id);
+            if (data) {
+              switch (row.documentType) {
+                case 'drivers_license':
+                  setDocumentStatus(data.drivers_license_status);
+                  break;
+                case 'private_hire_license':
+                  setDocumentStatus(data.private_hire_license_status);
+                  break;
+                case 'profile_pic':
+                  setDocumentStatus(data.profile_pic_status);
+                  break;
+                default:
+                  console.warn(`Unknown chauffeur document type: ${row.documentType}`);
+                  setDocumentStatus('pending');
+              }
+            }
+            break;
+          }
+
+          case 'vehicle': {
+            const { data } = await getVehicleById(id);
+            if (data) {
+              switch (row.documentType) {
+                case 'private_hire_license':
+                  setDocumentStatus(data.private_hire_license_status);
+                  break;
+                case 'mot_certificate':
+                  setDocumentStatus(data.mot_test_certificate_status);
+                  break;
+                case 'insurance':
+                  setDocumentStatus(data.vehicle_insurance_status);
+                  break;
+                case 'registration':
+                  setDocumentStatus(data.vehicle_registration_status);
+                  break;
+                case 'leasing_contract':
+                  setDocumentStatus(data.leasing_contract_status);
+                  break;
+                case 'vehicle_pic':
+                  setDocumentStatus(data.vehicle_pic_status);
+                  break;
+                default:
+                  console.warn(`Unknown vehicle document type: ${row.documentType}`);
+                  setDocumentStatus('pending');
+              }
+            }
+            break;
+          }
+
+          default:
+            console.warn(`Unknown document category: ${row.documentCategory}`);
+            setDocumentStatus('pending');
+        }
+      } catch (error) {
+        console.error('Error fetching document status:', error);
+        setDocumentStatus('pending');
+      }
+    };
+
+    fetchDocumentStatus();
+  }, [row]);
+
+  const handleGetSignedUrl = async () => {
+    try {
+      const {
+        data: { signedUrl },
+        error,
+      } = await supabase.storage.from('documents').createSignedUrl(row.path, 3600); // 1 hour expiry
+
+      if (error) throw error;
+      return signedUrl;
+    } catch (error) {
+      console.error('Error getting signed URL:', error);
+      toast.error('Failed to get link');
+      return null;
+    }
+  };
+
+  const handleCopy = async () => {
+    const url = await handleGetSignedUrl();
+    if (url) {
+      copy(url);
+      toast.success('Link copied!');
+    }
+  };
+
   const handleClick = useDoubleClick({
     click: () => {
       details.onTrue();
     },
     doubleClick: () => console.info('DOUBLE CLICK'),
   });
-
-  const handleCopy = useCallback(() => {
-    toast.success('Copied!');
-    copy(row.url);
-  }, [copy, row.url]);
 
   const defaultStyles = {
     borderTop: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
@@ -101,6 +236,21 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         return 'error';
       default:
         return 'warning';
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase.storage.from('documents').remove([row.path]);
+
+      if (error) throw error;
+
+      toast.success('File deleted successfully');
+      onDeleteRow(); // Update local UI state
+      onRefreshData(); // Refresh the data from server
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast.error('Failed to delete file');
     }
   };
 
@@ -180,8 +330,15 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         </TableCell>
 
         <TableCell onClick={handleClick} sx={{ whiteSpace: 'nowrap' }}>
-          <Label variant="soft" color={getStatusColor(row.status)}>
-            {row.status}
+          <Label
+            variant="soft"
+            color={
+              (documentStatus === 'approved' && 'success') ||
+              (documentStatus === 'rejected' && 'error') ||
+              'warning'
+            }
+          >
+            {documentStatus || 'pending'}
           </Label>
         </TableCell>
 
@@ -210,9 +367,9 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
           </MenuItem>
 
           <MenuItem
-            onClick={() => {
+            onClick={async () => {
               popover.onClose();
-              handleCopy();
+              await handleCopy();
             }}
           >
             <Iconify icon="eva:link-2-fill" />
@@ -239,7 +396,7 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         onCopyLink={handleCopy}
         open={details.value}
         onClose={details.onFalse}
-        onDelete={onDeleteRow}
+        onDelete={handleDelete}
       />
 
       <ConfirmDialog
@@ -248,7 +405,14 @@ export function FileManagerTableRow({ row, selected, onSelectRow, onDeleteRow }:
         title="Delete"
         content="Are you sure want to delete?"
         action={
-          <Button variant="contained" color="error" onClick={onDeleteRow}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              await handleDelete();
+              confirm.onFalse();
+            }}
+          >
             Delete
           </Button>
         }

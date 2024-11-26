@@ -44,7 +44,7 @@ import {
 } from 'src/components/table';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { getVehicles, deleteVehicle } from 'src/auth/context/supabase';
+import { getVehicles, deleteVehicle, getAllVehicles } from 'src/auth/context/supabase';
 
 import { VehicleTableRow } from '../vehicle-table-row';
 import { VehicleTableToolbar } from '../vehicle-table-toolbar';
@@ -85,22 +85,38 @@ export function VehicleListView() {
 
   const filters = useSetState<IVehicleTableFilters>({ licensePlate: '', status: 'all' });
 
-  // Fetch all users from Supabase
+  // Fetch all vehicles from Supabase
   useEffect(() => {
     const fetchVehicles = async () => {
       setLoading(true);
-      const { data, error } = await getVehicles(providerId);
-      if (error) {
-        toast.error('Failed to fetch vehicles');
-      } else {
-        const transformedData = data?.map(transformVehicleData);
-        setTableData(transformedData || []);
+      try {
+        // Check if user is admin
+        if (user?.user_metadata?.roles.includes('admin')) {
+          const { data, error } = await getAllVehicles();
+          if (error) {
+            toast.error('Failed to fetch vehicles');
+          } else {
+            const transformedData = data?.map(transformVehicleData);
+            setTableData(transformedData || []);
+          }
+        } else {
+          // Existing provider-specific logic
+          const { data, error } = await getVehicles(providerId);
+          if (error) {
+            toast.error('Failed to fetch vehicles');
+          } else {
+            const transformedData = data?.map(transformVehicleData);
+            setTableData(transformedData || []);
+          }
+        }
+      } catch (error) {
+        toast.error('Error fetching vehicles');
       }
       setLoading(false);
     };
 
     fetchVehicles();
-  }, []);
+  }, [providerId, user?.user_metadata?.roles]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,

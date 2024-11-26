@@ -28,6 +28,7 @@ export function DashboardYearlySales({ title, subheader, chart, ...other }: Prop
     theme.palette.warning.main,
     theme.palette.success.main,
     theme.palette.secondary.main,
+    theme.palette.info.main,
   ];
 
   const chartOptions = useChart({

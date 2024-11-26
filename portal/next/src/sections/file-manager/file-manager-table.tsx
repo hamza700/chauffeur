@@ -1,7 +1,10 @@
-import type { IFile } from 'src/types/file';
+import type { IStorageFile } from 'src/types/file';
 import type { TableProps } from 'src/components/table';
 
+import { useState } from 'react';
+
 import Box from '@mui/material/Box';
+import { Button } from '@mui/material';
 import Table from '@mui/material/Table';
 import Tooltip from '@mui/material/Tooltip';
 import { useTheme } from '@mui/material/styles';
@@ -11,7 +14,11 @@ import TableContainer from '@mui/material/TableContainer';
 import { tableCellClasses } from '@mui/material/TableCell';
 import { tablePaginationClasses } from '@mui/material/TablePagination';
 
+import { supabase } from 'src/lib/supabase';
+
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import {
   TableNoData,
   TableHeadCustom,
@@ -38,19 +45,23 @@ const TABLE_HEAD = [
 type Props = {
   table: TableProps;
   notFound: boolean;
-  dataFiltered: IFile[];
-  onOpenConfirm: () => void;
+  dataFiltered: IStorageFile[];
   onDeleteRow: (id: string) => void;
+  onDeleteRows: (selectedIds: string[]) => void;
+  onRefreshData: () => void;
 };
 
 export function FileManagerTable({
   table,
   notFound,
   onDeleteRow,
-  dataFiltered,
-  onOpenConfirm,
+  onDeleteRows,
+  dataFiltered = [],
+  onRefreshData,
 }: Props) {
   const theme = useTheme();
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<string[]>([]);
 
   const {
     dense,
@@ -58,16 +69,48 @@ export function FileManagerTable({
     order,
     orderBy,
     rowsPerPage,
-    //
     selected,
     onSelectRow,
     onSelectAllRows,
-    //
+    setSelected,
     onSort,
     onChangeDense,
     onChangePage,
     onChangeRowsPerPage,
   } = table;
+
+  const handleOpenConfirm = (selectedIds: string[]) => {
+    setSelectedForDelete(selectedIds);
+    setOpenConfirm(true);
+  };
+
+  const handleCloseConfirm = () => {
+    setOpenConfirm(false);
+    setSelectedForDelete([]);
+  };
+
+  const handleDeleteRows = async () => {
+    try {
+      // Get the paths of selected files
+      const selectedFiles = dataFiltered.filter((file) => selectedForDelete.includes(file.id));
+      const filePaths = selectedFiles.map((file) => file.path);
+
+      // Delete files from storage
+      const { error } = await supabase.storage.from('documents').remove(filePaths);
+
+      if (error) throw error;
+
+      toast.success('Files deleted successfully');
+      onDeleteRows(selectedForDelete); // Update local state
+      onRefreshData(); // Refresh data from server
+      handleCloseConfirm();
+      onSelectAllRows(false, []);
+      setSelected([]);
+    } catch (error) {
+      console.error('Error deleting files:', error);
+      toast.error('Failed to delete files');
+    }
+  };
 
   return (
     <>
@@ -88,19 +131,11 @@ export function FileManagerTable({
             )
           }
           action={
-            <>
-              <Tooltip title="Share">
-                <IconButton color="primary">
-                  <Iconify icon="solar:share-bold" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Delete">
-                <IconButton color="primary" onClick={onOpenConfirm}>
-                  <Iconify icon="solar:trash-bin-trash-bold" />
-                </IconButton>
-              </Tooltip>
-            </>
+            <Tooltip title="Delete">
+              <IconButton color="primary" onClick={() => handleOpenConfirm(selected)}>
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
           }
           sx={{
             pl: 1,
@@ -149,6 +184,7 @@ export function FileManagerTable({
                     selected={selected.includes(row.id)}
                     onSelectRow={() => onSelectRow(row.id)}
                     onDeleteRow={() => onDeleteRow(row.id)}
+                    onRefreshData={onRefreshData}
                   />
                 ))}
 
@@ -174,6 +210,22 @@ export function FileManagerTable({
         onChangeDense={onChangeDense}
         onRowsPerPageChange={onChangeRowsPerPage}
         sx={{ [`& .${tablePaginationClasses.toolbar}`]: { borderTopColor: 'transparent' } }}
+      />
+
+      <ConfirmDialog
+        open={openConfirm}
+        onClose={handleCloseConfirm}
+        title="Delete"
+        content={
+          <>
+            Are you sure want to delete <strong> {selectedForDelete.length} </strong> items?
+          </>
+        }
+        action={
+          <Button variant="contained" color="error" onClick={handleDeleteRows}>
+            Delete
+          </Button>
+        }
       />
     </>
   );

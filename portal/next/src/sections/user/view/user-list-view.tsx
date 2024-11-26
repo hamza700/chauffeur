@@ -45,7 +45,7 @@ import {
 
 import { useAuthContext } from 'src/auth/hooks';
 // Import Supabase functions
-import { getChauffeurs, deleteChauffeur } from 'src/auth/context/supabase';
+import { getChauffeurs, deleteChauffeur, getAllChauffeurs } from 'src/auth/context/supabase';
 
 import { UserTableRow } from '../user-table-row';
 import { UserTableToolbar } from '../user-table-toolbar';
@@ -87,18 +87,34 @@ export function UserListView() {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
-      const { data, error } = await getChauffeurs(providerId);
-      if (error) {
-        toast.error('Failed to fetch users');
-      } else {
-        const transformedData = data?.map(transformChauffeurData);
-        setTableData(transformedData || []);
+      try {
+        // Check if user is admin
+        if (user?.user_metadata?.roles.includes('admin')) {
+          const { data, error } = await getAllChauffeurs();
+          if (error) {
+            toast.error('Failed to fetch users');
+          } else {
+            const transformedData = data?.map(transformChauffeurData);
+            setTableData(transformedData || []);
+          }
+        } else {
+          // Existing provider-specific logic
+          const { data, error } = await getChauffeurs(providerId);
+          if (error) {
+            toast.error('Failed to fetch users');
+          } else {
+            const transformedData = data?.map(transformChauffeurData);
+            setTableData(transformedData || []);
+          }
+        }
+      } catch (error) {
+        toast.error('Error fetching users');
       }
       setLoading(false);
     };
 
     fetchUsers();
-  }, []);
+  }, [providerId, user?.user_metadata?.roles]);
 
   // Apply filter logic
   const dataFiltered = applyFilter({

@@ -1,10 +1,10 @@
-import type { IDateValue, IDatePickerControl } from './common';
+import type { IDatePickerControl } from './common';
 
 // ----------------------------------------------------------------------
 
 export type IFileFilters = {
   name: string;
-  status: 'pending' | 'rejected' | 'approved';
+  status: 'string';
   startDate: IDatePickerControl;
   endDate: IDatePickerControl;
 };
@@ -15,8 +15,9 @@ export interface IStorageFile {
   size: number;
   type: string;
   path: string;
-  status: 'pending' | 'approved' | 'rejected';
-  modifiedAt: Date;
+  entityId: string; // Add this field
+  status: string;
+  modifiedAt: string;
   documentType: string;
   documentCategory: 'chauffeur' | 'vehicle' | 'provider';
   providerId: string;
@@ -30,4 +31,3 @@ export interface IStorageFolder {
   type: 'folder';
   path: string;
 }
-
