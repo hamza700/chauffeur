@@ -21,6 +21,7 @@ import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import { useAuthContext } from 'src/auth/hooks';
+import { RoleBasedGuard } from 'src/auth/guard';
 import { getProviderById } from 'src/auth/context/supabase';
 
 import { AccountGeneral } from '../account-general';
@@ -75,29 +76,10 @@ export function AccountView() {
         // Fetch documents if we have provider data
         if (data) {
           try {
-            const [
-              operatorLicense,
-              personalID,
-              vatCertificate,
-            ] = await Promise.all([
-              getDocument(
-                data.id,
-                'company_private_hire_license',
-                0,
-                user?.access_token || ''
-              ),
-              getDocument(
-                data.id,
-                'proof_of_id',
-                0,
-                user?.access_token || ''
-              ),
-              getDocument(
-                data.id,
-                'vat_registration',
-                0,
-                user?.access_token || ''
-              ),
+            const [operatorLicense, personalID, vatCertificate] = await Promise.all([
+              getDocument(data.id, 'company_private_hire_license', 0, user?.access_token || ''),
+              getDocument(data.id, 'proof_of_id', 0, user?.access_token || ''),
+              getDocument(data.id, 'vat_registration', 0, user?.access_token || ''),
             ]);
 
             setDocuments({
@@ -122,32 +104,47 @@ export function AccountView() {
 
   return (
     <DashboardContent>
-      <CustomBreadcrumbs
-        heading="Account"
-        links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'User', href: paths.dashboard.settings },
-          { name: 'Account' },
-        ]}
-        sx={{ mb: { xs: 3, md: 5 } }}
-      />
-
-      <Tabs value={tabs.value} onChange={tabs.onChange} sx={{ mb: { xs: 3, md: 5 } }}>
-        {TABS.map((tab) => (
-          <Tab key={tab.value} label={tab.label} icon={tab.icon} value={tab.value} />
-        ))}
-      </Tabs>
-
-      {tabs.value === 'general' && <AccountGeneral currentProvider={currentProvider} />}
-
-      {tabs.value === 'documents' && (
-        <AccountDocuments 
-          currentProvider={currentProvider} 
-          existingDocuments={documents}
+      <RoleBasedGuard
+        hasContent
+        currentRole={user?.user_metadata?.roles}
+        acceptRoles={['provider']}
+        sx={{ py: 10 }}
+      >
+        <CustomBreadcrumbs
+          heading="Account"
+          links={[
+            { name: 'Dashboard', href: paths.dashboard.root },
+            { name: 'User', href: paths.dashboard.settings },
+            { name: 'Account' },
+          ]}
+          sx={{ mb: { xs: 3, md: 5 } }}
         />
-      )}
 
-      {tabs.value === 'payment' && <AccountPaymentDetails currentProvider={currentProvider} />}
+        <Tabs value={tabs.value} onChange={tabs.onChange} sx={{ mb: { xs: 3, md: 5 } }}>
+          {TABS.map((tab) => (
+            <Tab key={tab.value} label={tab.label} icon={tab.icon} value={tab.value} />
+          ))}
+        </Tabs>
+
+        {tabs.value === 'general' && (
+          <AccountGeneral currentProvider={currentProvider} onRefetch={fetchProviderAndDocuments} />
+        )}
+
+        {tabs.value === 'documents' && (
+          <AccountDocuments
+            currentProvider={currentProvider}
+            existingDocuments={documents}
+            onRefetch={fetchProviderAndDocuments}
+          />
+        )}
+
+        {tabs.value === 'payment' && (
+          <AccountPaymentDetails
+            currentProvider={currentProvider}
+            onRefetch={fetchProviderAndDocuments}
+          />
+        )}
+      </RoleBasedGuard>
     </DashboardContent>
   );
 }

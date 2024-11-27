@@ -1,4 +1,4 @@
-import type { IUserItem } from 'src/types/user';
+import type { IProviderAccount } from 'src/types/user';
 
 import { z as zod } from 'zod';
 import { useMemo } from 'react';
@@ -17,13 +17,13 @@ import DialogContent from '@mui/material/DialogContent';
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
 
-import { updateChauffeur } from 'src/auth/context/supabase'; // Import the updateUser function
+import { updateProvider } from 'src/auth/context/supabase';
 
 // ----------------------------------------------------------------------
 
-export type UserQuickEditSchemaType = zod.infer<typeof UserQuickEditSchema>;
+export type ProviderQuickEditSchemaType = zod.infer<typeof ProviderQuickEditSchema>;
 
-export const UserQuickEditSchema = zod.object({
+export const ProviderQuickEditSchema = zod.object({
   status: zod.string().min(1, { message: 'Status is required!' }),
 });
 
@@ -32,21 +32,21 @@ export const UserQuickEditSchema = zod.object({
 type Props = {
   open: boolean;
   onClose: () => void;
-  currentUser?: IUserItem;
+  currentProvider?: IProviderAccount;
   onRefreshData?: () => void;
 };
 
-export function UserQuickEditForm({ currentUser, open, onClose, onRefreshData }: Props) {
+export function ProviderQuickEditForm({ currentProvider, open, onClose, onRefreshData }: Props) {
   const defaultValues = useMemo(
     () => ({
-      status: currentUser?.status || '',
+      status: currentProvider?.status || '',
     }),
-    [currentUser]
+    [currentProvider]
   );
 
-  const methods = useForm<UserQuickEditSchemaType>({
+  const methods = useForm<ProviderQuickEditSchemaType>({
     mode: 'all',
-    resolver: zodResolver(UserQuickEditSchema),
+    resolver: zodResolver(ProviderQuickEditSchema),
     defaultValues,
   });
 
@@ -57,17 +57,16 @@ export function UserQuickEditForm({ currentUser, open, onClose, onRefreshData }:
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    if (!currentUser) return;
+    if (!currentProvider) return;
 
     try {
-      const { data: updatedData, error } = await updateChauffeur(currentUser.id, data);
+      const { data: updatedData, error } = await updateProvider(currentProvider.id, data);
       if (error) {
         throw error;
       }
 
       reset();
       onClose();
-
       toast.success('Update success!');
       onRefreshData?.();
       console.info('Updated Data', updatedData);
@@ -78,22 +77,12 @@ export function UserQuickEditForm({ currentUser, open, onClose, onRefreshData }:
   });
 
   return (
-    <Dialog
-      fullWidth
-      maxWidth="xs" // Make the dialog smaller
-      open={open}
-      onClose={onClose}
-    >
+    <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
       <Form methods={methods} onSubmit={onSubmit}>
         <DialogTitle>Update Status</DialogTitle>
 
         <DialogContent>
-          <Box
-            rowGap={3}
-            columnGap={2}
-            display="grid"
-            gridTemplateColumns="1fr" // Single column layout
-          >
+          <Box rowGap={3} columnGap={2} display="grid" gridTemplateColumns="1fr">
             <Field.Select name="status">
               <MenuItem value="approved">Approved</MenuItem>
               <MenuItem value="rejected">Rejected</MenuItem>
@@ -114,4 +103,4 @@ export function UserQuickEditForm({ currentUser, open, onClose, onRefreshData }:
       </Form>
     </Dialog>
   );
-}
+} 

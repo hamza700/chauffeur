@@ -36,9 +36,10 @@ type Props = {
   open: boolean;
   onClose: () => void;
   currentVehicle?: IVehicleItem;
+  onRefreshData?: () => void;
 };
 
-export function VehicleQuickEditForm({ currentVehicle, open, onClose }: Props) {
+export function VehicleQuickEditForm({ currentVehicle, open, onClose, onRefreshData }: Props) {
   const router = useRouter();
 
   const defaultValues = useMemo(
@@ -73,7 +74,7 @@ export function VehicleQuickEditForm({ currentVehicle, open, onClose }: Props) {
       onClose();
 
       toast.success('Update success!');
-      router.refresh();
+      onRefreshData?.();
       console.info('Updated Data', updatedData);
     } catch (error) {
       toast.error('Update error!');
@@ -99,8 +100,8 @@ export function VehicleQuickEditForm({ currentVehicle, open, onClose }: Props) {
             gridTemplateColumns="1fr"
           >
             <Field.Select name="status">
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
               <MenuItem value="pending">Pending</MenuItem>
             </Field.Select>
           </Box>

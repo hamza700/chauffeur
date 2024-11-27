@@ -55,7 +55,7 @@ import { UserTableFiltersResult } from '../user-table-filters-result';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
-  { value: 'active', label: 'Active' },
+  { value: 'approved', label: 'Approved' },
   { value: 'pending', label: 'Pending' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -83,8 +83,7 @@ export function UserListView() {
 
   const filters = useSetState<IUserTableFilters>({ name: '', status: 'all' });
 
-  // Fetch all users from Supabase
-  useEffect(() => {
+
     const fetchUsers = async () => {
       setLoading(true);
       try {
@@ -113,8 +112,10 @@ export function UserListView() {
       setLoading(false);
     };
 
+  // Fetch all users from Supabase
+  useEffect(() => {
     fetchUsers();
-  }, [providerId, user?.user_metadata?.roles]);
+  }, []);
 
   // Apply filter logic
   const dataFiltered = applyFilter({
@@ -209,7 +210,7 @@ export function UserListView() {
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New user
+              New chauffuer
             </Button>
           }
           sx={{ mb: { xs: 3, md: 5 } }}
@@ -238,13 +239,13 @@ export function UserListView() {
                       'soft'
                     }
                     color={
-                      (tab.value === 'active' && 'success') ||
+                      (tab.value === 'approved' && 'success') ||
                       (tab.value === 'pending' && 'warning') ||
                       (tab.value === 'rejected' && 'error') ||
                       'default'
                     }
                   >
-                    {['active', 'pending', 'rejected'].includes(tab.value)
+                    {['approved', 'pending', 'rejected'].includes(tab.value)
                       ? tableData.filter((user) => user.status === tab.value).length
                       : tableData.length}
                   </Label>
@@ -319,6 +320,7 @@ export function UserListView() {
                         onSelectRow={() => table.onSelectRow(row.id)}
                         onDeleteRow={() => handleDeleteRow(row.id)}
                         onEditRow={() => handleEditRow(row.id)}
+                        onRefreshData={fetchUsers}
                       />
                     ))}
 

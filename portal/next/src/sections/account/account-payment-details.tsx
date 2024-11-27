@@ -46,9 +46,10 @@ export type PaymentDetailsSchemaType = zod.infer<typeof PaymentDetailsSchema>;
 
 type Props = {
   currentProvider?: IProviderAccount;
+  onRefetch?: () => void;
 };
 
-export function AccountPaymentDetails({ currentProvider }: Props) {
+export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
   const router = useRouter();
 
   const defaultValues = useMemo(
@@ -102,7 +103,7 @@ export function AccountPaymentDetails({ currentProvider }: Props) {
       };
       await updateProvider(currentProvider?.id, updateData);
       toast.success('Payment details updated successfully!');
-      router.refresh();
+      onRefetch?.();
     } catch (error) {
       console.error('Error updating payment details:', error);
       toast.error('Failed to update payment details. Please try again.');

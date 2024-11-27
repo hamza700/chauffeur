@@ -30,9 +30,10 @@ type Props = {
   onEditRow: () => void;
   onSelectRow: () => void;
   onDeleteRow: () => void;
+  onRefreshData?: () => void;
 };
 
-export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }: Props) {
+export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onRefreshData }: Props) {
   const { user } = useAuthContext();
   const role = user?.user_metadata?.roles;
 
@@ -67,7 +68,7 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
           <Label
             variant="soft"
             color={
-              (row.status === 'active' && 'success') ||
+              (row.status === 'approved' && 'success') ||
               (row.status === 'pending' && 'warning') ||
               (row.status === 'rejected' && 'error') ||
               'default'
@@ -97,7 +98,12 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
         </TableCell>
       </TableRow>
 
-      <UserQuickEditForm currentUser={row} open={quickEdit.value} onClose={quickEdit.onFalse} />
+      <UserQuickEditForm
+        currentUser={row}
+        open={quickEdit.value}
+        onClose={quickEdit.onFalse}
+        onRefreshData={onRefreshData}
+      />
 
       <CustomPopover
         open={popover.open}

@@ -53,7 +53,7 @@ import { ProviderTableFiltersResult } from '../provider-table-filters-result';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
-  { value: 'active', label: 'Active' },
+  { value: 'approved', label: 'Approved' },
   { value: 'pending', label: 'Pending' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -85,20 +85,20 @@ export function ProviderListView() {
 
   const filters = useSetState<IProvidersTableFilters>({ companyName: '', status: 'all' });
 
+  const fetchProviders = async () => {
+    setLoading(true);
+    const { data, error } = await getProviders();
+    if (error) {
+      toast.error('Failed to fetch providers');
+    } else {
+      const transformedData = data?.map(transformProviderData);
+      setTableData(transformedData || []);
+    }
+    setLoading(false);
+  };
+
   // Fetch all users from Supabase
   useEffect(() => {
-    const fetchProviders = async () => {
-      setLoading(true);
-      const { data, error } = await getProviders();
-      if (error) {
-        toast.error('Failed to fetch providers');
-      } else {
-        const transformedData = data?.map(transformProviderData);
-        setTableData(transformedData || []);
-      }
-      setLoading(false);
-    };
-
     fetchProviders();
   }, []);
 
@@ -214,13 +214,13 @@ export function ProviderListView() {
                         'soft'
                       }
                       color={
-                        (tab.value === 'active' && 'success') ||
+                        (tab.value === 'approved' && 'success') ||
                         (tab.value === 'pending' && 'warning') ||
                         (tab.value === 'rejected' && 'error') ||
                         'default'
                       }
                     >
-                      {['active', 'pending', 'rejected'].includes(tab.value)
+                      {['approved', 'pending', 'rejected'].includes(tab.value)
                         ? tableData.filter((provider) => provider.status === tab.value).length
                         : tableData.length}
                     </Label>
@@ -294,6 +294,7 @@ export function ProviderListView() {
                           selected={table.selected.includes(row.id)}
                           onSelectRow={() => table.onSelectRow(row.id)}
                           onDeleteRow={() => handleDeleteRow(row.id)}
+                          onRefreshData={fetchProviders}
                         />
                       ))}
 

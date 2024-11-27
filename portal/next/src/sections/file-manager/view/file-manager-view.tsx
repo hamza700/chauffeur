@@ -1,6 +1,6 @@
 'use client';
 
-import type { IFile, IFileFilters } from 'src/types/file';
+import type { IFileFilters, IStorageFile } from 'src/types/file';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -27,15 +27,6 @@ import { FileManagerFilters } from '../file-manager-filters';
 import { FileManagerFiltersResult } from '../file-manager-filters-result';
 
 // ----------------------------------------------------------------------
-
-interface IStorageFile extends IFile {
-  providerId: string;
-  chauffeurId?: string;
-  vehicleId?: string;
-  documentType: string;
-  documentCategory: 'chauffeur' | 'vehicle' | 'provider';
-  path: string;
-}
 
 export function FileManagerView() {
   const { user } = useMockedUser();
@@ -76,32 +67,6 @@ export function FileManagerView() {
     !!filters.state.status;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
-
-  const handleDeleteItem = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
-    },
-    [dataInPage.length, table, tableData]
-  );
-
-  const handleDeleteItems = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
-    toast.success('Delete success!');
-
-    setTableData(deleteRows);
-
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
-  }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
   const handleDeleteRow = async (filePath: string) => {
     setTableData((prevData) => prevData.filter((item) => item.path !== filePath));

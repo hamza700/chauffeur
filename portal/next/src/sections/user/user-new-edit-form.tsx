@@ -57,9 +57,10 @@ export const NewUserSchema = zod.object({
 
 type Props = {
   currentUser?: IUserItem;
+  profilePicUrl?: string;
 };
 
-export function UserNewEditForm({ currentUser }: Props) {
+export function UserNewEditForm({ currentUser, profilePicUrl }: Props) {
   const { user } = useAuthContext();
   const userId = user?.id;
 
@@ -166,7 +167,7 @@ export function UserNewEditForm({ currentUser }: Props) {
             <Card sx={{ pt: 10, pb: 5, px: 3 }}>
               <Label
                 color={
-                  (values.status === 'active' && 'success') ||
+                  (values.status === 'approved' && 'success') ||
                   (values.status === 'rejected' && 'error') ||
                   'warning'
                 }
@@ -178,12 +179,20 @@ export function UserNewEditForm({ currentUser }: Props) {
               <Box sx={{ mb: 5, textAlign: 'center' }}>
                 <Box
                   component="img"
-                  src={currentUser.documents.profilePicUrl}
+                  src={profilePicUrl || '/assets/images/avatar/avatar_default.jpg'}
+                  alt={`${currentUser.firstName} ${currentUser.lastName}`}
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/assets/images/avatar/avatar_default.jpg';
+                  }}
                   sx={{
-                    width: 120,
-                    height: 120,
+                    width: 180,
+                    height: 180,
                     borderRadius: '50%',
                     mx: 'auto',
+                    objectFit: 'cover',
+                    boxShadow: (theme) => theme.customShadows.z8,
+                    border: (theme) => `solid 4px ${theme.palette.background.paper}`,
                   }}
                 />
               </Box>

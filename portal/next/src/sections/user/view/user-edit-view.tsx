@@ -146,9 +146,11 @@ export function UserEditView({ userId }: Props) {
         ))}
       </Tabs>
 
-      {tabs.value === 'personal' && <UserNewEditForm currentUser={currentUser} />}
+      {tabs.value === 'personal' && (
+        <UserNewEditForm currentUser={currentUser} profilePicUrl={documents.profilePicUrl} />
+      )}
       {tabs.value === 'documents' && (
-        <UserDocuments 
+        <UserDocuments
           currentUser={currentUser} 
           existingDocuments={documents}
         />

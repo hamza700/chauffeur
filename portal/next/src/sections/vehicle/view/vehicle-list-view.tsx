@@ -54,7 +54,7 @@ import { VehicleTableFiltersResult } from '../vehicle-table-filters-result';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
-  { value: 'active', label: 'Active' },
+  { value: 'approved', label: 'Approved' },
   { value: 'pending', label: 'Pending' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -85,38 +85,38 @@ export function VehicleListView() {
 
   const filters = useSetState<IVehicleTableFilters>({ licensePlate: '', status: 'all' });
 
+  const fetchVehicles = async () => {
+    setLoading(true);
+    try {
+      // Check if user is admin
+      if (user?.user_metadata?.roles.includes('admin')) {
+        const { data, error } = await getAllVehicles();
+        if (error) {
+          toast.error('Failed to fetch vehicles');
+        } else {
+          const transformedData = data?.map(transformVehicleData);
+          setTableData(transformedData || []);
+        }
+      } else {
+        // Existing provider-specific logic
+        const { data, error } = await getVehicles(providerId);
+        if (error) {
+          toast.error('Failed to fetch vehicles');
+        } else {
+          const transformedData = data?.map(transformVehicleData);
+          setTableData(transformedData || []);
+        }
+      }
+    } catch (error) {
+      toast.error('Error fetching vehicles');
+    }
+    setLoading(false);
+  };
+
   // Fetch all vehicles from Supabase
   useEffect(() => {
-    const fetchVehicles = async () => {
-      setLoading(true);
-      try {
-        // Check if user is admin
-        if (user?.user_metadata?.roles.includes('admin')) {
-          const { data, error } = await getAllVehicles();
-          if (error) {
-            toast.error('Failed to fetch vehicles');
-          } else {
-            const transformedData = data?.map(transformVehicleData);
-            setTableData(transformedData || []);
-          }
-        } else {
-          // Existing provider-specific logic
-          const { data, error } = await getVehicles(providerId);
-          if (error) {
-            toast.error('Failed to fetch vehicles');
-          } else {
-            const transformedData = data?.map(transformVehicleData);
-            setTableData(transformedData || []);
-          }
-        }
-      } catch (error) {
-        toast.error('Error fetching vehicles');
-      }
-      setLoading(false);
-    };
-
     fetchVehicles();
-  }, [providerId, user?.user_metadata?.roles]);
+  }, []);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -241,13 +241,13 @@ export function VehicleListView() {
                       'soft'
                     }
                     color={
-                      (tab.value === 'active' && 'success') ||
+                      (tab.value === 'approved' && 'success') ||
                       (tab.value === 'pending' && 'warning') ||
                       (tab.value === 'rejected' && 'error') ||
                       'default'
                     }
                   >
-                    {['active', 'pending', 'rejected'].includes(tab.value)
+                    {['approved', 'pending', 'rejected'].includes(tab.value)
                       ? tableData.filter((vehicle) => vehicle.status === tab.value).length
                       : tableData.length}
                   </Label>
@@ -322,6 +322,7 @@ export function VehicleListView() {
                         onSelectRow={() => table.onSelectRow(row.id)}
                         onDeleteRow={() => handleDeleteRow(row.id)}
                         onEditRow={() => handleEditRow(row.id)}
+                        onRefreshData={fetchVehicles}
                       />
                     ))}
 

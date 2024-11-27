@@ -1,19 +1,22 @@
-import type { IProviderAccount } from 'src/types/user';
+import type { IProviderAccount } from 'src/types/provider';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
-import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
+import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { ProviderQuickEditForm } from './provider-quick-edit-form';
 
 // ----------------------------------------------------------------------
 
@@ -22,10 +25,18 @@ type Props = {
   selected: boolean;
   onSelectRow: () => void;
   onDeleteRow: () => void;
+  onRefreshData?: () => void;
 };
 
-export function ProviderTableRow({ row, selected, onSelectRow, onDeleteRow }: Props) {
+export function ProviderTableRow({
+  row,
+  selected,
+  onSelectRow,
+  onDeleteRow,
+  onRefreshData,
+}: Props) {
   const confirm = useBoolean();
+  const quickEdit = useBoolean();
 
   return (
     <>
@@ -69,7 +80,7 @@ export function ProviderTableRow({ row, selected, onSelectRow, onDeleteRow }: Pr
           <Label
             variant="soft"
             color={
-              (row.status === 'active' && 'success') ||
+              (row.status === 'approved' && 'success') ||
               (row.status === 'pending' && 'warning') ||
               (row.status === 'rejected' && 'error') ||
               'default'
@@ -81,15 +92,28 @@ export function ProviderTableRow({ row, selected, onSelectRow, onDeleteRow }: Pr
 
         <TableCell>
           <Stack direction="row" alignItems="center">
-            <IconButton
-              color="error"
-              onClick={() => confirm.onTrue()}
-            >
+            <Tooltip title="Quick Edit" placement="top" arrow>
+              <IconButton
+                color={quickEdit.value ? 'inherit' : 'default'}
+                onClick={quickEdit.onTrue}
+              >
+                <Iconify icon="solar:pen-bold" />
+              </IconButton>
+            </Tooltip>
+
+            <IconButton color="error" onClick={() => confirm.onTrue()}>
               <Iconify icon="solar:trash-bin-trash-bold" />
             </IconButton>
           </Stack>
         </TableCell>
       </TableRow>
+
+      <ProviderQuickEditForm
+        currentProvider={row}
+        open={quickEdit.value}
+        onClose={quickEdit.onFalse}
+        onRefreshData={onRefreshData}
+      />
 
       <ConfirmDialog
         open={confirm.value}

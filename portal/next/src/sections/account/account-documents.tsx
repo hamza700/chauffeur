@@ -48,6 +48,7 @@ export const ProviderDocumentsSchema = zod.object({
 
 type Props = {
   currentProvider?: IProviderAccount;
+  onRefetch?: () => void;
   existingDocuments: {
     companyPrivateHireOperatorLicenseFiles: string[];
     personalIDorPassportFiles: string[];
@@ -61,7 +62,7 @@ const FILE_STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected', color: 'error' },
 ];
 
-export function AccountDocuments({ currentProvider, existingDocuments }: Props) {
+export function AccountDocuments({ currentProvider, existingDocuments, onRefetch }: Props) {
   const router = useRouter();
   const { user } = useAuthContext();
 
@@ -190,7 +191,7 @@ export function AccountDocuments({ currentProvider, existingDocuments }: Props) 
       }
 
       toast.success('Documents updated successfully!');
-      router.refresh();
+      onRefetch?.();
     } catch (error) {
       console.error('Error updating documents:', error);
       toast.error('Failed to update documents. Please try again.');

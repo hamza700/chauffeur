@@ -4,7 +4,7 @@ import type { IDatePickerControl } from './common';
 
 export type IFileFilters = {
   name: string;
-  status: 'string';
+  status: string;
   startDate: IDatePickerControl;
   endDate: IDatePickerControl;
 };
@@ -17,6 +17,7 @@ export interface IStorageFile {
   path: string;
   entityId: string; // Add this field
   status: string;
+  createdAt: string;
   modifiedAt: string;
   documentType: string;
   documentCategory: 'chauffeur' | 'vehicle' | 'provider';

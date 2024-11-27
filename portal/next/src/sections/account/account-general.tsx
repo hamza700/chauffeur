@@ -56,9 +56,10 @@ export const UpdateProviderSchema = zod.object({
 
 type Props = {
   currentProvider?: IProviderAccount;
+  onRefetch?: () => void;
 };
 
-export function AccountGeneral({ currentProvider }: Props) {
+export function AccountGeneral({ currentProvider, onRefetch }: Props) {
   const router = useRouter();
   const confirm = useBoolean();
 
@@ -114,9 +115,9 @@ export function AccountGeneral({ currentProvider }: Props) {
         company_registration_number: data.companyRegistrationNumber,
         vat_number: data.vatNumber,
       };
-      await updateProvider(currentProvider.id, updateData);
+      await updateProvider(currentProvider?.id, updateData);
       toast.success('Update success!');
-      router.refresh();
+      onRefetch?.();
       console.info('DATA', data);
     } catch (error) {
       toast.error(error.details); // Use the error message from Supabase

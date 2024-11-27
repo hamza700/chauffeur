@@ -1,10 +1,7 @@
 import type { IVehicleItem } from 'src/types/vehicle';
 
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,9 +16,10 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { VehicleQuickEditForm } from './vehicle-quick-edit-from';
+
 import { useAuthContext } from 'src/auth/hooks';
 
+import { VehicleQuickEditForm } from './vehicle-quick-edit-from';
 
 // ----------------------------------------------------------------------
 
@@ -31,9 +29,17 @@ type Props = {
   onEditRow: () => void;
   onSelectRow: () => void;
   onDeleteRow: () => void;
+  onRefreshData: () => void;
 };
 
-export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }: Props) {
+export function VehicleTableRow({
+  row,
+  selected,
+  onEditRow,
+  onSelectRow,
+  onDeleteRow,
+  onRefreshData,
+}: Props) {
   const { user } = useAuthContext();
   const role = user?.user_metadata?.roles;
 
@@ -51,7 +57,7 @@ export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDelet
         </TableCell>
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.licensePlate}</TableCell>
-        
+
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.model}</TableCell>
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.colour}</TableCell>
@@ -64,7 +70,7 @@ export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDelet
           <Label
             variant="soft"
             color={
-              (row.status === 'active' && 'success') ||
+              (row.status === 'approved' && 'success') ||
               (row.status === 'pending' && 'warning') ||
               (row.status === 'rejected' && 'error') ||
               'default'
@@ -76,7 +82,7 @@ export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDelet
 
         <TableCell>
           <Stack direction="row" alignItems="center">
-          {role === 'admin' && (
+            {role === 'admin' && (
               <Tooltip title="Quick Edit" placement="top" arrow>
                 <IconButton
                   color={quickEdit.value ? 'inherit' : 'default'}
@@ -94,7 +100,12 @@ export function VehicleTableRow({ row, selected, onEditRow, onSelectRow, onDelet
         </TableCell>
       </TableRow>
 
-      <VehicleQuickEditForm currentVehicle={row} open={quickEdit.value} onClose={quickEdit.onFalse} />
+      <VehicleQuickEditForm
+        currentVehicle={row}
+        open={quickEdit.value}
+        onClose={quickEdit.onFalse}
+        onRefreshData={onRefreshData}
+      />
 
       <CustomPopover
         open={popover.open}
