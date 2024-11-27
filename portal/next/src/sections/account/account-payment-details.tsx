@@ -36,8 +36,7 @@ const PaymentDetailsSchema = zod.object({
   bankName: zod.string().optional().nullable(),
   bankCountry: zod.string().nullable().optional(),
   bankAccountNumber: zod.string().optional().nullable(),
-  iban: zod.string().optional().nullable(),
-  swiftCode: zod.string().optional().nullable(),
+  sortCode: zod.string().optional().nullable(),
 });
 
 export type PaymentDetailsSchemaType = zod.infer<typeof PaymentDetailsSchema>;
@@ -60,8 +59,7 @@ export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
       bankName: currentProvider?.paymentDetails?.bankName || null,
       bankCountry: currentProvider?.paymentDetails?.bankCountry || null,
       bankAccountNumber: currentProvider?.paymentDetails?.bankAccountNumber || null,
-      iban: currentProvider?.paymentDetails?.iban || null,
-      swiftCode: currentProvider?.paymentDetails?.swiftCode || null,
+      sortCode: currentProvider?.paymentDetails?.sortCode || null,
     }),
     [currentProvider]
   );
@@ -98,8 +96,7 @@ export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
         bank_name: data.bankName,
         bank_country: data.bankCountry,
         bank_account_number: data.bankAccountNumber,
-        iban: data.iban,
-        swift_code: data.swiftCode,
+        sort_code: data.sortCode,
       };
       await updateProvider(currentProvider?.id, updateData);
       toast.success('Payment details updated successfully!');
@@ -175,15 +172,7 @@ export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
                   error={!!errors.bankAccountNumber}
                   helperText={errors.bankAccountNumber?.message}
                 />
-                <Field.Text
-                  name="iban"
-                  label="IBAN"
-                  required
-                  fullWidth
-                  error={!!errors.iban}
-                  helperText={errors.iban?.message}
-                />
-                <Field.Text name="swiftCode" label="SWIFT Code" fullWidth />
+                <Field.Text name="sortCode" label="Sort Code" fullWidth />
               </>
             )}
 

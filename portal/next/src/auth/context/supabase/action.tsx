@@ -184,8 +184,7 @@ export type ProviderData = {
   bank_name: string | null;
   bank_country: string | null;
   bank_account_number: string | null;
-  iban: string | null;
-  swift_code: string | null;
+  sort_code: string | null;
   onboarded?: boolean;
   created_at: string;
 };

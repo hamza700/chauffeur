@@ -28,8 +28,7 @@ const PaymentDetailsSchema = zod.object({
   bankName: zod.string().optional().nullable(),
   bankCountry: zod.string().nullable().optional(),
   bankAccountNumber: zod.string().optional().nullable(),
-  iban: zod.string().optional().nullable(),
-  swiftCode: zod.string().optional().nullable(),
+  sortCode: zod.string().optional().nullable(),
 });
 
 type PaymentDetailsSchemaType = zod.infer<typeof PaymentDetailsSchema>;
@@ -47,8 +46,7 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
     bankName: currentPaymentDetails?.bankName || null,
     bankCountry: currentPaymentDetails?.bankCountry || null,
     bankAccountNumber: currentPaymentDetails?.bankAccountNumber || null,
-    iban: currentPaymentDetails?.iban || null,
-    swiftCode: currentPaymentDetails?.swiftCode || null,
+    sortCode: currentPaymentDetails?.sortCode || null,
   };
 
   const methods = useForm<PaymentDetailsSchemaType>({
@@ -139,15 +137,7 @@ export function PaymentDetailsStep({ currentPaymentDetails, onSubmit }: Props) {
                     error={!!errors.bankAccountNumber}
                     helperText={errors.bankAccountNumber?.message}
                   />
-                  <Field.Text
-                    name="iban"
-                    label="IBAN"
-                    required
-                    fullWidth
-                    error={!!errors.iban}
-                    helperText={errors.iban?.message}
-                  />
-                  <Field.Text name="swiftCode" label="SWIFT Code" fullWidth />
+                  <Field.Text name="sortCode" label="Sort Code" fullWidth />
                 </>
               )}
             </Stack>

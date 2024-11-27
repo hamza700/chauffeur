@@ -50,6 +50,5 @@ export type PaymentDetails = {
   bankName?: string;
   bankCountry?: string | null;
   bankAccountNumber?: string;
-  iban?: string;
-  swiftCode?: string;
+  sortCode?: string;
 };

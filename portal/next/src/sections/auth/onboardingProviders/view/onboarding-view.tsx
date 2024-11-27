@@ -139,8 +139,7 @@ export function OnboardingViewProviders() {
       bankName: null,
       bankCountry: null,
       bankAccountNumber: null,
-      iban: null,
-      swiftCode: null,
+      sortCode: null,
     },
   });
 
@@ -243,8 +242,7 @@ export function OnboardingViewProviders() {
         bankName: null,
         bankCountry: null,
         bankAccountNumber: null,
-        iban: null,
-        swiftCode: null,
+        sortCode: null,
       },
     });
   };

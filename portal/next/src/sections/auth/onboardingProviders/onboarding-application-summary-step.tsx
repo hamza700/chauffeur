@@ -218,10 +218,7 @@ export function ApplicationSummaryStep({ formData }: Props) {
             Account Number: {formData.paymentDetails?.bankAccountNumber || 'N/A'}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            IBAN: {formData.paymentDetails?.iban || 'N/A'}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            SWIFT Code: {formData.paymentDetails?.swiftCode || 'N/A'}
+            Sort Code: {formData.paymentDetails?.sortCode || 'N/A'}
           </Typography>
         </Card>
       </Stack>

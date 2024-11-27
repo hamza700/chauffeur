@@ -141,8 +141,7 @@ export const transformProviderData = (provider: any): IProviderAccount => ({
     bankName: provider.bank_name,
     bankCountry: provider.bank_country,
     bankAccountNumber: provider.bank_account_number,
-    iban: provider.iban,
-    swiftCode: provider.swift_code,
+    sortCode: provider.sort_code,
   } as PaymentDetails,
 });
 
@@ -177,8 +176,7 @@ export const transformToProviderData = (provider: any): ProviderData => ({
   bank_name: provider.bankName || null,
   bank_country: provider.bankCountry || null,
   bank_account_number: provider.bankAccountNumber || null,
-  iban: provider.iban || null,
-  swift_code: provider.swiftCode || null,
+  sort_code: provider.sortCode || null,
   onboarded: provider.onboarded,
   created_at: provider.createdAt,
 });
