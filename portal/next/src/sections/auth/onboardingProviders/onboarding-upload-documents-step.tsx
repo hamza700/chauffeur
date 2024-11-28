@@ -17,19 +17,16 @@ export const OnboardingDocumentsSchema = zod.object({
   companyPrivateHireOperatorLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire operator license is required!',
-      minFiles: 1,
     },
   }),
   personalIDorPassportUrls: schemaHelper.files({
     message: {
       required_error: 'Personal ID or passport is required!',
-      minFiles: 1,
     },
   }),
   vatRegistrationCertificateUrls: schemaHelper.files({
     message: {
       required_error: 'VAT registration certificate is required!',
-      minFiles: 1,
     },
   }),
   companyPrivateHireOperatorLicenseExpiryDate: schemaHelper.date({
@@ -47,16 +44,15 @@ export const OnboardingDocumentsSchema = zod.object({
       required_error: 'VAT registration certificate expiry date is required!',
     },
   }),
-  profilePicUrl: schemaHelper.file({
+  profilePicUrls: schemaHelper.files({
     message: { required_error: 'Profile picture is required!' },
   }),
   chauffeurDriversLicenseUrls: schemaHelper.files({
-    message: { required_error: "Driver's license is required!", minFiles: 1 },
+    message: { required_error: "Driver's license is required!" },
   }),
   chauffeurPrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
-      minFiles: 1,
     },
   }),
   chauffeurDriversLicenseExpiryDate: schemaHelper.date({
@@ -67,13 +63,12 @@ export const OnboardingDocumentsSchema = zod.object({
       required_error: 'Private hire license expiry date is required!',
     },
   }),
-  vehiclePicUrl: schemaHelper.file({
+  vehiclePicUrls: schemaHelper.files({
     message: { required_error: 'Vehicle picture is required!' },
   }),
   vehiclePrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
-      minFiles: 1,
     },
   }),
   vehiclePrivateHireLicenseExpiryDate: schemaHelper.date({
@@ -84,7 +79,6 @@ export const OnboardingDocumentsSchema = zod.object({
   vehicleMotTestCertificateUrls: schemaHelper.files({
     message: {
       required_error: 'MOT test certificate is required!',
-      minFiles: 1,
     },
   }),
   vehicleMotTestCertificateExpiryDate: schemaHelper.date({
@@ -93,7 +87,7 @@ export const OnboardingDocumentsSchema = zod.object({
     },
   }),
   vehicleInsuranceUrls: schemaHelper.files({
-    message: { required_error: 'Vehicle insurance is required!', minFiles: 1 },
+    message: { required_error: 'Vehicle insurance is required!' },
   }),
   vehicleInsuranceExpiryDate: schemaHelper.date({
     message: { required_error: 'Vehicle insurance expiry date is required!' },
@@ -101,11 +95,10 @@ export const OnboardingDocumentsSchema = zod.object({
   vehicleRegistrationUrls: schemaHelper.files({
     message: {
       required_error: 'Vehicle registration is required!',
-      minFiles: 1,
     },
   }),
   vehicleLeasingContractUrls: schemaHelper.files({
-    message: { required_error: 'Leasing contract is required!', minFiles: 1 },
+    message: { required_error: 'Leasing contract is required!' },
   }),
 });
 
@@ -144,12 +137,12 @@ type Props = {
         vatRegistrationCertificate?: { files: File[]; expiryDate: Date | null };
       };
       chauffeur: {
-        profilePic?: File;
+        profilePic?: { files: File[] };
         driversLicense?: { files: File[]; expiryDate: Date | null };
         privateHireLicense?: { files: File[]; expiryDate: Date | null };
       };
       vehicle: {
-        vehiclePic?: File;
+        vehiclePic?: { files: File[] };
         privateHireLicense?: { files: File[]; expiryDate: Date | null };
         motTestCertificate?: { files: File[]; expiryDate: Date | null };
         vehicleInsurance?: { files: File[]; expiryDate: Date | null };
@@ -182,7 +175,7 @@ export function UploadDocumentsStep({
       vatRegistrationCertificateExpiryDate: null,
 
       // Chauffeur documents
-      profilePicUrl: null,
+      profilePicUrls: [],
       profilePicStatus: 'pending',
       chauffeurDriversLicenseUrls: [],
       chauffeurDriversLicenseStatus: 'pending',
@@ -192,7 +185,7 @@ export function UploadDocumentsStep({
       chauffeurPrivateHireLicenseExpiryDate: null,
 
       // Vehicle documents
-      vehiclePicUrl: null,
+      vehiclePicUrls: [],
       vehiclePicStatus: 'pending',
       vehiclePrivateHireLicenseUrls: [],
       vehiclePrivateHireLicenseStatus: 'pending',
@@ -297,7 +290,9 @@ export function UploadDocumentsStep({
           },
         },
         chauffeur: {
-          profilePic: data.profilePicUrl,
+          profilePic: {
+            files: data.profilePicUrls,
+          },
           driversLicense: {
             files: data.chauffeurDriversLicenseUrls,
             expiryDate: data.chauffeurDriversLicenseExpiryDate,
@@ -308,7 +303,9 @@ export function UploadDocumentsStep({
           },
         },
         vehicle: {
-          vehiclePic: data.vehiclePicUrl,
+          vehiclePic: {
+            files: data.vehiclePicUrls,
+          },
           privateHireLicense: {
             files: data.vehiclePrivateHireLicenseUrls,
             expiryDate: data.vehiclePrivateHireLicenseExpiryDate,
@@ -388,7 +385,7 @@ export function UploadDocumentsStep({
               </Typography>
               <DocumentSection
                 title="Profile Picture"
-                fieldName="profilePicUrl"
+                fieldName="profilePicUrls"
                 onRemove={handleRemoveFile}
                 onRemoveAll={handleRemoveAllFiles}
                 onDrop={handleDrop} // Handle file drop for correct handling
@@ -420,7 +417,7 @@ export function UploadDocumentsStep({
               </Typography>
               <DocumentSection
                 title="Vehicle Picture"
-                fieldName="vehiclePicUrl"
+                fieldName="vehiclePicUrls"
                 onRemove={handleRemoveFile}
                 onRemoveAll={handleRemoveAllFiles}
                 onDrop={handleDrop} // Handle file drop for correct handling

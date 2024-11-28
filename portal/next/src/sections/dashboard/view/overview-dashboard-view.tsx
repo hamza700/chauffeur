@@ -130,7 +130,7 @@ export function OverviewDashboardView() {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={!user?.user_metadata?.roles.includes('admin') ? 4 : 3}>
           <DashboardWidgetSummary
             title="Total Bookings"
             total={totals.bookings}
@@ -138,7 +138,7 @@ export function OverviewDashboardView() {
           />
         </Grid>
 
-        <Grid xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={!user?.user_metadata?.roles.includes('admin') ? 4 : 3}>
           <DashboardWidgetSummary
             title="Total Chauffeurs"
             total={totals.chauffeurs}
@@ -147,7 +147,7 @@ export function OverviewDashboardView() {
           />
         </Grid>
 
-        <Grid xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={!user?.user_metadata?.roles.includes('admin') ? 4 : 3}>
           <DashboardWidgetSummary
             title="Total Vehicles"
             total={totals.vehicles}

@@ -26,7 +26,7 @@ import { updateProvider } from 'src/auth/context/supabase';
 
 const PaymentDetailsSchema = zod.object({
   paymentMethod: zod.enum(
-    ['paypal', 'bankTransferDTAZV', 'bankTransferDomestic', 'bankTransferInternational'],
+    ['paypal', 'bankTransferDomestic', 'bankTransferInternational'],
     {
       errorMap: () => ({ message: 'Payment method is required!' }),
     }
@@ -120,7 +120,6 @@ export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
                 Select Payment Method
               </MenuItem>
               <MenuItem value="paypal">Paypal</MenuItem>
-              <MenuItem value="bankTransferDTAZV">Bank Transfer (DTAZV)</MenuItem>
               <MenuItem value="bankTransferDomestic">Bank Transfer (Domestic Transfer)</MenuItem>
               <MenuItem value="bankTransferInternational">
                 Bank Transfer (International Transfer)
@@ -172,7 +171,14 @@ export function AccountPaymentDetails({ currentProvider, onRefetch }: Props) {
                   error={!!errors.bankAccountNumber}
                   helperText={errors.bankAccountNumber?.message}
                 />
-                <Field.Text name="sortCode" label="Sort Code" fullWidth />
+                <Field.Text
+                  name="sortCode"
+                  label="Sort Code"
+                  required
+                  fullWidth
+                  error={!!errors.sortCode}
+                  helperText={errors.sortCode?.message}
+                />
               </>
             )}
 

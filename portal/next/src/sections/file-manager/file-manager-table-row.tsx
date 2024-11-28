@@ -397,6 +397,7 @@ export function FileManagerTableRow({
         open={details.value}
         onClose={details.onFalse}
         onDelete={handleDelete}
+        onRefreshData={onRefreshData}
       />
 
       <ConfirmDialog

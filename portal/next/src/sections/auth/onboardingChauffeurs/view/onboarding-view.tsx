@@ -16,7 +16,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useRouter } from 'src/routes/hooks';
 
-import { uploadDocument, uploadDocuments } from 'src/actions/documents';
+import { uploadDocuments } from 'src/actions/documents';
 
 import { toast } from 'src/components/snackbar';
 import { Field, schemaHelper } from 'src/components/hook-form';
@@ -33,16 +33,15 @@ import {
 export type OnboardingDocumentsSchemaType = zod.infer<typeof OnboardingDocumentsSchema>;
 
 export const OnboardingDocumentsSchema = zod.object({
-  profilePicUrl: schemaHelper.file({
+  profilePicUrls: schemaHelper.files({
     message: { required_error: 'Profile picture is required!' },
   }),
   chauffeurDriversLicenseUrls: schemaHelper.files({
-    message: { required_error: "Driver's license is required!", minFiles: 1 },
+    message: { required_error: "Driver's license is required!" },
   }),
   chauffeurPrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
-      minFiles: 1,
     },
   }),
   chauffeurDriversLicenseExpiryDate: schemaHelper.date({
@@ -53,13 +52,12 @@ export const OnboardingDocumentsSchema = zod.object({
       required_error: 'Private hire license expiry date is required!',
     },
   }),
-  vehiclePicUrl: schemaHelper.file({
+  vehiclePicUrls: schemaHelper.files({
     message: { required_error: 'Vehicle picture is required!' },
   }),
   vehiclePrivateHireLicenseUrls: schemaHelper.files({
     message: {
       required_error: 'Private hire license is required!',
-      minFiles: 1,
     },
   }),
   vehiclePrivateHireLicenseExpiryDate: schemaHelper.date({
@@ -70,7 +68,6 @@ export const OnboardingDocumentsSchema = zod.object({
   vehicleMotTestCertificateUrls: schemaHelper.files({
     message: {
       required_error: 'MOT test certificate is required!',
-      minFiles: 1,
     },
   }),
   vehicleMotTestCertificateExpiryDate: schemaHelper.date({
@@ -79,7 +76,7 @@ export const OnboardingDocumentsSchema = zod.object({
     },
   }),
   vehicleInsuranceUrls: schemaHelper.files({
-    message: { required_error: 'Vehicle insurance is required!', minFiles: 1 },
+    message: { required_error: 'Vehicle insurance is required!' },
   }),
   vehicleInsuranceExpiryDate: schemaHelper.date({
     message: { required_error: 'Vehicle insurance expiry date is required!' },
@@ -87,11 +84,10 @@ export const OnboardingDocumentsSchema = zod.object({
   vehicleRegistrationUrls: schemaHelper.files({
     message: {
       required_error: 'Vehicle registration is required!',
-      minFiles: 1,
     },
   }),
   vehicleLeasingContractUrls: schemaHelper.files({
-    message: { required_error: 'Leasing contract is required!', minFiles: 1 },
+    message: { required_error: 'Leasing contract is required!' },
   }),
 });
 
@@ -110,12 +106,12 @@ export function OnboardingViewChauffeurs() {
     mode: 'all',
     resolver: zodResolver(OnboardingDocumentsSchema),
     defaultValues: {
-      profilePicUrl: '',
+      profilePicUrls: [],
       chauffeurDriversLicenseUrls: [],
       chauffeurPrivateHireLicenseUrls: [],
       chauffeurDriversLicenseExpiryDate: null,
       chauffeurPrivateHireLicenseExpiryDate: null,
-      vehiclePicUrl: '',
+      vehiclePicUrls: [],
       vehiclePrivateHireLicenseUrls: [],
       vehiclePrivateHireLicenseExpiryDate: null,
       vehicleMotTestCertificateUrls: [],
@@ -192,17 +188,14 @@ export function OnboardingViewChauffeurs() {
 
       // Upload chauffeur documents with filtered files
       await Promise.all([
-        data.profilePicUrl instanceof File &&
-          uploadDocument(
-            {
-              file: data.profilePicUrl,
-              providerId: chauffeur.provider_id,
-              documentType: 'profile_pic',
-              index: 0,
-              entityType: 'chauffeurs',
-              entityId: userId,
-            },
-            user.access_token
+        data.profilePicUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.profilePicUrls),
+            chauffeur.provider_id,
+            'profile_pic',
+            user.access_token,
+            'chauffeurs',
+            userId
           ),
         data.chauffeurDriversLicenseUrls?.length &&
           uploadDocuments(
@@ -252,17 +245,14 @@ export function OnboardingViewChauffeurs() {
 
       // Upload vehicle documents with filtered files
       await Promise.all([
-        data.vehiclePicUrl instanceof File &&
-          uploadDocument(
-            {
-              file: data.vehiclePicUrl,
-              providerId: chauffeur.provider_id,
-              documentType: 'vehicle_pic',
-              index: 0,
-              entityType: 'vehicles',
-              entityId: vehicle.id,
-            },
-            user.access_token
+        data.vehiclePicUrls?.length &&
+          uploadDocuments(
+            filterFiles(data.vehiclePicUrls),
+            chauffeur.provider_id,
+            'vehicle_pic',
+            user.access_token,
+            'vehicles',
+            vehicle.id
           ),
         data.vehiclePrivateHireLicenseUrls?.length &&
           uploadDocuments(
@@ -367,7 +357,7 @@ export function OnboardingViewChauffeurs() {
               </Typography>
               <DocumentSection
                 title="Profile Picture"
-                fieldName="profilePicUrl"
+                fieldName="profilePicUrls"
                 onRemove={handleRemoveFile}
                 onRemoveAll={handleRemoveAllFiles}
                 onDrop={handleDrop} // Handle file drop for correct handling
@@ -399,7 +389,7 @@ export function OnboardingViewChauffeurs() {
               </Typography>
               <DocumentSection
                 title="Vehicle Picture"
-                fieldName="vehiclePicUrl"
+                fieldName="vehiclePicUrls"
                 onRemove={handleRemoveFile}
                 onRemoveAll={handleRemoveAllFiles}
                 onDrop={handleDrop} // Handle file drop for correct handling

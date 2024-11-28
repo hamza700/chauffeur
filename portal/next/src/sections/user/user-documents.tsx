@@ -17,7 +17,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { uploadDocument, uploadDocuments } from 'src/actions/documents';
+import { uploadDocuments } from 'src/actions/documents';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -31,7 +31,7 @@ import { updateChauffeur } from 'src/auth/context/supabase';
 export type UserDocumentsSchemaType = zod.infer<typeof UserDocumentsSchema>;
 
 export const UserDocumentsSchema = zod.object({
-  profilePicUrl: schemaHelper.file({ optional: true }),
+  profilePicUrls: schemaHelper.files({ optional: true }),
   driversLicenseUrls: schemaHelper.files({ optional: true }),
   privateHireLicenseUrls: schemaHelper.files({ optional: true }),
   driversLicenseExpiryDate: schemaHelper.date({
@@ -47,7 +47,7 @@ export const UserDocumentsSchema = zod.object({
 type Props = {
   currentUser?: IUserItem;
   existingDocuments: {
-    profilePicUrl?: string;
+    profilePicUrls: string[];
     driversLicenseUrls: string[];
     privateHireLicenseUrls: string[];
   };
@@ -67,7 +67,7 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
     () => ({
       driversLicenseExpiryDate: currentUser?.documents?.driversLicenseExpiryDate || null,
       privateHireLicenseExpiryDate: currentUser?.documents?.privateHireLicenseExpiryDate || null,
-      profilePicUrl: null,
+      profilePicUrls: [],
       driversLicenseUrls: [],
       privateHireLicenseUrls: [],
     }),
@@ -128,20 +128,20 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
       // Upload new documents only if they were changed
       const uploadPromises = [];
 
-      if (data.profilePicUrl instanceof File) {
-        uploadPromises.push(
-          uploadDocument(
-            {
-              file: data.profilePicUrl,
-              providerId: currentUser.providerId,
-              documentType: 'profile_pic',
-              index: 0,
-              entityType: 'chauffeurs',
-              entityId: currentUser.id,
-            },
-            user.access_token
-          )
-        );
+      if (data.profilePicUrls?.length) {
+        const newFiles = data.profilePicUrls.filter((file): file is File => file instanceof File);
+        if (newFiles.length) {
+          uploadPromises.push(
+            uploadDocuments(
+              newFiles,
+              currentUser.providerId,
+              'profile_pic',
+              user.access_token,
+              'chauffeurs',
+              currentUser.id
+            )
+          );
+        }
       }
 
       if (data.driversLicenseUrls?.length) {
@@ -218,14 +218,12 @@ export function UserDocuments({ currentUser, existingDocuments }: Props) {
 
             <DocumentSection
               title="Profile Picture"
-              fieldName="profilePicUrl"
+              fieldName="profilePicUrls"
               onRemove={handleRemoveFile}
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentUser?.documents?.profilePicStatus || 'pending'}
-              existingFiles={
-                existingDocuments.profilePicUrl ? [existingDocuments.profilePicUrl] : []
-              }
+              existingFiles={existingDocuments.profilePicUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -368,7 +366,7 @@ function DocumentSection({
 
       <Field.Upload
         name={fieldName}
-        multiple={fieldName !== 'profilePicUrl'}
+        multiple
         thumbnail
         onRemove={(file) => onRemove(file, fieldName)}
         onRemoveAll={() => onRemoveAll(fieldName)}

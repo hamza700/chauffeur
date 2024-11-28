@@ -1,8 +1,8 @@
 'use client';
 
 import type { SettingsState } from 'src/components/settings';
-import type { NavSectionProps } from 'src/components/nav-section';
 import type { Theme, SxProps, CSSObject, Breakpoint } from '@mui/material/styles';
+import type { NavSectionProps, NavItemBaseProps } from 'src/components/nav-section';
 
 import { useMemo } from 'react';
 
@@ -18,6 +18,8 @@ import { varAlpha, stylesMode } from 'src/theme/styles';
 
 import { bulletColor } from 'src/components/nav-section';
 import { useSettingsContext } from 'src/components/settings';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import { Main } from './main';
 import { NavMobile } from './nav-mobile';
@@ -51,7 +53,20 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
 
   const layoutQuery: Breakpoint = 'lg';
 
+  const { user } = useAuthContext();
+
   const navData = data?.nav ?? dashboardNavData;
+
+  const filteredNavData = useMemo(
+    () =>
+      navData.map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item: NavItemBaseProps) => !item.roles || item.roles.includes(user?.user_metadata?.roles)
+        ),
+      })),
+    [user?.user_metadata?.roles, navData]
+  );
 
   const isNavMini = settings.navLayout === 'mini';
 
@@ -62,7 +77,7 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
   return (
     <>
       <NavMobile
-        data={navData}
+        data={filteredNavData}
         open={mobileNavOpen.value}
         onClose={mobileNavOpen.onFalse}
         cssVars={navColorVars.section}
@@ -78,7 +93,7 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
             disableElevation={isNavVertical}
             onOpenNav={mobileNavOpen.onTrue}
             data={{
-              nav: navData,
+              nav: filteredNavData,
               langs: allLangs,
               account: _account,
               contacts: _contacts,
@@ -98,7 +113,7 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
               ),
               bottomArea: isNavHorizontal ? (
                 <NavHorizontal
-                  data={navData}
+                  data={filteredNavData}
                   layoutQuery={layoutQuery}
                   cssVars={navColorVars.section}
                 />
@@ -151,7 +166,7 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
         sidebarSection={
           isNavHorizontal ? null : (
             <NavVertical
-              data={navData}
+              data={filteredNavData}
               isNavMini={isNavMini}
               layoutQuery={layoutQuery}
               cssVars={navColorVars.section}

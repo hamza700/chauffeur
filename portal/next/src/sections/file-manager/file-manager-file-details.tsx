@@ -46,6 +46,7 @@ type Props = DrawerProps & {
   onClose: () => void;
   onDelete: () => void;
   onCopyLink: () => void;
+  onRefreshData: () => void;
 };
 
 export function FileManagerFileDetails({
@@ -54,6 +55,7 @@ export function FileManagerFileDetails({
   onClose,
   onDelete,
   onCopyLink,
+  onRefreshData,
   ...other
 }: Props) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -341,6 +343,7 @@ export function FileManagerFileDetails({
 
       setDocumentStatus(newStatus);
       setStatusDialogOpen(false);
+      onRefreshData();
     } catch (error) {
       console.error('Error updating status:', error);
     }

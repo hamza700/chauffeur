@@ -165,35 +165,6 @@ export function SupabaseSignUpView() {
     </Typography>
   );
 
-  const renderSignInWithSocials = (
-    <>
-      <Divider
-        sx={{
-          my: 3,
-          typography: 'overline',
-          color: 'text.disabled',
-          '&::before, :after': { borderTopStyle: 'dashed' },
-        }}
-      >
-        OR
-      </Divider>
-
-      <Stack direction="row" justifyContent="center" spacing={1}>
-        <IconButton>
-          <SocialIcon icon="google" width={22} />
-        </IconButton>
-
-        <IconButton>
-          <SocialIcon icon="github" width={22} />
-        </IconButton>
-
-        <IconButton>
-          <SocialIcon icon="twitter" width={22} />
-        </IconButton>
-      </Stack>
-    </>
-  );
-
   return (
     <>
       {renderLogo}
@@ -211,8 +182,6 @@ export function SupabaseSignUpView() {
       </Form>
 
       {renderTerms}
-
-      {renderSignInWithSocials}
     </>
   );
 }

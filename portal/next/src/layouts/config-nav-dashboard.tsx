@@ -93,7 +93,12 @@ export const navData = [
         icon: ICONS.file,
         roles: ['admin'],
       },
-      { title: 'Account Settings', path: paths.dashboard.settings, icon: ICONS.settings },
+      {
+        title: 'Account Settings',
+        path: paths.dashboard.settings,
+        icon: ICONS.settings,
+        roles: ['provider'],
+      },
     ],
   },
 ];

@@ -17,7 +17,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { uploadDocument, uploadDocuments } from 'src/actions/documents';
+import { uploadDocuments } from 'src/actions/documents';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -31,7 +31,7 @@ import { updateVehicle } from 'src/auth/context/supabase';
 export type VehicleDocumentsSchemaType = zod.infer<typeof VehicleDocumentsSchema>;
 
 export const VehicleDocumentsSchema = zod.object({
-  vehiclePicUrl: schemaHelper.file({ optional: true }),
+  vehiclePicUrls: schemaHelper.files({ optional: true }),
   privateHireLicenseUrls: schemaHelper.files({ optional: true }),
   motTestCertificateUrls: schemaHelper.files({ optional: true }),
   vehicleInsuranceUrls: schemaHelper.files({ optional: true }),
@@ -53,7 +53,7 @@ export const VehicleDocumentsSchema = zod.object({
 type Props = {
   currentVehicle?: IVehicleItem;
   existingDocuments: {
-    vehiclePicUrl?: string;
+    vehiclePicUrls: string[];
     privateHireLicenseUrls: string[];
     motTestCertificateUrls: string[];
     vehicleInsuranceUrls: string[];
@@ -74,7 +74,7 @@ export function VehicleDocuments({ currentVehicle, existingDocuments }: Props) {
 
   const defaultValues = useMemo(
     () => ({
-      vehiclePicUrl: null,
+      vehiclePicUrls: [],
       privateHireLicenseUrls: [],
       motTestCertificateUrls: [],
       vehicleInsuranceUrls: [],
@@ -144,22 +144,6 @@ export function VehicleDocuments({ currentVehicle, existingDocuments }: Props) {
       // Upload new documents only if they were changed
       const uploadPromises = [];
 
-      if (data.vehiclePicUrl instanceof File) {
-        uploadPromises.push(
-          uploadDocument(
-            {
-              file: data.vehiclePicUrl,
-              providerId: currentVehicle.providerId,
-              documentType: 'vehicle_pic',
-              index: 0,
-              entityType: 'vehicles',
-              entityId: currentVehicle.id,
-            },
-            user.access_token
-          )
-        );
-      }
-
       // Helper function to handle document uploads
       const handleDocumentUpload = (
         files: (File | string)[] | null | undefined,
@@ -182,6 +166,7 @@ export function VehicleDocuments({ currentVehicle, existingDocuments }: Props) {
         }
       };
 
+      handleDocumentUpload(data.vehiclePicUrls, 'vehicle_pic');
       handleDocumentUpload(data.privateHireLicenseUrls, 'private_hire_license');
       handleDocumentUpload(data.motTestCertificateUrls, 'mot_test_certificate');
       handleDocumentUpload(data.vehicleInsuranceUrls, 'vehicle_insurance');
@@ -236,14 +221,12 @@ export function VehicleDocuments({ currentVehicle, existingDocuments }: Props) {
 
             <DocumentSection
               title="Vehicle Picture"
-              fieldName="vehiclePicUrl"
+              fieldName="vehiclePicUrls"
               onRemove={handleRemoveFile}
               onRemoveAll={handleRemoveAllFiles}
               onDrop={handleDrop}
               currentStatus={currentVehicle?.documents?.vehiclePicStatus || 'pending'}
-              existingFiles={
-                existingDocuments.vehiclePicUrl ? [existingDocuments.vehiclePicUrl] : []
-              }
+              existingFiles={existingDocuments.vehiclePicUrls}
             />
 
             <Divider sx={{ my: 3 }} />
@@ -422,7 +405,7 @@ function DocumentSection({
 
       <Field.Upload
         name={fieldName}
-        multiple={fieldName !== 'vehiclePicUrl'}
+        multiple
         thumbnail
         onRemove={(file) => onRemove(file, fieldName)}
         onRemoveAll={() => onRemoveAll(fieldName)}

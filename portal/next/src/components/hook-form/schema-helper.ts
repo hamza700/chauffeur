@@ -118,7 +118,7 @@ export const schemaHelper = {
         return data;
       }
 
-      const minFiles = props?.minFiles ?? 2;
+      const minFiles = props?.minFiles ?? 1;
 
       if (!data.length && !props?.optional) {
         ctx.addIssue({
