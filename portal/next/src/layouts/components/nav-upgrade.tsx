@@ -9,14 +9,12 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import { alpha as hexAlpha } from '@mui/material/styles';
 
-import { paths } from 'src/routes/paths';
-
 import { CONFIG } from 'src/config-global';
 import { varAlpha, bgGradient } from 'src/theme/styles';
 
-import { Label } from 'src/components/label';
-
 import { useMockedUser } from 'src/auth/hooks';
+
+import { SignOutButton } from './sign-out-button';
 
 // ----------------------------------------------------------------------
 
@@ -30,21 +28,6 @@ export function NavUpgrade({ sx, ...other }: StackProps) {
           <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 48, height: 48 }}>
             {user?.displayName?.charAt(0).toUpperCase()}
           </Avatar>
-
-          <Label
-            color="success"
-            variant="filled"
-            sx={{
-              top: -6,
-              px: 0.5,
-              left: 40,
-              height: 20,
-              position: 'absolute',
-              borderBottomLeftRadius: 2,
-            }}
-          >
-            Free
-          </Label>
         </Box>
 
         <Stack spacing={0.5} sx={{ mb: 2, mt: 1.5, width: 1 }}>
@@ -65,9 +48,7 @@ export function NavUpgrade({ sx, ...other }: StackProps) {
           </Typography>
         </Stack>
 
-        <Button variant="contained" href={paths.minimalStore} target="_blank" rel="noopener">
-          Upgrade to Pro
-        </Button>
+        <SignOutButton />
       </Stack>
     </Stack>
   );

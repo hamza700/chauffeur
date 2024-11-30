@@ -12,8 +12,6 @@ import { iconButtonClasses } from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { allLangs } from 'src/locales';
-import { _contacts, _notifications } from 'src/_mock';
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
 import { bulletColor } from 'src/components/nav-section';
@@ -28,7 +26,6 @@ import { NavVertical } from './nav-vertical';
 import { NavHorizontal } from './nav-horizontal';
 import { _account } from '../config-nav-account';
 import { HeaderBase } from '../core/header-base';
-import { _workspaces } from '../config-nav-workspace';
 import { LayoutSection } from '../core/layout-section';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 
@@ -62,7 +59,9 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
       navData.map((section) => ({
         ...section,
         items: section.items.filter(
-          (item: NavItemBaseProps) => !item.roles || item.roles.includes(user?.user_metadata?.roles)
+          (item: NavItemBaseProps) => !item.roles || item.roles.some(role => 
+            user?.user_metadata?.roles?.includes(role)
+          )
         ),
       })),
     [user?.user_metadata?.roles, navData]
@@ -94,15 +93,10 @@ export function DashboardLayout({ sx, children, data }: DashboardLayoutProps) {
             onOpenNav={mobileNavOpen.onTrue}
             data={{
               nav: filteredNavData,
-              langs: allLangs,
               account: _account,
-              contacts: _contacts,
-              workspaces: _workspaces,
-              notifications: _notifications,
             }}
             slotsDisplay={{
               signIn: false,
-              purchase: false,
               helpLink: false,
             }}
             slots={{

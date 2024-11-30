@@ -2,7 +2,7 @@
 
 import type { IProviderAccount } from 'src/types/provider';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -58,49 +58,49 @@ export function AccountView() {
 
   const tabs = useTabs('general');
 
-  useEffect(() => {
-    const fetchProviderAndDocuments = async () => {
-      try {
-        setLoading(true);
+  const fetchProviderAndDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        // Fetch provider data
-        const { data, error } = await getProviderById(providerId);
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
-
-        const transformedData = transformProviderData(data);
-        setCurrentProvider(transformedData || undefined);
-
-        // Fetch documents if we have provider data
-        if (data) {
-          try {
-            const [operatorLicense, personalID, vatCertificate] = await Promise.all([
-              getDocument(data.id, 'company_private_hire_license', 0, user?.access_token || ''),
-              getDocument(data.id, 'proof_of_id', 0, user?.access_token || ''),
-              getDocument(data.id, 'vat_registration', 0, user?.access_token || ''),
-            ]);
-
-            setDocuments({
-              companyPrivateHireOperatorLicenseFiles: operatorLicense || [],
-              personalIDorPassportFiles: personalID || [],
-              vatRegistrationCertificateFiles: vatCertificate || [],
-            });
-          } catch (docError) {
-            console.error('Error fetching documents:', docError);
-            toast.error('Failed to fetch documents');
-          }
-        }
-      } catch (err) {
-        toast.error('Failed to fetch provider details');
-      } finally {
-        setLoading(false);
+      // Fetch provider data
+      const { data, error } = await getProviderById(providerId);
+      if (error) {
+        toast.error(error.message);
+        return;
       }
-    };
 
-    fetchProviderAndDocuments();
+      const transformedData = transformProviderData(data);
+      setCurrentProvider(transformedData || undefined);
+
+      // Fetch documents if we have provider data
+      if (data) {
+        try {
+          const [operatorLicense, personalID, vatCertificate] = await Promise.all([
+            getDocument(data.id, 'company_private_hire_license', 0, user?.access_token || ''),
+            getDocument(data.id, 'proof_of_id', 0, user?.access_token || ''),
+            getDocument(data.id, 'vat_registration', 0, user?.access_token || ''),
+          ]);
+
+          setDocuments({
+            companyPrivateHireOperatorLicenseFiles: operatorLicense || [],
+            personalIDorPassportFiles: personalID || [],
+            vatRegistrationCertificateFiles: vatCertificate || [],
+          });
+        } catch (docError) {
+          console.error('Error fetching documents:', docError);
+          toast.error('Failed to fetch documents');
+        }
+      }
+    } catch (err) {
+      toast.error('Failed to fetch provider details');
+    } finally {
+      setLoading(false);
+    }
   }, [providerId, user]);
+
+  useEffect(() => {
+    fetchProviderAndDocuments();
+  }, [fetchProviderAndDocuments]);
 
   return (
     <DashboardContent>

@@ -83,39 +83,38 @@ export function UserListView() {
 
   const filters = useSetState<IUserTableFilters>({ name: '', status: 'all' });
 
-
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        // Check if user is admin
-        if (user?.user_metadata?.roles.includes('admin')) {
-          const { data, error } = await getAllChauffeurs();
-          if (error) {
-            toast.error('Failed to fetch users');
-          } else {
-            const transformedData = data?.map(transformChauffeurData);
-            setTableData(transformedData || []);
-          }
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Check if user is admin
+      if (user?.user_metadata?.roles.includes('admin')) {
+        const { data, error } = await getAllChauffeurs();
+        if (error) {
+          toast.error('Failed to fetch users');
         } else {
-          // Existing provider-specific logic
-          const { data, error } = await getChauffeurs(providerId);
-          if (error) {
-            toast.error('Failed to fetch users');
-          } else {
-            const transformedData = data?.map(transformChauffeurData);
-            setTableData(transformedData || []);
-          }
+          const transformedData = data?.map(transformChauffeurData);
+          setTableData(transformedData || []);
         }
-      } catch (error) {
-        toast.error('Error fetching users');
+      } else {
+        // Existing provider-specific logic
+        const { data, error } = await getChauffeurs(providerId);
+        if (error) {
+          toast.error('Failed to fetch users');
+        } else {
+          const transformedData = data?.map(transformChauffeurData);
+          setTableData(transformedData || []);
+        }
       }
-      setLoading(false);
-    };
+    } catch (error) {
+      toast.error('Error fetching users');
+    }
+    setLoading(false);
+  }, [user, providerId]);
 
   // Fetch all users from Supabase
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   // Apply filter logic
   const dataFiltered = applyFilter({

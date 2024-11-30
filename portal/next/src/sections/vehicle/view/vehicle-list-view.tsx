@@ -85,7 +85,7 @@ export function VehicleListView() {
 
   const filters = useSetState<IVehicleTableFilters>({ licensePlate: '', status: 'all' });
 
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     setLoading(true);
     try {
       // Check if user is admin
@@ -111,12 +111,12 @@ export function VehicleListView() {
       toast.error('Error fetching vehicles');
     }
     setLoading(false);
-  };
+  }, [user, providerId]);
 
   // Fetch all vehicles from Supabase
   useEffect(() => {
     fetchVehicles();
-  }, []);
+  }, [fetchVehicles]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
