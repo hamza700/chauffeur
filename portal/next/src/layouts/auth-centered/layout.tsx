@@ -38,13 +38,9 @@ export function AuthCenteredLayout({ sx, children }: AuthCenteredLayoutProps) {
           slotsDisplay={{
             signIn: false,
             account: false,
-            purchase: false,
-            contacts: false,
             searchbar: false,
-            workspaces: false,
             menuButton: false,
-            localization: false,
-            notifications: false,
+            helpLink: false,
           }}
           slots={{
             topArea: (

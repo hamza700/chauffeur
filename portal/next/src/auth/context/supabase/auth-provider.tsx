@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
 
 import { useSetState } from 'src/hooks/use-set-state';
 
@@ -29,6 +29,22 @@ export function AuthProvider({ children }: Props) {
     user: null,
     loading: true,
   });
+
+  const inactivityTimeout = useRef<NodeJS.Timeout>();
+  const INACTIVE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+
+  const handleInactiveLogout = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimeout.current) {
+      clearTimeout(inactivityTimeout.current);
+    }
+    if (state.user) {
+      inactivityTimeout.current = setTimeout(handleInactiveLogout, INACTIVE_TIMEOUT);
+    }
+  }, [handleInactiveLogout, state.user, INACTIVE_TIMEOUT]);
 
   const checkUserSession = useCallback(async () => {
     try {
@@ -78,6 +94,22 @@ export function AuthProvider({ children }: Props) {
       subscription.unsubscribe();
     };
   }, [checkUserSession, setState]);
+
+  useEffect(() => {
+    if (state.user) {
+      const events = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
+      events.forEach((event) => document.addEventListener(event, resetInactivityTimer));
+      resetInactivityTimer();
+
+      return () => {
+        events.forEach((event) => document.removeEventListener(event, resetInactivityTimer));
+        if (inactivityTimeout.current) {
+          clearTimeout(inactivityTimeout.current);
+        }
+      };
+    }
+    return undefined;
+  }, [state.user, resetInactivityTimer]);
 
   // ----------------------------------------------------------------------
 
