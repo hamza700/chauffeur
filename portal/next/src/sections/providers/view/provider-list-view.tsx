@@ -14,6 +14,7 @@ import TableBody from '@mui/material/TableBody';
 import { Tooltip, IconButton } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
@@ -75,6 +76,8 @@ const TABLE_HEAD = [
 
 export function ProviderListView() {
   const { user } = useAuthContext();
+
+  const router = useRouter();
 
   const table = useTable();
 
@@ -164,6 +167,13 @@ export function ProviderListView() {
     }
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
+  const handleViewRow = useCallback(
+    (id: string) => {
+      router.push(paths.dashboard.providers.details(id));
+    },
+    [router]
+  );
+
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
       table.onResetPage();
@@ -185,7 +195,7 @@ export function ProviderListView() {
             heading="Providers"
             links={[
               { name: 'Dashboard', href: paths.dashboard.root },
-              { name: 'Providers', href: paths.dashboard.providers },
+              { name: 'Providers', href: paths.dashboard.providers.root },
               { name: 'List' },
             ]}
             sx={{ mb: { xs: 3, md: 5 } }}
@@ -294,6 +304,7 @@ export function ProviderListView() {
                           selected={table.selected.includes(row.id)}
                           onSelectRow={() => table.onSelectRow(row.id)}
                           onDeleteRow={() => handleDeleteRow(row.id)}
+                          onViewRow={() => handleViewRow(row.id)}
                           onRefreshData={fetchProviders}
                         />
                       ))}

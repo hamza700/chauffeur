@@ -77,7 +77,7 @@ export const navData = [
       },
       {
         title: 'Providers',
-        path: paths.dashboard.providers,
+        path: paths.dashboard.providers.root,
         icon: ICONS.providers,
         roles: ['admin'],
       },

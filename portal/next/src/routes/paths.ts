@@ -28,7 +28,6 @@ export const paths = {
   dashboard: {
     root: ROOTS.DASHBOARD,
     settings: `${ROOTS.DASHBOARD}/settings`,
-    providers: `${ROOTS.DASHBOARD}/providers`,
     bookings: {
       root: `${ROOTS.DASHBOARD}/bookings`,
       details: (id: string) => `${ROOTS.DASHBOARD}/bookings/${id}`,
@@ -45,6 +44,10 @@ export const paths = {
       new: `${ROOTS.DASHBOARD}/vehicles/new`,
       details: (id: string) => `${ROOTS.DASHBOARD}/vehicles/${id}`,
       edit: (id: string) => `${ROOTS.DASHBOARD}/vehicles/${id}/edit`,
+    },
+    providers: {
+      root: `${ROOTS.DASHBOARD}/providers`,
+      details: (id: string) => `${ROOTS.DASHBOARD}/providers/${id}`,
     },
     invoices: {
       root: `${ROOTS.DASHBOARD}/invoices`,

@@ -3,6 +3,7 @@ import type { IVehicleItem } from 'src/types/vehicle';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
@@ -116,6 +117,18 @@ export function VehicleTableRow({
         <MenuList>
           <MenuItem
             onClick={() => {
+              onEditRow();
+              popover.onClose();
+            }}
+          >
+            <Iconify icon="solar:pen-bold" />
+            Edit
+          </MenuItem>
+
+          <Divider sx={{ borderStyle: 'dashed' }} />
+
+          <MenuItem
+            onClick={() => {
               confirm.onTrue();
               popover.onClose();
             }}
@@ -123,16 +136,6 @@ export function VehicleTableRow({
           >
             <Iconify icon="solar:trash-bin-trash-bold" />
             Delete
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              onEditRow();
-              popover.onClose();
-            }}
-          >
-            <Iconify icon="solar:pen-bold" />
-            Edit
           </MenuItem>
         </MenuList>
       </CustomPopover>

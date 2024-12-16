@@ -17,6 +17,7 @@ export type IDocumentFields = {
 export type IProviderAccount = {
   id: string;
   city: string;
+  email: string;
   state: string;
   address: string;
   postCode: string;

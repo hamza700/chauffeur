@@ -109,6 +109,7 @@ export const transformToVehicleData = (vehicle: any): VehicleData => ({
 export const transformProviderData = (provider: any): IProviderAccount => ({
   id: provider.id,
   city: provider.city,
+  email: provider.email,
   state: provider.state,
   address: provider.address,
   postCode: provider.post_code,

@@ -4,6 +4,7 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
@@ -33,7 +34,14 @@ type Props = {
   onRefreshData?: () => void;
 };
 
-export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onRefreshData }: Props) {
+export function UserTableRow({
+  row,
+  selected,
+  onEditRow,
+  onSelectRow,
+  onDeleteRow,
+  onRefreshData,
+}: Props) {
   const { user } = useAuthContext();
   const role = user?.user_metadata?.roles;
 
@@ -114,6 +122,18 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
         <MenuList>
           <MenuItem
             onClick={() => {
+              onEditRow();
+              popover.onClose();
+            }}
+          >
+            <Iconify icon="solar:pen-bold" />
+            Edit
+          </MenuItem>
+
+          <Divider sx={{ borderStyle: 'dashed' }} />
+
+          <MenuItem
+            onClick={() => {
               confirm.onTrue();
               popover.onClose();
             }}
@@ -121,16 +141,6 @@ export function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRo
           >
             <Iconify icon="solar:trash-bin-trash-bold" />
             Delete
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              onEditRow();
-              popover.onClose();
-            }}
-          >
-            <Iconify icon="solar:pen-bold" />
-            Edit
           </MenuItem>
         </MenuList>
       </CustomPopover>

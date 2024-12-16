@@ -4,8 +4,6 @@ import { UserEditView } from 'src/sections/user/view';
 
 // ----------------------------------------------------------------------
 
-const { assetURL } = CONFIG.site;
-
 export const metadata = { title: `User edit | Dashboard - ${CONFIG.site.name}` };
 
 type Props = {

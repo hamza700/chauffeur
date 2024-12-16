@@ -3,8 +3,11 @@ import type { IProviderAccount } from 'src/types/provider';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import Divider from '@mui/material/Divider';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
+import MenuList from '@mui/material/MenuList';
+import MenuItem from '@mui/material/MenuItem';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -15,6 +18,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { ProviderQuickEditForm } from './provider-quick-edit-form';
 
@@ -24,6 +28,7 @@ type Props = {
   row: IProviderAccount;
   selected: boolean;
   onSelectRow: () => void;
+  onViewRow: () => void;
   onDeleteRow: () => void;
   onRefreshData?: () => void;
 };
@@ -32,10 +37,12 @@ export function ProviderTableRow({
   row,
   selected,
   onSelectRow,
+  onViewRow,
   onDeleteRow,
   onRefreshData,
 }: Props) {
   const confirm = useBoolean();
+  const popover = usePopover();
   const quickEdit = useBoolean();
 
   return (
@@ -101,8 +108,8 @@ export function ProviderTableRow({
               </IconButton>
             </Tooltip>
 
-            <IconButton color="error" onClick={() => confirm.onTrue()}>
-              <Iconify icon="solar:trash-bin-trash-bold" />
+            <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+              <Iconify icon="eva:more-vertical-fill" />
             </IconButton>
           </Stack>
         </TableCell>
@@ -114,6 +121,38 @@ export function ProviderTableRow({
         onClose={quickEdit.onFalse}
         onRefreshData={onRefreshData}
       />
+
+      <CustomPopover
+        open={popover.open}
+        anchorEl={popover.anchorEl}
+        onClose={popover.onClose}
+        slotProps={{ arrow: { placement: 'right-top' } }}
+      >
+        <MenuList>
+          <MenuItem
+            onClick={() => {
+              onViewRow();
+              popover.onClose();
+            }}
+          >
+            <Iconify icon="solar:pen-bold" />
+            View
+          </MenuItem>
+
+          <Divider sx={{ borderStyle: 'dashed' }} />
+
+          <MenuItem
+            onClick={() => {
+              confirm.onTrue();
+              popover.onClose();
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            <Iconify icon="solar:trash-bin-trash-bold" />
+            Delete
+          </MenuItem>
+        </MenuList>
+      </CustomPopover>
 
       <ConfirmDialog
         open={confirm.value}
